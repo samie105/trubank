@@ -12,7 +12,6 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Bank, Coin, Element3, LockSlash } from "iconsax-react";
-import { Switch } from "@/components/ui/switch";
 import {
   Sidebar,
   SidebarContent,
@@ -27,15 +26,16 @@ import {
 } from "@/components/ui/sidebar";
 import Image from "next/image";
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-  DialogTrigger,
+  ResponsiveModal,
+  ResponsiveModalTrigger,
+  ResponsiveModalClose,
+  ResponsiveModalContent,
+  ResponsiveModalTitle,
+  ResponsiveModalDescription,
+  ResponsiveModalFooter,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
-import { useTheme } from "next-themes";
+import ThemeSwitch from "./Theme-switch";
 
 const menuItems = [
   {
@@ -109,8 +109,6 @@ const roleAndAccessItems = [
 ];
 
 export default function SidebarComp() {
-  const [isDarkMode, setIsDarkMode] = React.useState(false);
-  const { theme, setTheme } = useTheme();
   const [openItems, setOpenItems] = React.useState<string[]>([]);
   const pathname = usePathname();
 
@@ -122,18 +120,11 @@ export default function SidebarComp() {
     );
   };
 
-  React.useEffect(() => {
-    setIsDarkMode(theme === "dark");
-  }, [theme]);
-
   const isActive = (path: string) => pathname.startsWith(path);
-  const handleDarkModeChange = (checked: boolean) => {
-    setIsDarkMode(checked);
-    setTheme(checked ? "dark" : "light");
-  };
+
   return (
-    <SidebarProvider>
-      <Sidebar className="w-64 border-r  bg-background">
+    <SidebarProvider className="relative">
+      <Sidebar className="w-full h-screen bg-secondary border-r bg-backg/round">
         <SidebarHeader className="p-4">
           <div className="image-cont w-4/6 mx-auto">
             <Image alt="trubank-logo" src={logowhite} className="dark:hidden" />
@@ -364,11 +355,11 @@ export default function SidebarComp() {
             ))}
           </SidebarMenu>
           <SidebarMenu>
-            <Dialog>
+            <ResponsiveModal>
               <SidebarMenuButton asChild>
                 <div className="flex items-center py-5 mt-1 justify-between">
                   {" "}
-                  <DialogTrigger className="py-5">
+                  <ResponsiveModalTrigger className="py-5">
                     <div className="flex items-center gap-x-2  text-foreground">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -386,52 +377,49 @@ export default function SidebarComp() {
                       </svg>
                       <p>Logout</p>
                     </div>
-                  </DialogTrigger>
+                  </ResponsiveModalTrigger>
                   <div className="mt- flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <Switch
-                        checked={isDarkMode}
-                        onCheckedChange={handleDarkModeChange}
-                        className="data-[state=checked]:bg-primary"
-                      />
+                      <ThemeSwitch />
                     </div>
                   </div>
                 </div>
               </SidebarMenuButton>
-              <DialogContent>
-                <DialogTitle>Confirm Logout</DialogTitle>
-                <DialogDescription>
+              <ResponsiveModalContent>
+                <ResponsiveModalTitle>Confirm Logout</ResponsiveModalTitle>
+                <ResponsiveModalDescription>
                   Confirm you want to logout
-                </DialogDescription>
-
-                <div className="flex justify-between">
-                  <DialogClose asChild>
-                    <Button variant={"secondary"}> Cancel</Button>
-                  </DialogClose>
-                  <Button
-                    variant={"default"}
-                    className="flex items-center text-white gap-x-2"
-                  >
-                    {" "}
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={1.5}
-                      stroke="currentColor"
-                      className="size-4 -rotate-90"
+                </ResponsiveModalDescription>
+                <ResponsiveModalFooter className="w-full mt-2">
+                  <div className="flex w-full justify-between">
+                    <ResponsiveModalClose asChild>
+                      <Button variant={"secondary"}> Cancel</Button>
+                    </ResponsiveModalClose>
+                    <Button
+                      variant={"default"}
+                      className="flex items-center text-white gap-x-2"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"
-                      />
-                    </svg>
-                    <p>Logout</p>
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+                      {" "}
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={1.5}
+                        stroke="currentColor"
+                        className="size-4 -rotate-90"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"
+                        />
+                      </svg>
+                      <p>Logout</p>
+                    </Button>
+                  </div>
+                </ResponsiveModalFooter>
+              </ResponsiveModalContent>
+            </ResponsiveModal>
           </SidebarMenu>
         </div>
       </Sidebar>

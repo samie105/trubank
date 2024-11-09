@@ -6,11 +6,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="md:grid md:grid-cols-12 hidden">
-      <div className="col-span-2 relative">
+    <div className="md:grid md:grid-cols-12 hidden w-screen h-screen overflow-hidden">
+      <div className="lg:col-span-3 md:col-span-4 relative">
         <SidebarComp />
       </div>
-      <div className="col-span-10 /bg-blue-300"> {children}</div>
+      <div className="lg:col-span-9 md:col-span-8 /bg-blue-300">
+        {" "}
+        {children}
+      </div>
     </div>
   );
 }
