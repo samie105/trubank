@@ -33,7 +33,7 @@ import {
   ResponsiveModalTitle,
   ResponsiveModalDescription,
   ResponsiveModalFooter,
-} from "../ui/dialog";
+} from "../ui/dialog-2";
 import { Button } from "../ui/button";
 import ThemeSwitch from "./Theme-switch";
 
