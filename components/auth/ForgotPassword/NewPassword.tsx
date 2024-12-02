@@ -23,7 +23,7 @@ import {
   ResponsiveModalFooter,
   ResponsiveModalTitle,
   ResponsiveModalDescription,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog-2";
 import { useRouter } from "next/navigation";
 import { resetPasswordAction } from "@/server/forgotpassword";
 import { Eye, EyeOff } from "lucide-react";

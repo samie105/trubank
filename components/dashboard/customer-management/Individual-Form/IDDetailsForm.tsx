@@ -259,7 +259,7 @@ export default function IDDetailsForm() {
               <FormField
                 control={form.control}
                 name="idDocument"
-                render={({ field: { value, onChange, ...field } }) => (
+                render={({ field: { value } }) => (
                   <FormItem>
                     <FormLabel>Upload ID Document</FormLabel>
                     <FormControl>
