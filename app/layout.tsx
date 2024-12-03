@@ -5,6 +5,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/contexts/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import "animate.css";
+import { Suspense } from "react";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -34,7 +35,10 @@ export default function RootLayout({
       >
         <Toaster />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <NuqsAdapter> {children}</NuqsAdapter>
+          <NuqsAdapter>
+            {" "}
+            <Suspense>{children}</Suspense>
+          </NuqsAdapter>
         </ThemeProvider>
       </body>
     </html>
