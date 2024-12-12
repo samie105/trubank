@@ -21,11 +21,19 @@ export const FormProvider: React.FC<{ children: React.ReactNode }> = ({
     email: "",
     phone: "+234",
     country: "Nigeria",
-    state: "",
+    state: "Abia",
     address: "",
     idType: undefined,
     idNumber: "",
-    idDocument: undefined,
+    idDocument: null,
+    idType2: undefined,
+    idNumber2: "",
+    idDocument2: null,
+    proofOfAddress: null,
+    profileImage: null,
+    branch: undefined,
+    accountOfficer: "",
+    desiredAccount: undefined,
   });
 
   useEffect(() => {

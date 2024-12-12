@@ -153,8 +153,11 @@ export default function InformationDetailsForm() {
   }, [countryId]);
 
   const onSubmit = (data: FormData) => {
-    updateFormData(data);
+    const updatedData = { ...formData, ...data };
+    updateFormData(updatedData);
+    localStorage.setItem("customerForm", JSON.stringify(updatedData));
     console.log("Form submitted:", data);
+    setStep(2);
   };
   return (
     <Form {...form}>
@@ -457,12 +460,11 @@ export default function InformationDetailsForm() {
         </div>
         <div className="flex justify-between mt-4">
           <Button variant="outline" onClick={() => setCreating(false)}>
-            Previous
+            Back
           </Button>
           <Button
             type="submit"
             className="text-white"
-            onClick={() => setStep(2)}
             disabled={isLoading || !form.formState.isValid}
           >
             {isLoading ? (

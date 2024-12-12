@@ -1,4 +1,5 @@
-export type IDType = "nin" | "bvn" | "passport" | "drivers_license" | undefined;
+export type IDType = "nin" | "bvn" | "passport" | "drivers_license";
+export type AccountType = "Savings" | "Current";
 
 export type FormData = {
   firstName: string;
@@ -10,14 +11,40 @@ export type FormData = {
   country: string;
   state: string;
   address: string;
-  idType: IDType;
-  idNumber: string;
-  idDocument?: File;
+  idType?: IDType;
+  idNumber?: string;
+  idDocument?: File | string | null;
+  idType2?: IDType;
+  idNumber2?: string;
+  idDocument2?: File | string | null;
+  proofOfAddress?: File | string | null;
+  profileImage?: File | string | null;
+  branch?: string;
+  accountOfficer?: string;
+  desiredAccount?: AccountType;
 };
 
 export type FormContextType = {
   formData: FormData;
   updateFormData: (data: Partial<FormData>) => void;
+};
+export type BusinessFormData = {
+  businessName: string;
+  businessType: string;
+  industrySector: string;
+  businessAddress: string;
+  email: string;
+  phoneNumber: string;
+  rcNumber: string;
+  cacDocument: File | string | null;
+  ownerFirstName: string;
+  ownerLastName: string;
+  ownerPhoneNumber: string;
+  ownerEmail: string;
+  ownerTitle: string;
+  branch: string;
+  desiredAccount: AccountType;
+  accountOfficer: string;
 };
 
 export type Country = {

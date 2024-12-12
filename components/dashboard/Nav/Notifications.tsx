@@ -35,7 +35,7 @@ export default function Component() {
       type: "admin",
       user: {
         name: "Samuel Ikechukwu",
-        avatar: "/placeholder.svg",
+        avatar: "",
         initials: "SI",
       },
       action: "requests permission to change",
@@ -48,7 +48,7 @@ export default function Component() {
       type: "admin",
       user: {
         name: "David Johnson",
-        avatar: "/placeholder.svg",
+        avatar: "",
         initials: "DJ",
       },
       action: "requests permission to change",
@@ -61,7 +61,7 @@ export default function Component() {
       type: "customer",
       user: {
         name: "Daniel James",
-        avatar: "/placeholder.svg",
+        avatar: "",
         initials: "DJ",
       },
       action: "approved",
@@ -74,7 +74,7 @@ export default function Component() {
       type: "customer",
       user: {
         name: "Mike Oluwatobiloba",
-        avatar: "/placeholder.svg",
+        avatar: "",
         initials: "MO",
       },
       action: "submitted document for",
@@ -87,7 +87,7 @@ export default function Component() {
       type: "customer",
       user: {
         name: "Esther Williams",
-        avatar: "/placeholder.svg",
+        avatar: "",
         initials: "EW",
       },
       action: "submitted document for",

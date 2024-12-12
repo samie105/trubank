@@ -46,11 +46,11 @@ const idTypes = [
 
 const formSchema = z
   .object({
-    idType: z.enum(["nin", "bvn", "passport", "drivers_license"] as const, {
+    idType2: z.enum(["nin", "bvn", "passport", "drivers_license"] as const, {
       required_error: "Please select an ID type",
     }),
-    idNumber: z.string().min(1, "ID number is required"),
-    idDocument: z
+    idNumber2: z.string().min(1, "ID number is required"),
+    idDocument2: z
       .custom<File | string | null>()
       .refine(
         (file) => !file || file instanceof File || typeof file === "string",
@@ -72,21 +72,21 @@ const formSchema = z
   })
   .refine(
     (data) => {
-      // Custom validation logic based on idType
-      if (data.idType !== "bvn" && !data.idDocument) {
-        return false; // Validation fails if idDocument is not provided for non-bvn types
+      // Custom validation logic based on idType2
+      if (data.idType2 !== "bvn" && !data.idDocument2) {
+        return false; // Validation fails if idDocument2 is not provided for non-bvn types
       }
       return true; // Validation passes
     },
     {
       message: "ID document is required for the selected ID type",
-      path: ["idDocument"], // Specify the path to the idDocument field
+      path: ["idDocument2"], // Specify the path to the idDocument2 field
     }
   );
 
-type IDFormData = Pick<FormData, "idType" | "idNumber" | "idDocument">;
+type IDFormData = Pick<FormData, "idType2" | "idNumber2" | "idDocument2">;
 
-export default function IDDetailsForm() {
+export default function IDDetailsForm2() {
   const { formData, updateFormData } = useFormContext();
   const [dragActive, setDragActive] = useState(false);
   const [, setStep] = useQueryState("step", parseAsInteger);
@@ -95,54 +95,57 @@ export default function IDDetailsForm() {
   const form = useForm<IDFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      idType: formData.idType || undefined,
-      idNumber: formData.idNumber || "",
-      idDocument: formData.idDocument || null,
+      idType2: formData.idType2 || undefined,
+      idNumber2: formData.idNumber2 || "",
+      idDocument2: formData.idDocument2 || null,
     },
     mode: "onChange",
   });
 
-  const selectedIdType = form.watch("idType");
+  const selectedIdType = form.watch("idType2");
 
   useEffect(() => {
-    if (formData.idType) {
-      form.setValue("idType", formData.idType);
+    if (formData.idType2) {
+      form.setValue("idType2", formData.idType2);
     }
-    if (formData.idNumber) {
-      form.setValue("idNumber", formData.idNumber);
+    if (formData.idNumber2) {
+      form.setValue("idNumber2", formData.idNumber2);
     }
-    // Set preview URL if idDocument exists
-    if (formData.idDocument instanceof File) {
-      setPreviewUrl(URL.createObjectURL(formData.idDocument));
-      form.setValue("idDocument", formData.idDocument);
-    } else if (typeof formData.idDocument === "string" && formData.idDocument) {
-      setPreviewUrl(formData.idDocument);
-      form.setValue("idDocument", formData.idDocument);
+    // Set preview URL if idDocument2 exists
+    if (formData.idDocument2 instanceof File) {
+      setPreviewUrl(URL.createObjectURL(formData.idDocument2));
+      form.setValue("idDocument2", formData.idDocument2);
+    } else if (
+      typeof formData.idDocument2 === "string" &&
+      formData.idDocument2
+    ) {
+      setPreviewUrl(formData.idDocument2);
+      form.setValue("idDocument2", formData.idDocument2);
     }
   }, [formData, form]);
 
   const onSubmit = (data: IDFormData) => {
     const updatedData = { ...formData, ...data };
-    if (data.idDocument instanceof File) {
+    if (data.idDocument2 instanceof File) {
       // Convert File to Data URL for storage
       const reader = new FileReader();
       reader.onloadend = () => {
-        updatedData.idDocument = reader.result as string;
+        updatedData.idDocument2 = reader.result as string;
         updateFormData(updatedData);
         localStorage.setItem("customerForm", JSON.stringify(updatedData));
-        setStep(3);
+        setStep(4);
       };
-      reader.readAsDataURL(data.idDocument);
+      reader.readAsDataURL(data.idDocument2);
     } else {
       updateFormData(updatedData);
       localStorage.setItem("customerForm", JSON.stringify(updatedData));
-      setStep(3);
+      setStep(4);
     }
     console.log("Form submitted:", updatedData);
   };
 
   const handleSkip = () => {
-    setStep(3);
+    setStep(4);
   };
 
   const handleDrag = (e: React.DragEvent) => {
@@ -172,12 +175,12 @@ export default function IDDetailsForm() {
   };
 
   const handleFile = (file: File) => {
-    form.setValue("idDocument", file);
+    form.setValue("idDocument2", file);
     setPreviewUrl(URL.createObjectURL(file));
   };
 
   const removeFile = () => {
-    form.setValue("idDocument", null);
+    form.setValue("idDocument2", null);
     setPreviewUrl(null);
   };
 
@@ -189,10 +192,10 @@ export default function IDDetailsForm() {
           <div className="space-y-4">
             <FormField
               control={form.control}
-              name="idType"
+              name="idType2"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>ID Verification</FormLabel>
+                  <FormLabel>ID Verification 2</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -223,9 +226,12 @@ export default function IDDetailsForm() {
                                 key={type.value}
                                 value={type.value}
                                 onSelect={() => {
-                                  form.setValue("idType", type.value as IDType);
-                                  form.setValue("idNumber", "");
-                                  form.setValue("idDocument", null);
+                                  form.setValue(
+                                    "idType2",
+                                    type.value as IDType
+                                  );
+                                  form.setValue("idNumber2", "");
+                                  form.setValue("idDocument2", null);
                                   setPreviewUrl(null);
                                 }}
                               >
@@ -253,7 +259,7 @@ export default function IDDetailsForm() {
             {selectedIdType && (
               <FormField
                 control={form.control}
-                name="idNumber"
+                name="idNumber2"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
@@ -285,7 +291,7 @@ export default function IDDetailsForm() {
             {selectedIdType && selectedIdType !== "bvn" && (
               <FormField
                 control={form.control}
-                name="idDocument"
+                name="idDocument2"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Upload ID Document</FormLabel>
@@ -324,7 +330,7 @@ export default function IDDetailsForm() {
                               <p className="font-medium capitalize">
                                 {field.value instanceof File
                                   ? field.value.name
-                                  : `${form.getValues("idType")} ID Upload`}
+                                  : `${form.getValues("idType2")} ID Upload`}
                               </p>
                               <p className="text-sm text-muted-foreground">
                                 {field.value instanceof File
@@ -369,7 +375,7 @@ export default function IDDetailsForm() {
           </div>
         </div>
         <div className="flex justify-between">
-          <Button type="button" variant="outline" onClick={() => setStep(1)}>
+          <Button type="button" variant="outline" onClick={() => setStep(2)}>
             Previous
           </Button>
           <div className="space-x-2">

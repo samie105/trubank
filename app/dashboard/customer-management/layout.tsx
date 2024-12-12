@@ -1,3 +1,4 @@
+import { BusinessFormProvider } from "@/contexts/BusinessFormContext";
 import { FormProvider } from "@/contexts/FormContext";
 import React from "react";
 
@@ -8,7 +9,9 @@ export default function layout({
 }>) {
   return (
     <>
-      <FormProvider>{children}</FormProvider>
+      <FormProvider>
+        <BusinessFormProvider>{children}</BusinessFormProvider>
+      </FormProvider>
     </>
   );
 }

@@ -26,7 +26,7 @@ export default function Component() {
       <PopoverTrigger asChild>
         <Button variant="shine" className="relative size-10 rounded-full">
           <Avatar className="size-10 bg-transparent">
-            <AvatarImage src="/placeholder.svg" alt="User avatar" />
+            <AvatarImage src="" alt="User avatar" />
             <AvatarFallback className="bg-transparent text-foreground">
               MG
             </AvatarFallback>
@@ -36,7 +36,7 @@ export default function Component() {
       <PopoverContent className="w-80 p-0" align="end">
         <div className="flex items-center gap-4 p-4">
           <Avatar className="h-16 w-16 ">
-            <AvatarImage src="/placeholder.svg" alt="User avatar" />
+            <AvatarImage src="" alt="User avatar" />
             <AvatarFallback className="animate-shine">MG</AvatarFallback>
           </Avatar>
           <div className="space-y-1">
