@@ -58,7 +58,7 @@ export default function BusinessConfirmationPage() {
 
   const handleConfirmAndSubmit = () => {
     // Implement your submission logic here
-    console.log("Form submitted:", data);
+    console.log("Form submittedd:", data);
     // Navigate to a success page or the next step
     setStep(6);
   };
