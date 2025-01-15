@@ -7,7 +7,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="md:grid md:grid-cols-12  w-screen h-screen overflow-hidden">
+    <div className="md:grid md:grid-cols-12 w-screen h-screen overflow-hidden">
       <div className="lg:col-span-3 md:col-span-4 hidden md:block relative">
         <SidebarComp />
       </div>

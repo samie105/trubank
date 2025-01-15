@@ -52,7 +52,7 @@ export default function CustomerModalFormCreation() {
           </ResponsiveModalFooter>
         </>
       )}
-      {creating && type === "individual" && <FormStepController step={step} />}
+      {creating && type === "individual" && <FormStepController />}
       {creating && type === "business" && (
         <BusinessFormController step={step} />
       )}

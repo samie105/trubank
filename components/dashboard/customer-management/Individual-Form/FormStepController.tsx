@@ -1,20 +1,26 @@
+"use client";
 import React from "react";
 import InformationDetailsForm from "./InformationDetailsForm";
 import IDDetailsForm from "./IDDetailsForm";
-import IDDetailsForm2 from "./IDDetailsForm2";
 import ProofofAddress from "./ProofofAddress";
-import ProfileForm from "./ProfileForm";
 import ConfirmDetails from "./ConfirmPage";
+import { parseAsInteger, useQueryState } from "nuqs";
+import EmploymentDetails from "./EmploymentDetails";
+import GuarantorForm from "./GuarantorForm";
+import NextOfKin from "./NextOfKin";
 
-export default function FormStepController({ step }: { step: number }) {
+export default function FormStepController() {
+  const [step] = useQueryState("step", parseAsInteger.withDefault(1));
+
   return (
     <div>
       {step === 1 && <InformationDetailsForm />}
       {step === 2 && <IDDetailsForm />}
-      {step === 3 && <IDDetailsForm2 />}
-      {step === 4 && <ProofofAddress />}
-      {step === 5 && <ProfileForm />}
-      {step === 6 && <ConfirmDetails />}
+      {step === 3 && <ProofofAddress />}
+      {step === 4 && <EmploymentDetails />}
+      {step === 5 && <GuarantorForm />}
+      {step === 6 && <NextOfKin />}
+      {step === 7 && <ConfirmDetails />}
     </div>
   );
 }

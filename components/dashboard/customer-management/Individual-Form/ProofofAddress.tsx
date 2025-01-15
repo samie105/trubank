@@ -5,8 +5,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { parseAsInteger, useQueryState } from "nuqs";
-import { Loader2, Upload, X } from "lucide-react";
+import { Loader2, Upload, X, ChevronDown, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DateTimePicker } from "@/components/ui/date-picker";
 import {
   Form,
   FormControl,
@@ -15,6 +16,19 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useFormContext } from "@/contexts/FormContext";
 import { FormData } from "@/types/types";
@@ -27,6 +41,21 @@ const ACCEPTED_FILE_TYPES = [
   "image/png",
   "application/pdf",
 ];
+
+const addressProofTypes = [
+  "Utility Bill",
+  "Bank Statement",
+  "Lease Agreement",
+] as const;
+
+const issuingAuthorities = [
+  "Electricity Company",
+  "Water Corporation",
+  "Banking Institution",
+  "Property Management Company",
+  "Telecommunications Company",
+  "Other",
+] as const;
 
 const formSchema = z.object({
   proofOfAddress: z
@@ -47,9 +76,21 @@ const formSchema = z.object({
       "Only .jpg, .jpeg, .png, and .pdf files are accepted"
     )
     .refine((file) => file !== null, "Proof of address document is required"),
+  addressProofType: z.enum(addressProofTypes, {
+    required_error: "Please select type of address proof",
+  }),
+  issuingAuthorityPOA: z.enum(issuingAuthorities, {
+    required_error: "Please select issuing authority",
+  }),
+  dateOfIssue: z.date({
+    required_error: "Date of issue is required",
+  }),
 });
 
-type ProofOfAddressFormData = Pick<FormData, "proofOfAddress">;
+type ProofOfAddressFormData = Pick<
+  FormData,
+  "proofOfAddress" | "addressProofType" | "issuingAuthorityPOA" | "dateOfIssue"
+>;
 
 export default function ProofOfAddress() {
   const { formData, updateFormData } = useFormContext();
@@ -61,6 +102,12 @@ export default function ProofOfAddress() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       proofOfAddress: formData.proofOfAddress || null,
+      addressProofType: formData.addressProofType || undefined,
+      issuingAuthorityPOA: formData.issuingAuthorityPOA || undefined,
+      dateOfIssue:
+        formData.dateOfIssue instanceof Date
+          ? formData.dateOfIssue
+          : new Date(formData.dateOfIssue),
     },
     mode: "onChange",
   });
@@ -76,30 +123,32 @@ export default function ProofOfAddress() {
       setPreviewUrl(formData.proofOfAddress);
       form.setValue("proofOfAddress", formData.proofOfAddress);
     }
+    if (formData.dateOfIssue) {
+      form.setValue("dateOfIssue", new Date(formData.dateOfIssue));
+    }
   }, [formData, form]);
 
   const onSubmit = (data: ProofOfAddressFormData) => {
     const updatedData = { ...formData, ...data };
     if (data.proofOfAddress instanceof File) {
-      // Convert File to Data URL for storage
       const reader = new FileReader();
       reader.onloadend = () => {
         updatedData.proofOfAddress = reader.result as string;
         updateFormData(updatedData);
         localStorage.setItem("customerForm", JSON.stringify(updatedData));
-        setStep(5);
+        setStep(4);
       };
       reader.readAsDataURL(data.proofOfAddress);
     } else {
       updateFormData(updatedData);
       localStorage.setItem("customerForm", JSON.stringify(updatedData));
-      setStep(5);
+      setStep(4);
     }
     console.log("Form submitted:", updatedData);
   };
 
   const handleSkip = () => {
-    setStep(5);
+    setStep(4);
   };
 
   const handleDrag = (e: React.DragEvent) => {
@@ -140,10 +189,151 @@ export default function ProofOfAddress() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-6 animate__fadeIn animate__animated animate__faster"
+      >
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Proof of Address</h2>
           <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="addressProofType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Type of Address Proof</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "w-full justify-between",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value || "Select proof type"}
+                          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0">
+                      <Command>
+                        <CommandInput placeholder="Search proof type..." />
+                        <CommandList>
+                          <CommandEmpty>No proof type found.</CommandEmpty>
+                          <CommandGroup>
+                            {addressProofTypes.map((type) => (
+                              <CommandItem
+                                key={type}
+                                value={type}
+                                onSelect={() => {
+                                  form.setValue("addressProofType", type);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    type === field.value
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                                {type}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="issuingAuthorityPOA"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Issuing Authority</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "w-full justify-between",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value || "Select issuing authority"}
+                          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0">
+                      <Command>
+                        <CommandInput placeholder="Search issuing authority..." />
+                        <CommandList>
+                          <CommandEmpty>
+                            No issuing authority found.
+                          </CommandEmpty>
+                          <CommandGroup>
+                            {issuingAuthorities.map((authority) => (
+                              <CommandItem
+                                key={authority}
+                                value={authority}
+                                onSelect={() => {
+                                  form.setValue(
+                                    "issuingAuthorityPOA",
+                                    authority
+                                  );
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    authority === field.value
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                                {authority}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="dateOfIssue"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Date of Issue</FormLabel>
+                  <FormControl>
+                    <DateTimePicker
+                      displayFormat={{ hour24: "yyyy/MM/dd" }}
+                      granularity="day"
+                      value={field.value ? new Date(field.value) : undefined}
+                      onChange={(date) => field.onChange(date)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="proofOfAddress"
@@ -229,7 +419,7 @@ export default function ProofOfAddress() {
           </div>
         </div>
         <div className="flex justify-between">
-          <Button type="button" variant="outline" onClick={() => setStep(3)}>
+          <Button type="button" variant="outline" onClick={() => setStep(2)}>
             Previous
           </Button>
           <div className="space-x-2">

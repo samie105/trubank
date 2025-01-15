@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { useFormContext } from "@/contexts/FormContext";
 import { FormData, IDType } from "@/types/types";
 import Image from "next/image";
+import { DateTimePicker } from "@/components/ui/date-picker";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_FILE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
@@ -42,6 +43,14 @@ const idTypes = [
   { value: "bvn", label: "BVN", maxLength: 11 },
   { value: "passport", label: "Passport", maxLength: 9 },
   { value: "drivers_license", label: "Driver's License", maxLength: 12 },
+] as const;
+
+const issuingAuthorities = [
+  "National Identity Management Commission (NIMC)",
+  "Central Bank of Nigeria (CBN)",
+  "Nigeria Immigration Service (NIS)",
+  "Federal Road Safety Corps (FRSC)",
+  "Other",
 ] as const;
 
 const formSchema = z
@@ -69,22 +78,31 @@ const formSchema = z
         "Only .jpg, .jpeg, and .png files are accepted"
       )
       .nullable(),
+    expiryDate: z.date({
+      required_error: "Expiry date is required",
+      invalid_type_error: "That's not a valid date!",
+    }),
+    issuingAuthority: z.enum(issuingAuthorities, {
+      required_error: "Please select an issuing authority",
+    }),
   })
   .refine(
     (data) => {
-      // Custom validation logic based on idType
       if (data.idType !== "bvn" && !data.idDocument) {
-        return false; // Validation fails if idDocument is not provided for non-bvn types
+        return false;
       }
-      return true; // Validation passes
+      return true;
     },
     {
       message: "ID document is required for the selected ID type",
-      path: ["idDocument"], // Specify the path to the idDocument field
+      path: ["idDocument"],
     }
   );
 
-type IDFormData = Pick<FormData, "idType" | "idNumber" | "idDocument">;
+type IDFormData = Pick<
+  FormData,
+  "idType" | "idNumber" | "idDocument" | "expiryDate" | "issuingAuthority"
+>;
 
 export default function IDDetailsForm() {
   const { formData, updateFormData } = useFormContext();
@@ -98,6 +116,8 @@ export default function IDDetailsForm() {
       idType: formData.idType || undefined,
       idNumber: formData.idNumber || "",
       idDocument: formData.idDocument || null,
+      expiryDate: formData.expiryDate || undefined,
+      issuingAuthority: formData.issuingAuthority || undefined,
     },
     mode: "onChange",
   });
@@ -111,7 +131,12 @@ export default function IDDetailsForm() {
     if (formData.idNumber) {
       form.setValue("idNumber", formData.idNumber);
     }
-    // Set preview URL if idDocument exists
+    if (formData.expiryDate) {
+      form.setValue("expiryDate", new Date(formData.expiryDate));
+    }
+    if (formData.issuingAuthority) {
+      form.setValue("issuingAuthority", formData.issuingAuthority);
+    }
     if (formData.idDocument instanceof File) {
       setPreviewUrl(URL.createObjectURL(formData.idDocument));
       form.setValue("idDocument", formData.idDocument);
@@ -124,7 +149,6 @@ export default function IDDetailsForm() {
   const onSubmit = (data: IDFormData) => {
     const updatedData = { ...formData, ...data };
     if (data.idDocument instanceof File) {
-      // Convert File to Data URL for storage
       const reader = new FileReader();
       reader.onloadend = () => {
         updatedData.idDocument = reader.result as string;
@@ -183,7 +207,10 @@ export default function IDDetailsForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-6 animate__fadeIn animate__animated animate__faster"
+      >
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Create Individual Customer</h2>
           <div className="space-y-4">
@@ -281,6 +308,84 @@ export default function IDDetailsForm() {
                 )}
               />
             )}
+
+            <FormField
+              control={form.control}
+              name="expiryDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Expiry Date</FormLabel>
+                  <FormControl>
+                    <DateTimePicker
+                      displayFormat={{ hour24: "yyyy/MM/dd" }}
+                      granularity="day"
+                      value={field.value ? new Date(field.value) : undefined}
+                      onChange={(date) => field.onChange(date)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="issuingAuthority"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Issuing Authority</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "w-full justify-between",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value || "Select Issuing Authority"}
+                          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0">
+                      <Command>
+                        <CommandInput placeholder="Search issuing authority..." />
+                        <CommandList>
+                          <CommandEmpty>
+                            No issuing authority found.
+                          </CommandEmpty>
+                          <CommandGroup>
+                            {issuingAuthorities.map((authority) => (
+                              <CommandItem
+                                key={authority}
+                                value={authority}
+                                onSelect={() => {
+                                  form.setValue("issuingAuthority", authority);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    authority === field.value
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                                {authority}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {selectedIdType && selectedIdType !== "bvn" && (
               <FormField

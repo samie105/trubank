@@ -35,6 +35,13 @@ import { cn } from "@/lib/utils";
 import { useFormContext } from "@/contexts/FormContext";
 import { FormData, Country, State } from "@/types/types";
 import { PhoneInput } from "./PhoneInput";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const formSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -46,6 +53,15 @@ const formSchema = z.object({
   country: z.string().min(1, "Country is required"),
   state: z.string().min(1, "State is required"),
   address: z.string().min(1, "Address is required"),
+  maritalStatus: z.enum(["Married", "Single"], {
+    required_error: "Marital status is required",
+  }),
+  alternatePhone: z.string().min(1, "Alternate phone number is required"),
+  employmentStatus: z.enum(
+    ["Employed", "Self-employed", "Unemployed", "Student"],
+    { required_error: "Employment status is required" }
+  ),
+  tin: z.string().min(1, "Tax Identification Number is required").optional(),
 });
 
 export default function InformationDetailsForm() {
@@ -163,7 +179,7 @@ export default function InformationDetailsForm() {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-4 animate__fadeInU animate__animated animate__faster"
+        className="space-y-4 animate__fadeIn animate__animated animate__faster"
       >
         <h2 className="text-lg font-semibold">Create Individual Customer</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -452,6 +468,89 @@ export default function InformationDetailsForm() {
                 <FormLabel>Residential Address</FormLabel>
                 <FormControl>
                   <Input placeholder="Enter address" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="maritalStatus"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Marital Status</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select marital status" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="Married">Married</SelectItem>
+                    <SelectItem value="Single">Single</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="alternatePhone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Alternate Phone Number</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Enter alternate phone number"
+                    type="number"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="employmentStatus"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Occupation/Employment Status</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select employment status" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="Employed">Employed</SelectItem>
+                    <SelectItem value="Self-employed">Self-employed</SelectItem>
+                    <SelectItem value="Unemployed">Unemployed</SelectItem>
+                    <SelectItem value="Student">Student</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="tin"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tax Identification Number (TIN)</FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter TIN" type="number" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
