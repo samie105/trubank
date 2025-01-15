@@ -13,8 +13,8 @@ import {
   useQueryState,
 } from "nuqs";
 import React from "react";
-import FormStepController from "./Individual-Form/FormStepController";
 import BusinessFormController from "./business-form/BusinessFormController";
+import ProfileForm from "./Individual-Form/ProfileForm";
 
 export default function CustomerModalFormCreation() {
   const [type, setType] = useQueryState(
@@ -52,7 +52,7 @@ export default function CustomerModalFormCreation() {
           </ResponsiveModalFooter>
         </>
       )}
-      {creating && type === "individual" && <FormStepController />}
+      {creating && type === "individual" && <ProfileForm />}
       {creating && type === "business" && (
         <BusinessFormController step={step} />
       )}

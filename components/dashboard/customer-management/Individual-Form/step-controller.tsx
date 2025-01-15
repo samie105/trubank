@@ -44,12 +44,12 @@ export function StepController() {
       {/* Progress bar */}
       <div className="sticky z-[9999px] md:relative top-0">
         <p className="text-sm mb-3 font-medium text-muted-foreground">
-          Step {formStep} of {steps.length}
+          Step {formStep === 7 ? "6" : formStep} of {steps.length}
         </p>
         <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
           <div
             className="h-full bg-primary transition-all duration-500 ease-in-out rounded-full"
-            style={{ width: `${(formStep / steps.length) * 100}%` }}
+            style={{ width: `${(formStep / 7) * 100}%` }}
           />
         </div>
         <div className="mt-2 text- md:hidden">

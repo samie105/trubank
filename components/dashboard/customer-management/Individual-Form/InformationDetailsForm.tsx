@@ -42,6 +42,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -88,10 +89,14 @@ export default function InformationDetailsForm() {
 
   const [openCountry, setOpenCountry] = useState(false);
   const [openState, setOpenState] = useState(false);
-
+  const router = useRouter();
   const memoizedCountriesList = useMemo(() => countriesList, [countriesList]);
   const memoizedStateList = useMemo(() => stateList, [stateList]);
 
+  const handleBack = () => {
+    setCreating(false);
+    router.back();
+  };
   useEffect(() => {
     const fetchCountries = async () => {
       setIsLoading(true);
@@ -558,7 +563,7 @@ export default function InformationDetailsForm() {
           />
         </div>
         <div className="flex justify-between mt-4">
-          <Button variant="outline" onClick={() => setCreating(false)}>
+          <Button variant="outline" onClick={() => handleBack()}>
             Back
           </Button>
           <Button
