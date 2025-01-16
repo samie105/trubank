@@ -15,19 +15,29 @@ import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 
 type BusinessFormData = {
+  // Business Profile Details
   businessName: string;
+  registrationNumber: string;
+  tin: string;
+  natureOfBusiness: string;
   businessType: string;
-  industrySector: string;
   businessAddress: string;
-  email: string;
   phoneNumber: string;
-  rcNumber: string;
-  cacDocument: string | null;
-  ownerFirstName: string;
-  ownerLastName: string;
-  ownerPhoneNumber: string;
-  ownerEmail: string;
-  ownerTitle: string;
+  email: string;
+  website: string;
+
+  // Business Registration Documents
+  businessIncorporationCertificate: string | null;
+  memorandumArticles: string | null;
+  businessLicense: string | null;
+
+  // Proof of Address
+  utilityBillType: string;
+  utilityBillIssuer: string;
+  issueDateOfBill: string; // Changed from Date to string for easier rendering
+  utilityBill: string | null;
+
+  // Account Information (kept from previous version)
   branch: string;
   desiredAccount: string;
   accountOfficer: string;
@@ -48,19 +58,13 @@ export default function BusinessConfirmationPage() {
     return <div>Loading...</div>;
   }
 
-  const handleMakeChanges = () => {
+  const handlePrevious = () => {
     setStep(1);
   };
 
-  const handlePrevious = () => {
-    setStep(4);
-  };
-
   const handleConfirmAndSubmit = () => {
-    // Implement your submission logic here
-    console.log("Form submittedrrd:", data);
-    // Navigate to a success page or the next step
-    setStep(6);
+    console.log("Form submitted:", data);
+    //setStep(6);
   };
 
   const renderField = (label: string, value: string | undefined) => {
@@ -79,7 +83,7 @@ export default function BusinessConfirmationPage() {
       <div className="flex flex-col items-center gap-2 py-4">
         <span className="font-medium text-muted-foreground">{label}</span>
         <Image
-          src={src}
+          src={src || "/placeholder.svg"}
           alt={alt}
           width={200}
           height={200}
@@ -100,26 +104,51 @@ export default function BusinessConfirmationPage() {
         <ScrollArea className="h-[60vh] pr-4">
           <div className="grid gap-6 md:grid-cols-1">
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Business Information</h3>
+              <h3 className="text-lg font-semibold">
+                Business Profile Details
+              </h3>
               {renderField("Business Name", data.businessName)}
+              {renderField("Registration Number", data.registrationNumber)}
+              {renderField("TIN", data.tin)}
+              {renderField("Nature of Business", data.natureOfBusiness)}
               {renderField("Business Type", data.businessType)}
-              {renderField("Industry/Sector", data.industrySector)}
               {renderField("Business Address", data.businessAddress)}
-              {renderField("Email", data.email)}
               {renderField("Phone Number", data.phoneNumber)}
-              {renderField("RC Number", data.rcNumber)}
-              {renderImage("CAC Document", data.cacDocument, "CAC Document")}
+              {renderField("Email", data.email)}
+              {renderField("Website", data.website)}
             </div>
 
             <Separator className="my-4" />
 
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Owner Information</h3>
-              {renderField("First Name", data.ownerFirstName)}
-              {renderField("Last Name", data.ownerLastName)}
-              {renderField("Phone Number", data.ownerPhoneNumber)}
-              {renderField("Email", data.ownerEmail)}
-              {renderField("Title", data.ownerTitle)}
+              <h3 className="text-lg font-semibold">
+                Business Registration Documents
+              </h3>
+              {renderImage(
+                "Business Incorporation Certificate",
+                data.businessIncorporationCertificate,
+                "Business Incorporation Certificate"
+              )}
+              {renderImage(
+                "Memorandum and Articles of Association",
+                data.memorandumArticles,
+                "Memorandum and Articles of Association"
+              )}
+              {renderImage(
+                "Business License",
+                data.businessLicense,
+                "Business License"
+              )}
+            </div>
+
+            <Separator className="my-4" />
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Proof of Address</h3>
+              {renderField("Utility Bill Type", data.utilityBillType)}
+              {renderField("Utility Bill Issuer", data.utilityBillIssuer)}
+              {renderField("Issue Date of Bill", data.issueDateOfBill)}
+              {renderImage("Utility Bill", data.utilityBill, "Utility Bill")}
             </div>
 
             <Separator className="my-4" />
@@ -135,16 +164,11 @@ export default function BusinessConfirmationPage() {
       </CardContent>
       <CardFooter className="flex justify-between">
         <Button variant="outline" onClick={handlePrevious}>
-          Previous
+          Make Changes
         </Button>
-        <div className="space-x-2">
-          <Button variant="outline" onClick={handleMakeChanges}>
-            Make Changes
-          </Button>
-          <Button onClick={handleConfirmAndSubmit} className="text-white">
-            Confirm & Submit
-          </Button>
-        </div>
+        <Button onClick={handleConfirmAndSubmit} className="text-white">
+          Confirm & Submit
+        </Button>
       </CardFooter>
     </Card>
   );

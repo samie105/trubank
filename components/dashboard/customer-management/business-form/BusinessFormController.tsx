@@ -1,18 +1,20 @@
+"use client";
 import React from "react";
 import BusinessDetailForm from "./BusinesssDetailsForm";
-import RCNumberAndCACForm from "./BusinessCacUpload";
-import OwnerInformationForm from "./OwnerInformationForm";
-import BusinessProfileForm from "./BusinessProfileForm";
+import BusinessDocumentsUpload from "./BusinessDocumentsUpload";
+import ProofofAddressBusiness from "./ProofofAddressBusiness";
 import BusinessConfirmationPage from "./BusinessConfirmPage";
+import { parseAsInteger, useQueryState } from "nuqs";
 
-export default function BusinessFormController({ step }: { step: number }) {
+export default function BusinessFormController() {
+  const [step] = useQueryState("step", parseAsInteger.withDefault(1));
+
   return (
     <div>
       {step === 1 && <BusinessDetailForm />}
-      {step === 2 && <RCNumberAndCACForm />}
-      {step === 3 && <OwnerInformationForm />}
-      {step === 4 && <BusinessProfileForm />}
-      {step === 5 && <BusinessConfirmationPage />}
+      {step === 2 && <BusinessDocumentsUpload />}
+      {step === 3 && <ProofofAddressBusiness />}
+      {step === 4 && <BusinessConfirmationPage />}
     </div>
   );
 }

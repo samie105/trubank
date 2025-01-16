@@ -55,6 +55,17 @@ export const BusinessFormProvider: React.FC<{ children: React.ReactNode }> = ({
       branch: "",
       desiredAccount: "",
       accountOfficer: "",
+      registrationNumber: "",
+      tin: "",
+      natureOfBusiness: "",
+      website: "",
+      businessIncorporationCertificate: null,
+      memorandumArticles: null,
+      businessLicense: null,
+      utilityBillType: "",
+      utilityBillIssuer: "",
+      issueDateOfBill: "",
+      utilityBill: null,
     };
   });
 

@@ -78,9 +78,9 @@ export default function ConfirmDetails() {
     setStep(1);
   };
 
-  const handlePrevious = () => {
-    setStep(6);
-  };
+  // const handlePrevious = () => {
+  //   setStep(6);
+  // };
 
   const handleConfirmAndSubmit = () => {
     console.log("Form submitted:", formData);
@@ -324,13 +324,11 @@ export default function ConfirmDetails() {
         </ScrollArea>
       </CardContent>
       <CardFooter className="flex justify-between">
-        <Button variant="outline" onClick={handlePrevious}>
-          Previous
+        <Button variant="outline" onClick={handleMakeChanges}>
+          Make Changes
         </Button>
         <div className="space-x-2">
-          <Button variant="outline" onClick={handleMakeChanges}>
-            Make Changes
-          </Button>
+          {/* <Button variant="outline">Make Changes</Button> */}
           <Button onClick={handleConfirmAndSubmit} className="text-white">
             Confirm & Submit
           </Button>

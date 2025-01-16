@@ -56,20 +56,23 @@ export type FormContextType = {
 export type BusinessFormData = {
   businessName: string;
   businessType: string;
-  industrySector: string;
   businessAddress: string;
   email: string;
   phoneNumber: string;
-  rcNumber: string;
-  cacDocument: File | string | null;
-  ownerFirstName: string;
-  ownerLastName: string;
-  ownerPhoneNumber: string;
-  ownerEmail: string;
-  ownerTitle: string;
   branch: string;
   desiredAccount: AccountType;
   accountOfficer: string;
+  registrationNumber: string;
+  tin: string;
+  natureOfBusiness: string;
+  website: string;
+  businessIncorporationCertificate: File | string | null;
+  memorandumArticles: File | string | null;
+  businessLicense: File | string | null;
+  utilityBillType: string;
+  utilityBillIssuer: string;
+  issueDateOfBill: Date;
+  utilityBill: File | string | null;
 };
 
 export type Country = {

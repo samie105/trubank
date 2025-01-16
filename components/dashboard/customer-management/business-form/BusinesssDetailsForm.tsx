@@ -13,52 +13,32 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import { Check, ChevronDown } from "lucide-react";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useBusinessForm } from "@/contexts/BusinessFormContext";
 import { BusinessFormData } from "@/types/types";
 import { parseAsBoolean, parseAsInteger, useQueryState } from "nuqs";
 
-const businessTypes = [
-  { value: "logistics", label: "Logistics" },
-  { value: "retail", label: "Retail" },
-  { value: "manufacturing", label: "Manufacturing" },
-  { value: "technology", label: "Technology" },
-];
-
-const industrySectors = [
-  { value: "transportation", label: "Transportation" },
-  { value: "healthcare", label: "Healthcare" },
-  { value: "finance", label: "Finance" },
-  { value: "education", label: "Education" },
-];
-
-const phoneRegex = /^\+[1-9]\d{1,14}$/;
-
 const formSchema = z.object({
   businessName: z.string().min(1, "Business name is required"),
-  businessType: z.string().min(1, "Please select a business type"),
-  industrySector: z.string().min(1, "Please select an industry/sector"),
+  registrationNumber: z
+    .string()
+    .min(1, "Business registration number is required"),
+  tin: z.string().min(1, "Tax Identification Number is required"),
+  natureOfBusiness: z.string().min(1, "Nature of business is required"),
+  businessType: z.string().min(1, "Business type is required"),
   businessAddress: z.string().min(1, "Business address is required"),
+  phoneNumber: z.string().min(1, "Phone number is required"),
   email: z.string().email("Invalid email address"),
-  phoneNumber: z.string().regex(phoneRegex, "Invalid phone number"),
+  website: z.string().optional(),
 });
 
 export default function BusinessDetailForm() {
   const { formData, updateFormData } = useBusinessForm();
-
   const [, setCreating] = useQueryState(
     "creating",
     parseAsBoolean.withDefault(false)
@@ -67,7 +47,17 @@ export default function BusinessDetailForm() {
 
   const form = useForm<BusinessFormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: formData,
+    defaultValues: {
+      businessName: formData.businessName,
+      registrationNumber: formData.registrationNumber,
+      tin: formData.tin,
+      natureOfBusiness: formData.natureOfBusiness,
+      businessType: formData.businessType,
+      businessAddress: formData.businessAddress,
+      phoneNumber: formData.phoneNumber,
+      email: formData.email,
+      website: formData.website,
+    },
   });
 
   const onSubmit = (data: BusinessFormData) => {
@@ -80,6 +70,8 @@ export default function BusinessDetailForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <h2 className="text-xl font-semibold">Business Profile Details</h2>
+
         <FormField
           control={form.control}
           name="businessName"
@@ -87,134 +79,98 @@ export default function BusinessDetailForm() {
             <FormItem>
               <FormLabel>Business Name</FormLabel>
               <FormControl>
-                <Input placeholder="Enter business name" {...field} />
+                <Input placeholder="Enter Business Name" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="businessType"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Business Type</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      className={cn(
-                        "w-full justify-between",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value
-                        ? businessTypes.find(
-                            (type) => type.value === field.value
-                          )?.label
-                        : "Select business type"}
-                      <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
-                  <Command>
-                    <CommandInput placeholder="Search business type..." />
-                    <CommandList>
-                      <CommandEmpty>No business type found.</CommandEmpty>
-                      <CommandGroup>
-                        {businessTypes.map((type) => (
-                          <CommandItem
-                            key={type.value}
-                            value={type.value}
-                            onSelect={() => {
-                              form.setValue("businessType", type.value);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                type.value === field.value
-                                  ? "opacity-100"
-                                  : "opacity-0"
-                              )}
-                            />
-                            {type.label}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="registrationNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Business Registration Number</FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter Business Reg. Number" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="industrySector"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Industry/Sector</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
+          <FormField
+            control={form.control}
+            name="tin"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tax Identification Number (TIN)</FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter TIN" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="natureOfBusiness"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nature of Business/Industry</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
                   <FormControl>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      className={cn(
-                        "w-full justify-between",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value
-                        ? industrySectors.find(
-                            (sector) => sector.value === field.value
-                          )?.label
-                        : "Select industry/sector"}
-                      <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Industry" />
+                    </SelectTrigger>
                   </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
-                  <Command>
-                    <CommandInput placeholder="Search industry/sector..." />
-                    <CommandList>
-                      <CommandEmpty>No industry/sector found.</CommandEmpty>
-                      <CommandGroup>
-                        {industrySectors.map((sector) => (
-                          <CommandItem
-                            key={sector.value}
-                            value={sector.value}
-                            onSelect={() => {
-                              form.setValue("industrySector", sector.value);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                sector.value === field.value
-                                  ? "opacity-100"
-                                  : "opacity-0"
-                              )}
-                            />
-                            {sector.label}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                  <SelectContent>
+                    <SelectItem value="retail">Retail</SelectItem>
+                    <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                    <SelectItem value="services">Services</SelectItem>
+                    <SelectItem value="technology">Technology</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="businessType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Business Type</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Business Type" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="sole_proprietorship">
+                      Sole Proprietorship
+                    </SelectItem>
+                    <SelectItem value="partnership">Partnership</SelectItem>
+                    <SelectItem value="corporation">Corporation</SelectItem>
+                    <SelectItem value="llc">LLC</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <FormField
           control={form.control}
@@ -223,49 +179,69 @@ export default function BusinessDetailForm() {
             <FormItem>
               <FormLabel>Business Address</FormLabel>
               <FormControl>
-                <Input placeholder="Enter business address" {...field} />
+                <Input placeholder="Enter Business Address" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
+        <h3 className="text-lg font-medium">Business Contact Details</h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="phoneNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Phone Number</FormLabel>
+                <FormControl>
+                  <Input
+                    type="tel"
+                    placeholder="Enter Phone Number"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email Address</FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter Email Address" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         <FormField
           control={form.control}
-          name="email"
+          name="website"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>Business Website (optional)</FormLabel>
               <FormControl>
-                <Input placeholder="Enter email" {...field} />
+                <Input placeholder="Enter Website Address" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="phoneNumber"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Phone Number</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Enter phone number (e.g., +1234567890)"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
         <div className="flex justify-between mt-4">
           <Button variant="outline" onClick={() => setCreating(false)}>
             Back
           </Button>
           <Button type="submit" className="text-white">
-            {"Save & Next"}
+            Save & Next
           </Button>
         </div>
       </form>

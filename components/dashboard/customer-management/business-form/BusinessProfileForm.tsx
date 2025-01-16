@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { parseAsInteger, useQueryState } from "nuqs";
+import { parseAsBoolean, parseAsInteger, useQueryState } from "nuqs";
 import { Loader2, Check, ChevronDown, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +33,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useBusinessForm } from "@/contexts/BusinessFormContext";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = [
@@ -69,8 +70,11 @@ type ProfileFormData = z.infer<typeof formSchema>;
 
 export default function BusinessProfileForm() {
   const { formData, updateFormData } = useBusinessForm();
-  const [, setStep] = useQueryState("step", parseAsInteger);
-
+  const [, setCreating] = useQueryState(
+    "creating",
+    parseAsBoolean.withDefault(false)
+  );
+  const router = useRouter();
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -79,6 +83,7 @@ export default function BusinessProfileForm() {
       desiredAccount: formData.desiredAccount || undefined,
     },
   });
+  router.prefetch("/dashboard/customer-management/create/business");
 
   useEffect(() => {
     const savedData = localStorage.getItem("CustomerBusinessForm");
@@ -100,18 +105,20 @@ export default function BusinessProfileForm() {
     updateFormData(updatedData);
     localStorage.setItem("CustomerBusinessForm", JSON.stringify(updatedData));
     console.log("Form submitted:", updatedData);
-    setStep(5); // Navigate to the next step
-  };
-
-  const handleSkip = () => {
-    setStep(5);
+    router.push("/dashboard/customer-management/create/business");
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-4">
-          <h2 className="text-2xl font-bold">Profile Information</h2>
+          <h2 className="text-2xl font-bold text-center">
+            Customer Assignment <br /> and Account Setup
+          </h2>
+          <h2 className="text-sm text-center font-medium text-muted-foreground">
+            Assign the customer to a branch and an officer, <br /> then proceed
+            to create their account
+          </h2>
 
           <FormField
             control={form.control}
@@ -246,13 +253,17 @@ export default function BusinessProfileForm() {
         </div>
 
         <div className="flex justify-between">
-          <Button type="button" variant="outline" onClick={() => setStep(3)}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setCreating(false)}
+          >
             Previous
           </Button>
           <div className="space-x-2">
-            <Button type="button" variant="outline" onClick={handleSkip}>
+            {/* <Button type="button" variant="outline" onClick={handleSkip}>
               Skip
-            </Button>
+            </Button> */}
             <Button type="submit" className="text-white">
               {form.formState.isSubmitting ? (
                 <>
@@ -260,7 +271,7 @@ export default function BusinessProfileForm() {
                   Please wait
                 </>
               ) : (
-                "Create"
+                "Create Customer"
               )}
             </Button>
           </div>
