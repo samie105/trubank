@@ -22,6 +22,7 @@ import {
 import { useBusinessForm } from "@/contexts/BusinessFormContext";
 import { BusinessFormData } from "@/types/types";
 import { parseAsBoolean, parseAsInteger, useQueryState } from "nuqs";
+import Link from "next/link";
 
 const formSchema = z.object({
   businessName: z.string().min(1, "Business name is required"),
@@ -237,8 +238,8 @@ export default function BusinessDetailForm() {
         />
 
         <div className="flex justify-between mt-4">
-          <Button variant="outline" onClick={() => setCreating(false)}>
-            Back
+          <Button asChild variant="outline" onClick={() => setCreating(false)}>
+            <Link href={"/dashboard/customer-management"}>Back</Link>
           </Button>
           <Button type="submit" className="text-white">
             Save & Next

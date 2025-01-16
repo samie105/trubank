@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DateTimePicker } from "@/components/ui/date-picker";
 import { GetCountries, GetState } from "react-country-state-city";
-import { parseAsBoolean, parseAsInteger, useQueryState } from "nuqs";
+import { parseAsInteger, useQueryState } from "nuqs";
 import { Loader2, Check, ChevronDown } from "lucide-react";
 import {
   Form,
@@ -42,7 +42,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const formSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -81,22 +82,18 @@ export default function InformationDetailsForm() {
   const [countriesList, setCountriesList] = useState<Country[]>([]);
   const [stateList, setStateList] = useState<State[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [, setCreating] = useQueryState(
-    "creating",
-    parseAsBoolean.withDefault(false)
-  );
+  // const [, setCreating] = useQueryState(
+  //   "creating",
+  //   parseAsBoolean.withDefault(false)
+  // );
   const [, setStep] = useQueryState("step", parseAsInteger);
 
   const [openCountry, setOpenCountry] = useState(false);
   const [openState, setOpenState] = useState(false);
-  const router = useRouter();
+  // const router = useRouter();
   const memoizedCountriesList = useMemo(() => countriesList, [countriesList]);
   const memoizedStateList = useMemo(() => stateList, [stateList]);
 
-  const handleBack = () => {
-    setCreating(false);
-    router.back();
-  };
   useEffect(() => {
     const fetchCountries = async () => {
       setIsLoading(true);
@@ -563,8 +560,8 @@ export default function InformationDetailsForm() {
           />
         </div>
         <div className="flex justify-between mt-4">
-          <Button variant="outline" onClick={() => handleBack()}>
-            Back
+          <Button variant="outline" asChild>
+            <Link href="/dashboard/customer-management">Back</Link>
           </Button>
           <Button
             type="submit"
