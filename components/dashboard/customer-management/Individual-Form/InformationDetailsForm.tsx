@@ -42,8 +42,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-// import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -82,18 +81,18 @@ export default function InformationDetailsForm() {
   const [countriesList, setCountriesList] = useState<Country[]>([]);
   const [stateList, setStateList] = useState<State[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  // const [, setCreating] = useQueryState(
-  //   "creating",
-  //   parseAsBoolean.withDefault(false)
-  // );
+
   const [, setStep] = useQueryState("step", parseAsInteger);
 
   const [openCountry, setOpenCountry] = useState(false);
   const [openState, setOpenState] = useState(false);
-  // const router = useRouter();
+  const router = useRouter();
   const memoizedCountriesList = useMemo(() => countriesList, [countriesList]);
   const memoizedStateList = useMemo(() => stateList, [stateList]);
 
+  const handleBack = async () => {
+    await router.push("/dashboard/customer-management");
+  };
   useEffect(() => {
     const fetchCountries = async () => {
       setIsLoading(true);
@@ -560,8 +559,8 @@ export default function InformationDetailsForm() {
           />
         </div>
         <div className="flex justify-between mt-4">
-          <Button variant="outline" asChild>
-            <Link href="/dashboard/customer-management">Back</Link>
+          <Button variant="outline" type="button" onClick={() => handleBack()}>
+            Back
           </Button>
           <Button
             type="submit"

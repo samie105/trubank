@@ -21,8 +21,8 @@ import {
 } from "@/components/ui/select";
 import { useBusinessForm } from "@/contexts/BusinessFormContext";
 import { BusinessFormData } from "@/types/types";
-import { parseAsBoolean, parseAsInteger, useQueryState } from "nuqs";
-import Link from "next/link";
+import { parseAsInteger, useQueryState } from "nuqs";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   businessName: z.string().min(1, "Business name is required"),
@@ -40,10 +40,11 @@ const formSchema = z.object({
 
 export default function BusinessDetailForm() {
   const { formData, updateFormData } = useBusinessForm();
-  const [, setCreating] = useQueryState(
-    "creating",
-    parseAsBoolean.withDefault(false)
-  );
+
+  const router = useRouter();
+  const handleBack = async () => {
+    await router.push("/dashboard/customer-management");
+  };
   const [, setStep] = useQueryState("step", parseAsInteger);
 
   const form = useForm<BusinessFormData>({
@@ -238,8 +239,8 @@ export default function BusinessDetailForm() {
         />
 
         <div className="flex justify-between mt-4">
-          <Button asChild variant="outline" onClick={() => setCreating(false)}>
-            <Link href={"/dashboard/customer-management"}>Back</Link>
+          <Button type="button" variant="outline" onClick={() => handleBack()}>
+            Back
           </Button>
           <Button type="submit" className="text-white">
             Save & Next
