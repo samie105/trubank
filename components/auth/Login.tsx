@@ -64,7 +64,7 @@ export default function Component() {
 
   async function onSubmit(data: LoginFormValues) {
     execute(data);
-    router.push("dashboard/customer-management");
+    router.push("/dashboard/customer-management");
   }
 
   return (
