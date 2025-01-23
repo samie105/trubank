@@ -15,7 +15,7 @@ export const loginAction = actionClient
     await new Promise((resolve) => setTimeout(resolve, 2000));
     console.log(email, password);
     // Simulate success/error (change this to test different scenarios)
-    const isSuccess = false;
+    const isSuccess = true;
 
     if (isSuccess) {
       return { success: true };

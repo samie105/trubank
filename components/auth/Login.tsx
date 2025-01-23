@@ -36,7 +36,7 @@ export default function Component() {
       password: "",
     },
   });
-  let toastId: string;
+  const toastId: string = "";
   const { execute, status } = useAction(loginAction, {
     onSuccess({ data }) {
       if (data?.success) toast.success("Login successful!", { id: toastId });
