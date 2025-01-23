@@ -19,6 +19,7 @@ import { useAction } from "next-safe-action/hooks";
 import { toast } from "sonner";
 import { loginAction } from "@/server/Login";
 import { Eye, EyeOff } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -28,6 +29,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function Component() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -62,6 +64,7 @@ export default function Component() {
 
   async function onSubmit(data: LoginFormValues) {
     execute(data);
+    router.push("dashboard/customer-management");
   }
 
   return (
