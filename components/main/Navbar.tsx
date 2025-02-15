@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Book, FileText, Menu, MessageSquare, PanelBottom } from "lucide-react";
+import { Book, FileText, Menu, MessageSquare } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 
 const navigation = [
   { name: "Home", href: "/" },
@@ -40,19 +41,39 @@ const navigation = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > window.innerHeight * 0.8) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
   return (
-    <nav className="sticky top-0 z-50 w-full bg-none px-3 md:px-12 py-3">
+    <nav
+      className={`fixed top-0 z-50 w-full transition-all bg-none px-3 md:px-12 py-3 ${
+        scrolled ? "bg-primary shadow-md" : "bg-none"
+      }`}
+    >
       <div className="mx-auto flex max-w-7xl items-center">
         {/* Logo - Fixed width */}
         <div className="w-[200px]">
           <Link href="/" className="text-2xl font-bold text-white">
             <Image
-              src={"/assets/logo-white.png"}
+              src={"/assets/trubank logo-main.png"}
               alt="logo"
               width={1000}
               height={1000}
-              className="h-8"
+              className="h-8 w-36"
             />
           </Link>
         </div>
@@ -68,13 +89,25 @@ export default function Navbar() {
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="ghost"
-                          className={`h-10 px-4 rounded-full text-black/50 hover:bg-neutral-100 hover:text-black/50 ${
+                          className={`h-10 gap-x-1 px-4 rounded-full text-black/50 hover:bg-neutral-100 hover:text-black/50 ${
                             pathname.startsWith(item.href)
                               ? "bg-white text-primary hover:bg-white hover:text-primary"
                               : ""
                           }`}
                         >
-                          {item.name} <PanelBottom />
+                          {item.name}{" "}
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            className="size-4"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent

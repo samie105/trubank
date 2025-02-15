@@ -1,9 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  type CarouselApi,
+} from "@/components/ui/carousel";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface Step {
   number: number;
@@ -38,17 +44,20 @@ const steps: Step[] = [
 ];
 
 export function HowItWorks() {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const stepsPerSlide = 3;
-  const totalSlides = Math.ceil(steps.length / stepsPerSlide);
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
 
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % totalSlides);
-  };
+  useEffect(() => {
+    if (!api) {
+      return;
+    }
 
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
-  };
+    setCurrent(api.selectedScrollSnap() + 1);
+
+    api.on("select", () => {
+      setCurrent(api.selectedScrollSnap() + 1);
+    });
+  }, [api]);
 
   return (
     <section className="bg-white py-24">
@@ -69,97 +78,76 @@ export function HowItWorks() {
           </p>
         </div>
 
-        <div className="relative mt-16">
-          {/* Navigation Buttons */}
-          <div className="absolute left-0 right-0 top-1/2 z-10 flex -translate-y-1/2 justify-between">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={prevSlide}
-              className="h-12 w-12 rounded-full bg-white/80 shadow-lg backdrop-blur-sm hover:bg-white"
-            >
-              <ChevronLeft className="h-6 w-6" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={nextSlide}
-              className="h-12 w-12 rounded-full bg-white/80 shadow-lg backdrop-blur-sm hover:bg-white"
-            >
-              <ChevronRight className="h-6 w-6" />
-            </Button>
-          </div>
-
-          {/* Steps Grid */}
-          <div className="relative overflow-hidden">
-            <div
-              className="flex transition-transform duration-500 ease-in-out"
-              style={{
-                transform: `translateX(-${currentSlide * 100}%)`,
-              }}
-            >
-              {Array.from({ length: totalSlides }).map((_, slideIndex) => (
-                <div
-                  key={slideIndex}
-                  className="grid w-full shrink-0 grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3"
+        <div className="mt-16 relative">
+          <Carousel
+            setApi={setApi}
+            opts={{
+              align: "start",
+              loop: true,
+            }}
+            className="w-full"
+          >
+            <CarouselContent className="-ml-2 p-2 md:-ml-4">
+              {steps.map((step) => (
+                <CarouselItem
+                  key={step.number}
+                  className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/2"
                 >
-                  {steps
-                    .slice(
-                      slideIndex * stepsPerSlide,
-                      (slideIndex + 1) * stepsPerSlide
-                    )
-                    .map((step) => (
-                      <div
-                        key={step.number}
-                        className="relative flex flex-col items-start p-6"
-                      >
-                        <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                  <Card className="bg-white text-black border-gray-100">
+                    <CardHeader>
+                      <CardTitle className="flex flex-col gap-4">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
                           <span className="text-xl font-semibold text-primary">
                             {step.number}
                           </span>
                         </div>
-                        <h3 className="mb-2 text-xl font-bold text-gray-900">
-                          {step.title}
-                        </h3>
-                        <p className="text-gray-600">{step.description}</p>
-                      </div>
-                    ))}
-                </div>
+                        <div className="text-gray-600">{step.title}</div>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-gray-600">{step.description}</p>
+                    </CardContent>
+                  </Card>
+                </CarouselItem>
               ))}
-            </div>
-          </div>
+            </CarouselContent>
+            {/* <CarouselPrevious />
+            <CarouselNext /> */}
+          </Carousel>
 
-          {/* Slide Indicators */}
-          <div className="mt-8 flex justify-center gap-2">
-            {Array.from({ length: totalSlides }).map((_, index) => (
-              <button
+          {/* Mini Navigation Arrows and Indicator */}
+          <div className="mt-4 flex items-center justify-center gap-2">
+            {steps.map((_, index) => (
+              <div
                 key={index}
-                onClick={() => setCurrentSlide(index)}
-                className={cn(
-                  "h-2 w-2 rounded-full transition-all",
-                  currentSlide === index
-                    ? "w-8 bg-primary"
-                    : "bg-gray-300 hover:bg-gray-400"
-                )}
-              >
-                <span className="sr-only">Go to slide {index + 1}</span>
-              </button>
+                className={`h-1.5 w-1.5 rounded-full ${
+                  current === index + 1 ? "bg-primary" : "bg-gray-300"
+                }`}
+              />
             ))}
           </div>
         </div>
 
         {/* CTA Section */}
-        <div className="mt-16 rounded-2xl bg-gradient-to-r from-primary to-primary p-8 text-center sm:p-12">
-          <h3 className="text-2xl font-bold text-white sm:text-3xl">
-            Ready to Power Your Financial Institution?
-          </h3>
-          <Button
-            size="lg"
-            className="mt-6 bg-white text-primary hover:bg-white/90"
-          >
-            Get Started Today
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+        <div
+          className="relative mt-16 rounded-2xl bg-primary p-8 text-center sm:p-12 bg-cover bg-center"
+          style={{
+            backgroundImage: "url(/assets/howitworksbgpattern.png)",
+          }}
+        >
+          <div className="absolute inset-0 bg-primary opacity-80 rounded-2xl"></div>
+          <div className="relative z-10">
+            <h3 className="text-2xl font-bold text-white sm:text-3xl">
+              Ready to Power Your Financial Institution?
+            </h3>
+            <Button
+              size="lg"
+              className="mt-6 bg-white text-primary hover:bg-white/90"
+            >
+              Get Started Today
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
     </section>

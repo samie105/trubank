@@ -191,7 +191,7 @@ export function Footer() {
           </div>
         </div>
       </div>
-      <div className="text-xs px-5 md:px-8 pb-4 text-gray-600 w-full">
+      <div className="text-sm px-5 md:px-16 pb-4 text-gray-600 /w-full">
         {" "}
         © 2024, Trubank is a bank with its services provided by Trubank MFB
         Limited and duly licensed by the Central Bank of Nigeria. Unauthorised

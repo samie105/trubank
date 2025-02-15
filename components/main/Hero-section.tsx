@@ -8,7 +8,7 @@ export default function HeroSection() {
       <div className="relative z-10 mx-auto md:mx-20 max-w-7xl">
         <div className="max-w-2xl space-y-8">
           <div className="space-y-4">
-            <h2 className="text-4xl font-bold leading-tight text-[#ffffff] sm:text-5xl lg:text-6xl">
+            <h2 className="text-4xl mt-20 font-bold leading-tight text-[#ffffff] sm:text-5xl lg:text-6xl">
               Powering Banking
               <br />
               <span className="text-white">From the Core.</span>
@@ -46,7 +46,7 @@ export default function HeroSection() {
 
       {/* Tech Illustration */}
       <div
-        className="absolute bottom-0 right-0 z-0 h-[600px] w-full bg-contain bg-right-bottom bg-no-repeat opacity-90 md:w-[800px]"
+        className="absolute bottom-16 md:bottom-0 right-0 z-0 h-[600px] w-full bg-contain bg-right-bottom bg-no-repeat opacity-90 md:w-[800px]"
         style={{
           backgroundImage: `url('/assets/landing_page_tech.png')`,
         }}
