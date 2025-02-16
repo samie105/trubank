@@ -46,7 +46,7 @@ export default function HeroSection() {
 
       {/* Tech Illustration */}
       <div
-        className="absolute bottom-16 md:bottom-0 right-0 z-0 h-[600px] w-full bg-contain bg-right-bottom bg-no-repeat opacity-90 md:w-[800px]"
+        className="absolute bottom-0 right-0 z-0 h-[600px] w-full bg-contain bg-right-bottom bg-no-repeat opacity-90 md:w-[800px]"
         style={{
           backgroundImage: `url('/assets/landing_page_tech.png')`,
         }}
