@@ -38,7 +38,7 @@ export default function ForgotPassword({
       email,
     },
   });
-  let toastId: string;
+  const toastId: string = "";
   const { execute, status } = useAction(forgotPasswordAction, {
     onSuccess({ data }) {
       if (data?.success) setStep(1);

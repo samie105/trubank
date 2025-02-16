@@ -36,7 +36,7 @@ const navigation = [
     ],
   },
   { name: "Careers", href: "/careers" },
-  { name: "Contact", href: "/contact" },
+  { name: "Contact", href: "/contacts" },
 ];
 
 export default function Navbar() {
