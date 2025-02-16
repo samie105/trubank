@@ -142,7 +142,7 @@ export default function AboutPage() {
             </div>
 
             {/* Image */}
-            <div className="relative aspect-square lg:aspect-auto">
+            <div className="relative aspect-square lg:aspect-auto order-first lg:order-none">
               <Image
                 src="/assets/about-us/core_values.svg" // Replace with your image path
                 alt="Core Values Illustration"
