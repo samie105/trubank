@@ -5,7 +5,7 @@ import { Button } from "../ui/button";
 export default function CTAsection() {
   return (
     <div
-      className="relative mt-16 rounded-2xl bg-primary p-8 text-center sm:p-12 bg-cover bg-center"
+      className="relative  rounded-2xl bg-primary p-8 text-center sm:p-12 bg-cover bg-center"
       style={{
         backgroundImage: "url(/assets/howitworksbgpattern.png)",
       }}

@@ -1,12 +1,15 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ArrowRight } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 interface Feature {
   title: string;
   description: string;
   imagePath: string;
   imageAlt: string;
+  linkPath?: string;
 }
 
 const features: Feature[] = [
@@ -16,6 +19,7 @@ const features: Feature[] = [
       "Empower your customers with online and mobile banking services that allow them to access their accounts and conduct transactions 24/7.",
     imagePath: "/assets/product-solution/mobile-banking.svg", // Replace with your image path
     imageAlt: "Mobile banking illustration",
+    linkPath: "/products-solutions/mobile-web-banking-app",
   },
   {
     title: "Account Management",
@@ -23,6 +27,7 @@ const features: Feature[] = [
       "Manage customer accounts with ease, including account creation, closure, and maintenance. Provide a seamless experience for account types such as savings, current, fixed deposits etc.",
     imagePath: "/assets/product-solution/accout-management.svg",
     imageAlt: "Account management illustration",
+    linkPath: "/products-solutions/account-management",
   },
   {
     title: "KYC/AML Compliance",
@@ -30,6 +35,7 @@ const features: Feature[] = [
       "Implement advanced security protocols such as multi-factor authentication and encrypted data transfer to keep your institution's and customers' information safe.",
     imagePath: "/assets/product-solution/kyc-compliance.svg",
     imageAlt: "KYC compliance illustration",
+    linkPath: "/products-solutions/kyc-compliance",
   },
   {
     title: "Customer Management",
@@ -37,6 +43,7 @@ const features: Feature[] = [
       "Store and manage customer information separately, ensuring personalized service delivery, KYC compliance, and effective data management.",
     imagePath: "/assets/product-solution/customer-management.svg", // Replace with your image path
     imageAlt: "Customer management illustration",
+    linkPath: "/products-solutions/customer-management",
   },
   {
     title: "Reporting & Analytics",
@@ -44,6 +51,7 @@ const features: Feature[] = [
       "Generate comprehensive reports and analytics in real-time, enabling financial institutions to make data-driven decisions that enhance growth and customer satisfaction.",
     imagePath: "/assets/product-solution/reporting-analytics.svg", // Replace with your image path
     imageAlt: "Reporting and analytics illustration",
+    linkPath: "/products-solutions/reporting-analytics",
   },
 ];
 
@@ -122,8 +130,11 @@ export default function SolutionsPage() {
                     <Button
                       variant="default"
                       className="bg-primary text-white hover:bg-primary/90"
+                      asChild
                     >
-                      Read More
+                      <Link href={feature.linkPath || "#"}>
+                        Read More <ArrowRight className="ml-1 size-4" />
+                      </Link>
                     </Button>
                   </div>
                 </div>
