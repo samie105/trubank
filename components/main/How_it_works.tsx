@@ -129,6 +129,7 @@ export function HowItWorks() {
         </div>
 
         {/* CTA Section */}
+        <div className="mt-5" />
         <CTAsection />
       </div>
     </section>

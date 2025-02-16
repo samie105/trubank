@@ -9,7 +9,7 @@ export default function page() {
     <div>
       <Navbar />
       <SolutionsPage />
-      <div className="px-8 bg-white py-12">
+      <div className="px-8 mt-5 bg-white py-12">
         <CTAsection />
       </div>
 
