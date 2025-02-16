@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { GlobeIcon as World, Flag } from "lucide-react";
+import { GlobeIcon as World } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -19,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { GetCountries } from "react-country-state-city";
 
 interface Job {
   id: string;
@@ -115,15 +116,31 @@ export function JobsTable() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [selectedTeam, setSelectedTeam] = React.useState("");
   const [selectedOffice, setSelectedOffice] = React.useState("");
+  const [nigeriaFlagUrl, setNigeriaFlagUrl] = React.useState("");
 
   const filteredJobs = jobs.filter((job) => {
     const matchesSearch = job.role
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
-    const matchesTeam = !selectedTeam || job.team === selectedTeam;
-    const matchesOffice = !selectedOffice || job.office === selectedOffice;
+    const matchesTeam =
+      selectedTeam === "all" || !selectedTeam || job.team === selectedTeam;
+    const matchesOffice =
+      selectedOffice === "all" ||
+      !selectedOffice ||
+      job.office === selectedOffice;
     return matchesSearch && matchesTeam && matchesOffice;
   });
+
+  React.useEffect(() => {
+    const fetchCountry = async () => {
+      const data = await GetCountries();
+      const nigeriaCountry = data.find((country) => country.name === "Nigeria");
+      if (nigeriaCountry) {
+        setNigeriaFlagUrl(nigeriaCountry.emoji);
+      }
+    };
+    fetchCountry();
+  }, []);
 
   return (
     <div className="mx-auto w-full max-w-7xl ">
@@ -224,7 +241,9 @@ export function JobsTable() {
                       {job.isRemote ? (
                         <World className="h-4 w-4 text-gray-400" />
                       ) : (
-                        <Flag className="h-4 w-4 text-gray-400" />
+                        <div className="size-7 flex items-center justify-center">
+                          {nigeriaFlagUrl}
+                        </div>
                       )}
                       {job.office}
                     </div>
