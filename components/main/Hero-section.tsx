@@ -25,7 +25,7 @@ export default function HeroSection() {
               variant="secondary"
               className="group inline-flex items-center gap-2 bg-white text-primary hover:bg-white/90"
             >
-              <a href="/learn-more">
+              <a href="/products-solution">
                 Learn More
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </a>
@@ -35,7 +35,7 @@ export default function HeroSection() {
               variant="ghost"
               className="inline-flex items-center gap-2 border-2 border-none bg-transparent text-white transition-colors hover:bg-white/10 hover:text-white"
             >
-              <a href="/request-demo">
+              <a href="/contacts">
                 <Building2 className="h-4 w-4" />
                 Request A Demo
               </a>

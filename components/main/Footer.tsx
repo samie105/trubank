@@ -3,16 +3,16 @@ import { Youtube, Twitter, Instagram, Linkedin } from "lucide-react";
 
 const navigation = {
   home: [
-    { name: "Features", href: "/features" },
-    { name: "Partners", href: "/partners" },
-    { name: "Testimonies", href: "/testimonies" },
-    { name: "How it works", href: "/how-it-works" },
+    { name: "Features", href: "#features" },
+    { name: "Partners", href: "#partners" },
+    { name: "Testimonies", href: "#testimonies" },
+    { name: "How it works", href: "#how-it-works" },
   ],
   about: [
-    { name: "Mission", href: "/about/mission" },
-    { name: "Vision", href: "/about/vision" },
-    { name: "Who We Are", href: "/about/who-we-are" },
-    { name: "Core Values", href: "/about/core-values" },
+    { name: "Mission", href: "/about-us" },
+    { name: "Vision", href: "/about-us" },
+    { name: "Who We Are", href: "/about-us" },
+    { name: "Core Values", href: "/about-us" },
   ],
   solutions: [
     { name: "Our Solutions", href: "/solutions" },
@@ -21,10 +21,10 @@ const navigation = {
     { name: "Contact", href: "/contact" },
   ],
   resources: [
-    { name: "Blog", href: "/blog" },
-    { name: "Case Study", href: "/case-study" },
-    { name: "Documentation", href: "/docs" },
-    { name: "Contact", href: "/contact" },
+    { name: "Blog", href: "/resources/blog" },
+    { name: "Case Study", href: "/resources/whitepapers" },
+    { name: "Documentation", href: "/resources/documentation" },
+    { name: "Contact", href: "/contacts" },
   ],
   others: [
     { name: "Privacy Policy", href: "/privacy-policy" },

@@ -91,7 +91,7 @@ export default function Navbar() {
                           variant="ghost"
                           className={`h-10 gap-x-1 px-4 rounded-full text-black/50 hover:bg-neutral-100 hover:text-black/50 ${
                             pathname.startsWith(item.href)
-                              ? "bg-white text-primary hover:bg-white hover:text-primary"
+                              ? "bg-primary text-white hover:bg-white hover:bg-primaryreq hover:text-white"
                               : ""
                           }`}
                         >
@@ -112,7 +112,7 @@ export default function Navbar() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
                         align="start"
-                        className="w-[240px] bg-white"
+                        className="w-[240px] bg-white border-gray-200"
                       >
                         {item.children.map((child) => (
                           <DropdownMenuItem
@@ -156,8 +156,11 @@ export default function Navbar() {
         {/* Actions - Fixed width */}
         <div className="w-[200px] flex justify-end">
           <div className="flex items-center gap-4">
-            <Button className="hidden rounded-full hover:bg-white bg-white text-primary lg:inline-flex">
-              Request Demo
+            <Button
+              className="hidden rounded-full hover:bg-white bg-white text-primary lg:inline-flex"
+              asChild
+            >
+              <Link href="/contacts">Request Demo</Link>
             </Button>
 
             {/* Mobile Navigation */}
@@ -225,8 +228,11 @@ export default function Navbar() {
                       </Button>
                     );
                   })}
-                  <Button className="mt-4 bg-primary text-white hover:bg-primary/90">
-                    Request Demo
+                  <Button
+                    className="mt-4 bg-primary text-white hover:bg-primary/90"
+                    asChild
+                  >
+                    <Link href="/contacts"></Link> Request Demo
                   </Button>
                 </div>
               </SheetContent>
