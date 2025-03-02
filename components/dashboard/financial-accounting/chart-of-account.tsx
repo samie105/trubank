@@ -454,10 +454,10 @@ export default function AccountTable() {
             onChange={(event) =>
               table.getColumn("accountName")?.setFilterValue(event.target.value)
             }
-            className="pl-8 w-40 md:w-auto"
+            className="pl-8"
           />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex md:ml-0 ml-2 items-center gap-2">
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
               <Button className="bg-primary text-wrap text-white hover:bg-primary">
