@@ -72,7 +72,7 @@ export function FeaturesSection() {
         <div className="relative grid items-center gap-12 lg:grid-cols-[1fr,1.5fr]">
           {/* Image Column - Absolute on mobile, grid column on desktop */}
           <div
-            className="absolute -top-20 md:bottom-0 left-0 z-0 h-[60%] w-full bg-contain bg-left-top opacity-10  md:bg-left-bottom bg-no-repeat md:opacity-90 lg:relative lg:h-full lg:w-full"
+            className="absolute -top-20 md:bottom-0 left-0 z-0 h-[60%] w-full bg-contain bg-left-top opacity-10  md:bg-left-bottom bg-no-repeat lg:opacity-90 lg:relative lg:h-full lg:w-full"
             style={{
               backgroundImage: `url('/assets/feature_section_tech.png')`,
             }}
@@ -102,7 +102,7 @@ export function FeaturesSection() {
 
             <div className="mt-12">
               <Link
-                href="#"
+                href="/products-solution"
                 className="inline-flex justify-center w-full items-center text-sm font-semibold text-primary hover:text-primary/80"
               >
                 Learn More

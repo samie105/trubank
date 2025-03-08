@@ -56,6 +56,12 @@ export function HowItWorks() {
     api.on("select", () => {
       setCurrent(api.selectedScrollSnap() + 1);
     });
+
+    const interval = setInterval(() => {
+      api.scrollNext();
+    }, 3000); // Change slide every 3 seconds
+
+    return () => clearInterval(interval);
   }, [api]);
 
   return (
