@@ -48,14 +48,8 @@ const productDetails = {
   },
 };
 
-export default function ProductDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function ProductDetailPage() {
   const router = useRouter();
-  const productId = params.id;
-  console.log(productId);
 
   return (
     <div className="container mx-auto py-6 px-5">

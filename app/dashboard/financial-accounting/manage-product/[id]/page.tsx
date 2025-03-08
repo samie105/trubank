@@ -1,10 +1,15 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import ProductDetailPage from "@/components/dashboard/financial-accounting/manage-product/product-details";
 import React from "react";
 
-export default function page({ params }: { params: { id: string } }) {
+export default async function page({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   return (
     <div>
-      <ProductDetailPage params={params} />
+      <ProductDetailPage />
     </div>
   );
 }
