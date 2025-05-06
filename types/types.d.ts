@@ -1,52 +1,83 @@
-export type IDType = "nin" | "bvn" | "passport" | "drivers_license";
+export type IDType = 
+  | "Driver_Licence"
+  | "International_Passport"
+  | "Voters_Card"
+  | "NationalIdentityCard"
+  | "BVN"
+  | "Nin";
+
+export type DocumentType = 
+  | "DriverLicense"
+  | "InternationalPassport"
+  | "VotersCard"
+  | "NationalIdentityCard"
+  | "BVN"
+  | "Cac"
+  | "BusinessIncorporationCertificate"
+  | "MemorandumArticlesAssociation"
+  | "BusinessLicense"
+  | "ProfilePicture"
+  | "UtilityBill"
+  | "WaterBill"
+  | "GuarantorIdentity"
+  | "EmploymentProof"
+  | "BankStatement"
+  | "LeaseAgreement";
+
+export type ProofOfAddressType = "Utility_Bill" | "Water_Bill";
+
+export type CustomerType = "Individual" | "Business" | "Admin";
+
 export type AccountType = "Savings" | "Current";
 
 export type FormData = {
-  firstName: string;
-  lastName: string;
-  dob: Date | string;
-  gender?: "Male" | "Female";
-  email: string;
-  phone: string;
-  country: string;
-  maritalStatus: string;
+  firstName?: string;
+  lastName?: string;
+  dob?: Date | string;
+  gender?: string;
+  email?: string;
+  phone?: string;
+  country?: string;
+  maritalStatus?: string;
   alternatePhone?: string;
   employmentStatus?: string;
-  tin: string;
-  state: string;
-  address: string;
+  tin?: string;
+  address?: string;
   idType?: IDType;
   idNumber?: string;
-  idDocument?: File | string | null;
-  idType2?: IDType;
-  expiryDate: Date | string;
-  issuingAuthority: string;
-  issuingAuthorityPOA: string;
-  idNumber2?: string;
-  idDocument2?: File | string | null;
+  IdFile?: File | string | null;
+  expiryDate?: Date | string;
+  issuingAuthority?: string;
+  issuingAuthorityPOA?: string;
   proofOfAddress?: File | string | null;
-  dateOfIssue: Date | string;
-  addressProofType?: string;
+  dateOfIssue?: Date | string;
+  addressProofType?: ProofOfAddressType;
   profileImage?: File | string | null;
   branch?: string;
   accountOfficer?: string;
-  desiredAccount?: AccountType;
-  employerAddress: string;
-  jobTitle: string;
-  startDate: Date | string;
-  endDate: Date | string;
-  employmentDocument: File | string | null;
-  guarantorFullName: string;
-  guarantorRelationship: string;
-  guarantorPhone: string;
-  guarantorEmail: string;
-  guarantorAddress: string;
-  guarantorId: File | string | null;
-  nextOfKinFullName: string;
-  nextOfKinPhone: string;
-  nextOfKinEmail: string;
-  nextOfKinAddress: string;
-  nextOfKinRelationship: string;
+  productId?: string;
+  productType?: string;
+  desiredAccount?: string;
+  employerAddress?: string;
+  jobTitle?: string;
+  startDate?: Date | string;
+  currentEmployerName?: string;
+  endDate?: Date | string;
+  employmentDocument?: File | string | null;
+  guarantorFullName?: string;
+  guarantorRelationship?: string;
+  guarantorPhone?: string;
+  guarantorEmail?: string;
+  guarantorAddress?: string;
+  guarantorId?: File | string | null;
+  nextOfKinFullName?: string;
+  nextOfKinPhone?: string;
+  nextOfKinEmail?: string;
+  nextOfKinAddress?: string;
+  nextOfKinRelationship?: string;
+  customerType?: CustomerType;
+  requireSmsAlert?: boolean;
+  requireEmailAlert?: boolean;
 };
 
 export type FormContextType = {
@@ -55,24 +86,28 @@ export type FormContextType = {
 };
 export type BusinessFormData = {
   businessName: string;
-  businessType: string;
-  businessAddress: string;
-  email: string;
-  phoneNumber: string;
-  branch: string;
-  desiredAccount: AccountType;
-  accountOfficer: string;
   registrationNumber: string;
   tin: string;
   natureOfBusiness: string;
+  businessType: string;
+  businessAddress: string;
+  phoneNumber: string;
+  email: string;
   website: string;
+  branch?: string;
+  branchId?: string;
+  accountOfficer?: string;
+  accountOfficerId?: string;
   businessIncorporationCertificate: File | string | null;
   memorandumArticles: File | string | null;
   businessLicense: File | string | null;
   utilityBillType: string;
   utilityBillIssuer: string;
-  issueDateOfBill: Date;
+  issueDateOfBill: Date | string;
   utilityBill: File | string | null;
+  desiredAccount?: string;
+  type?: number;
+  customerId?: string;
 };
 
 export type Country = {

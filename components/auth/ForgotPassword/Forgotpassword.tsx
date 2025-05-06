@@ -1,70 +1,84 @@
-"use client";
+"use client"
 
-import React from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { useAction } from "next-safe-action/hooks";
-import { toast } from "sonner";
-import { forgotPasswordAction } from "@/server/forgotpassword";
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
+import React, { useState } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { useAction } from "next-safe-action/hooks"
+import { toast } from "sonner"
+import { forgotPasswordAction } from "@/server/forgotpassword"
+import { ArrowLeft } from "lucide-react"
+import Link from "next/link"
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
-});
+})
 
-type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
+type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>
 
 export default function ForgotPassword({
   setStep,
 }: {
-  setStep: (step: number) => void;
+  setStep: (step: number) => void
 }) {
-  const [email] = React.useState(localStorage.getItem("email") ?? "");
+  // Use state instead of localStorage for better SSR compatibility
+  const [savedEmail, setSavedEmail] = useState("")
+
+  // Get email from localStorage on client-side only
+  React.useEffect(() => {
+    const storedEmail = localStorage.getItem("email") || ""
+    setSavedEmail(storedEmail)
+  }, [])
+
   const form = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
-      email,
+      email: savedEmail,
     },
-  });
-  const toastId: string = "";
+  })
+
+  // Update form value when savedEmail changes
+  React.useEffect(() => {
+    if (savedEmail) {
+      form.setValue("email", savedEmail)
+    }
+  }, [savedEmail, form])
+
   const { execute, status } = useAction(forgotPasswordAction, {
-    onSuccess({ data }) {
-      if (data?.success) setStep(1);
-      if (data?.error) toast.error(data.message, { id: toastId });
-      toast.dismiss(toastId);
+    onSuccess(response) {
+      if (response.data?.success) {
+        toast.success(response.data.message || "Reset instructions sent to your email")
+        setStep(1)
+      } else if (response.data?.error) {
+        toast.error(response.data.message || "Failed to send reset instructions")
+      }
     },
     onExecute() {
-      toast.loading("Please wait...", { id: toastId });
+      toast.loading("Sending reset instructions...", { id: "forgot-password" })
     },
     onError(error) {
-      if (error.error.serverError)
-        toast.error("Error connecting to servers", {
-          id: toastId,
-        });
-      if (error.error.validationErrors)
-        toast.error("Please check your details", {
-          id: toastId,
-        });
+      toast.dismiss("forgot-password")
 
-      toast.dismiss(toastId);
+      if (error.error.serverError) {
+        toast.error("Error connecting to servers")
+      } else if (error.error.validationErrors) {
+        toast.error("Please check your email address")
+      } else {
+        toast.error("Failed to send reset instructions. Please try again.")
+      }
     },
-  });
+    onSettled() {
+      toast.dismiss("forgot-password")
+    },
+  })
 
   async function onSubmit(data: ForgotPasswordFormValues) {
-    localStorage.setItem("email", data.email);
-    execute(data);
+    // Save email to localStorage for persistence
+    localStorage.setItem("email", data.email)
+    execute(data)
   }
 
   return (
@@ -82,9 +96,7 @@ export default function ForgotPassword({
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-2 text-center">
             <h1 className="text-3xl font-bold">Forgot Password</h1>
-            <p className="text-muted-foreground">
-              Enter your email to receive password reset instructions
-            </p>
+            <p className="text-muted-foreground">Enter your email to receive password reset instructions</p>
           </div>
 
           <div className="space-y-4">
@@ -111,15 +123,14 @@ export default function ForgotPassword({
             <Button
               type="submit"
               className="w-full font-semibold bg-primary text-white hover:bg-primary/90"
-              disabled={!form.formState.isValid || status === "executing"}
+              disabled={status === "executing"}
             >
-              {status === "executing"
-                ? "Sending..."
-                : "Send Reset Instructions"}
+              {status === "executing" ? "Sending..." : "Send Reset Instructions"}
             </Button>
           </div>
         </form>
       </Form>
     </>
-  );
+  )
 }
+

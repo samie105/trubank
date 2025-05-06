@@ -39,10 +39,22 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_FILE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
 
 const idTypes = [
-  { value: "nin", label: "National ID (NIN)", maxLength: 11 },
-  { value: "bvn", label: "BVN", maxLength: 11 },
-  { value: "passport", label: "Passport", maxLength: 9 },
-  { value: "drivers_license", label: "Driver's License", maxLength: 12 },
+  { value: "DriverLicense", label: "Driver's License", maxLength: 20 },
+  { value: "InternationalPassport", label: "International Passport", maxLength: 20 },
+  { value: "VotersCard", label: "Voter's Card", maxLength: 20 },
+  { value: "NationalIdentityCard", label: "National Identity Card", maxLength: 20 },
+  { value: "BVN", label: "Bank Verification Number", maxLength: 20 },
+  { value: "Cac", label: "CAC Document", maxLength: 20 },
+  { value: "BusinessIncorporationCertificate", label: "Business Incorporation Certificate", maxLength: 20 },
+  { value: "MemorandumArticlesAssociation", label: "Memorandum and Articles of Association", maxLength: 20 },
+  { value: "BusinessLicense", label: "Business License", maxLength: 20 },
+  { value: "ProfilePicture", label: "Profile Picture", maxLength: 20 },
+  { value: "UtilityBill", label: "Utility Bill", maxLength: 20 },
+  { value: "WaterBill", label: "Water Bill", maxLength: 20 },
+  { value: "GuarantorIdentity", label: "Guarantor Identity", maxLength: 20 },
+  { value: "EmploymentProof", label: "Employment Proof", maxLength: 20 },
+  { value: "BankStatement", label: "Bank Statement", maxLength: 20 },
+  { value: "LeaseAgreement", label: "Lease Agreement", maxLength: 20 }
 ] as const;
 
 const issuingAuthorities = [
@@ -55,11 +67,9 @@ const issuingAuthorities = [
 
 const formSchema = z
   .object({
-    idType: z.enum(["nin", "bvn", "passport", "drivers_license"] as const, {
-      required_error: "Please select an ID type",
-    }),
-    idNumber: z.string().min(1, "ID number is required"),
-    idDocument: z
+    idType: z.string().optional(),
+    idNumber: z.string().optional(),
+    IdFile: z
       .custom<File | string | null>()
       .refine(
         (file) => !file || file instanceof File || typeof file === "string",
@@ -77,31 +87,17 @@ const formSchema = z
           ACCEPTED_FILE_TYPES.includes(file.type),
         "Only .jpg, .jpeg, and .png files are accepted"
       )
-      .nullable(),
+      .nullable()
+      .optional(),
     expiryDate: z.date({
-      required_error: "Expiry date is required",
       invalid_type_error: "That's not a valid date!",
-    }),
-    issuingAuthority: z.enum(issuingAuthorities, {
-      required_error: "Please select an issuing authority",
-    }),
-  })
-  .refine(
-    (data) => {
-      if (data.idType !== "bvn" && !data.idDocument) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: "ID document is required for the selected ID type",
-      path: ["idDocument"],
-    }
-  );
+    }).optional(),
+    issuingAuthority: z.string().optional(),
+  });
 
 type IDFormData = Pick<
   FormData,
-  "idType" | "idNumber" | "idDocument" | "expiryDate" | "issuingAuthority"
+  "idType" | "idNumber" | "IdFile" | "expiryDate" | "issuingAuthority"
 >;
 
 export default function IDDetailsForm() {
@@ -115,7 +111,7 @@ export default function IDDetailsForm() {
     defaultValues: {
       idType: formData.idType || undefined,
       idNumber: formData.idNumber || "",
-      idDocument: formData.idDocument || null,
+      IdFile: formData.IdFile || null,
       expiryDate: formData.expiryDate || undefined,
       issuingAuthority: formData.issuingAuthority || undefined,
     },
@@ -137,26 +133,26 @@ export default function IDDetailsForm() {
     if (formData.issuingAuthority) {
       form.setValue("issuingAuthority", formData.issuingAuthority);
     }
-    if (formData.idDocument instanceof File) {
-      setPreviewUrl(URL.createObjectURL(formData.idDocument));
-      form.setValue("idDocument", formData.idDocument);
-    } else if (typeof formData.idDocument === "string" && formData.idDocument) {
-      setPreviewUrl(formData.idDocument);
-      form.setValue("idDocument", formData.idDocument);
+    if (formData.IdFile instanceof File) {
+      setPreviewUrl(URL.createObjectURL(formData.IdFile));
+      form.setValue("IdFile", formData.IdFile);
+    } else if (typeof formData.IdFile === "string" && formData.IdFile) {
+      setPreviewUrl(formData.IdFile);
+      form.setValue("IdFile", formData.IdFile);
     }
   }, [formData, form]);
 
   const onSubmit = (data: IDFormData) => {
     const updatedData = { ...formData, ...data };
-    if (data.idDocument instanceof File) {
+    if (data.IdFile instanceof File) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        updatedData.idDocument = reader.result as string;
+        updatedData.IdFile = reader.result as string;
         updateFormData(updatedData);
         localStorage.setItem("customerForm", JSON.stringify(updatedData));
         setStep(3);
       };
-      reader.readAsDataURL(data.idDocument);
+      reader.readAsDataURL(data.IdFile);
     } else {
       updateFormData(updatedData);
       localStorage.setItem("customerForm", JSON.stringify(updatedData));
@@ -196,12 +192,12 @@ export default function IDDetailsForm() {
   };
 
   const handleFile = (file: File) => {
-    form.setValue("idDocument", file);
+    form.setValue("IdFile", file);
     setPreviewUrl(URL.createObjectURL(file));
   };
 
   const removeFile = () => {
-    form.setValue("idDocument", null);
+    form.setValue("IdFile", null);
     setPreviewUrl(null);
   };
 
@@ -252,7 +248,7 @@ export default function IDDetailsForm() {
                                 onSelect={() => {
                                   form.setValue("idType", type.value as IDType);
                                   form.setValue("idNumber", "");
-                                  form.setValue("idDocument", null);
+                                  form.setValue("IdFile", null);
                                   setPreviewUrl(null);
                                 }}
                               >
@@ -387,13 +383,13 @@ export default function IDDetailsForm() {
               )}
             />
 
-            {selectedIdType && selectedIdType !== "bvn" && (
+            {selectedIdType && selectedIdType !== "BVN" && (
               <FormField
                 control={form.control}
-                name="idDocument"
+                name="IdFile"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Upload ID Document</FormLabel>
+                    <FormLabel>Upload ID</FormLabel>
                     <FormControl>
                       <div
                         className={cn(
@@ -426,10 +422,10 @@ export default function IDDetailsForm() {
                               className="w-20 h-20 object-cover rounded"
                             />
                             <div className="flex-1 ml-4 text-left">
-                              <p className="font-medium capitalize">
+                              <p className="font-medium">
                                 {field.value instanceof File
                                   ? field.value.name
-                                  : `${form.getValues("idType")} ID Upload`}
+                                  : "ID Document"}
                               </p>
                               <p className="text-sm text-muted-foreground">
                                 {field.value instanceof File

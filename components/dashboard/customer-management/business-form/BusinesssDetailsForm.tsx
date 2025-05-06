@@ -12,13 +12,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useBusinessForm } from "@/contexts/BusinessFormContext";
 import { BusinessFormData } from "@/types/types";
 import { parseAsInteger, useQueryState } from "nuqs";
@@ -36,214 +29,199 @@ const formSchema = z.object({
   phoneNumber: z.string().min(1, "Phone number is required"),
   email: z.string().email("Invalid email address"),
   website: z.string().optional(),
+  customerId: z.string().optional(),
+  branchId: z.string().optional(),
+  accountOfficerId: z.string().optional(),
+  desiredAccount: z.string().optional(),
+  type: z.number().optional(),
 });
 
-export default function BusinessDetailForm() {
+export default function BusinesssDetailsForm() {
   const { formData, updateFormData } = useBusinessForm();
-
-  const router = useRouter();
-  const handleBack = async () => {
-    await router.push("/dashboard/customer-management");
-  };
   const [, setStep] = useQueryState("step", parseAsInteger);
+  const router = useRouter();
 
   const form = useForm<BusinessFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      businessName: formData.businessName,
-      registrationNumber: formData.registrationNumber,
-      tin: formData.tin,
-      natureOfBusiness: formData.natureOfBusiness,
-      businessType: formData.businessType,
-      businessAddress: formData.businessAddress,
-      phoneNumber: formData.phoneNumber,
-      email: formData.email,
-      website: formData.website,
+      businessName: formData.businessName || "",
+      registrationNumber: formData.registrationNumber || "",
+      tin: formData.tin || "",
+      natureOfBusiness: formData.natureOfBusiness || "",
+      businessType: formData.businessType || "",
+      businessAddress: formData.businessAddress || "",
+      phoneNumber: formData.phoneNumber || "",
+      email: formData.email || "",
+      website: formData.website || "",
+      customerId: formData.customerId,
+      branchId: formData.branchId,
+      accountOfficerId: formData.accountOfficerId,
+      desiredAccount: formData.desiredAccount,
+      type: formData.type || 2,
     },
   });
 
   const onSubmit = (data: BusinessFormData) => {
-    const updatedData = { ...formData, ...data };
-    updateFormData(updatedData);
-    localStorage.setItem("customerForm", JSON.stringify(updatedData));
+    const apiReadyData = {
+      ...data,
+    };
+    
+    console.log("Form submitted:", data);
+    updateFormData(data);
     setStep(2);
+  };
+
+  const cancel = () => {
+    router.push("/dashboard/customer-management");
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <h2 className="text-xl font-semibold">Business Profile Details</h2>
-
-        <FormField
-          control={form.control}
-          name="businessName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Business Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter Business Name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="registrationNumber"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Business Registration Number</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter Business Reg. Number" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="tin"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Tax Identification Number (TIN)</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter TIN" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="natureOfBusiness"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nature of Business/Industry</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-8 py-2 pb-10"
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="businessName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Business Name</FormLabel>
                   <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Industry" />
-                    </SelectTrigger>
+                    <Input {...field} />
                   </FormControl>
-                  <SelectContent>
-                    <SelectItem value="retail">Retail</SelectItem>
-                    <SelectItem value="manufacturing">Manufacturing</SelectItem>
-                    <SelectItem value="services">Services</SelectItem>
-                    <SelectItem value="technology">Technology</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="businessType"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Business Type</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="businessType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Business Type</FormLabel>
                   <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Business Type" />
-                    </SelectTrigger>
+                    <Input {...field} />
                   </FormControl>
-                  <SelectContent>
-                    <SelectItem value="sole_proprietorship">
-                      Sole Proprietorship
-                    </SelectItem>
-                    <SelectItem value="partnership">Partnership</SelectItem>
-                    <SelectItem value="corporation">Corporation</SelectItem>
-                    <SelectItem value="llc">LLC</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="registrationNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Registration Number (RC Number)</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="tin"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tax Identification Number (TIN)</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="natureOfBusiness"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nature of Business</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="website"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Website (Optional)</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid grid-cols-1 gap-4">
+            <FormField
+              control={form.control}
+              name="businessAddress"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Business Address</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email Address</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="phoneNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone Number</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
 
-        <FormField
-          control={form.control}
-          name="businessAddress"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Business Address</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter Business Address" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <h3 className="text-lg font-medium">Business Contact Details</h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="phoneNumber"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Phone Number</FormLabel>
-                <FormControl>
-                  <Input
-                    type="tel"
-                    placeholder="Enter Phone Number"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email Address</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter Email Address" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <FormField
-          control={form.control}
-          name="website"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Business Website (optional)</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter Website Address" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="flex justify-between mt-4">
-          <Button type="button" variant="outline" onClick={() => handleBack()}>
-            Back
+        <div className="flex space-x-4 pt-4">
+          <Button
+            type="button"
+            onClick={cancel}
+            variant="outline"
+            className="flex-1"
+          >
+            Cancel
           </Button>
-          <Button type="submit" className="text-white">
-            Save & Next
+          <Button type="submit" className="flex-1">
+            Continue
           </Button>
         </div>
       </form>

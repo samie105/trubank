@@ -25,11 +25,11 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_FILE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
 
 const formSchema = z.object({
-  guarantorFullName: z.string().min(1, "Guarantor full name is required"),
-  guarantorRelationship: z.string().min(1, "Relationship is required"),
-  guarantorPhone: z.string().min(1, "Phone number is required"),
-  guarantorEmail: z.string().email("Invalid email address"),
-  guarantorAddress: z.string().min(1, "Address is required"),
+  guarantorFullName: z.string().optional(),
+  guarantorRelationship: z.string().optional(),
+  guarantorPhone: z.string().optional(),
+  guarantorEmail: z.string().optional(),
+  guarantorAddress: z.string().optional(),
   guarantorId: z
     .custom<File | string | null>()
     .refine(
@@ -47,7 +47,8 @@ const formSchema = z.object({
         ACCEPTED_FILE_TYPES.includes(file.type),
       "Only .jpg, .jpeg, and .png files are accepted"
     )
-    .nullable(),
+    .nullable()
+    .optional(),
 });
 
 type GuarantorFormData = Pick<

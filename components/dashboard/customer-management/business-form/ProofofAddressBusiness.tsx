@@ -42,6 +42,7 @@ const utilityBillTypes = [
   "Gas Bill",
   "Internet Bill",
   "Phone Bill",
+  "Utility_Bill",
 ] as const;
 
 const utilityBillIssuers = [
@@ -83,7 +84,7 @@ const formSchema = z.object({
         ACCEPTED_FILE_TYPES.includes(file.type),
       "Only .jpg, .jpeg, and .png files are accepted"
     )
-    .refine((file) => file !== null, "Utility bill is required"),
+    .refine((file) => file !== null, "Utility bill is required").nullable(),
 });
 
 type ProofOfBusinessAddressFormData = {
@@ -93,7 +94,7 @@ type ProofOfBusinessAddressFormData = {
   utilityBill: File | string | null;
 };
 
-export default function ProofofAddressBusiness() {
+export default function ProofofAddressBusiness({isEditMode}:{isEditMode:boolean}) {
   const { formData, updateFormData } = useBusinessForm();
   const [dragActive, setDragActive] = useState(false);
   const [, setStep] = useQueryState("step", parseAsInteger);
@@ -429,7 +430,7 @@ export default function ProofofAddressBusiness() {
           </div>
         </div>
         <div className="flex justify-between">
-          <Button type="button" variant="outline" onClick={() => setStep(3)}>
+          <Button type="button" variant="outline" onClick={() => setStep(2)}>
             Previous
           </Button>
           <Button
@@ -437,7 +438,7 @@ export default function ProofofAddressBusiness() {
             className="bg-primary hover:bg-primary text-white"
             disabled={form.formState.isSubmitting}
           >
-            Create Customer
+           {!isEditMode? "Edit Customer":"Create Customer"}
           </Button>
         </div>
       </form>

@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useFormContext } from "@/contexts/FormContext";
-import { FormData } from "@/types/types";
+import { FormData, ProofOfAddressType } from "@/types/types";
 import Image from "next/image";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -43,10 +43,18 @@ const ACCEPTED_FILE_TYPES = [
 ];
 
 const addressProofTypes = [
-  "Utility Bill",
-  "Bank Statement",
-  "Lease Agreement",
+  "Utility_Bill",
+  "Water_Bill",
 ] as const;
+
+// Function to convert API values to user-friendly display values
+const getProofDisplayName = (type: string): string => {
+  const displayMap: Record<string, string> = {
+    "Utility_Bill": "Utility Bill",
+    "Water_Bill": "Water Bill",
+  };
+  return displayMap[type] || type;
+};
 
 const issuingAuthorities = [
   "Electricity Company",
@@ -75,16 +83,11 @@ const formSchema = z.object({
         ACCEPTED_FILE_TYPES.includes(file.type),
       "Only .jpg, .jpeg, .png, and .pdf files are accepted"
     )
-    .refine((file) => file !== null, "Proof of address document is required"),
-  addressProofType: z.enum(addressProofTypes, {
-    required_error: "Please select type of address proof",
-  }),
-  issuingAuthorityPOA: z.enum(issuingAuthorities, {
-    required_error: "Please select issuing authority",
-  }),
-  dateOfIssue: z.date({
-    required_error: "Date of issue is required",
-  }),
+    .nullable()
+    .optional(),
+  addressProofType: z.string().optional(),
+  issuingAuthorityPOA: z.string().optional(),
+  dateOfIssue: z.date().optional(),
 });
 
 type ProofOfAddressFormData = Pick<
@@ -104,10 +107,11 @@ export default function ProofOfAddress() {
       proofOfAddress: formData.proofOfAddress || null,
       addressProofType: formData.addressProofType || undefined,
       issuingAuthorityPOA: formData.issuingAuthorityPOA || undefined,
-      dateOfIssue:
-        formData.dateOfIssue instanceof Date
-          ? formData.dateOfIssue
-          : new Date(formData.dateOfIssue),
+      dateOfIssue: formData.dateOfIssue instanceof Date 
+        ? formData.dateOfIssue 
+        : formData.dateOfIssue 
+          ? new Date(formData.dateOfIssue) 
+          : undefined,
     },
     mode: "onChange",
   });
@@ -213,7 +217,7 @@ export default function ProofOfAddress() {
                             !field.value && "text-muted-foreground"
                           )}
                         >
-                          {field.value || "Select proof type"}
+                          {field.value ? getProofDisplayName(field.value) : "Select proof type"}
                           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
@@ -229,7 +233,7 @@ export default function ProofOfAddress() {
                                 key={type}
                                 value={type}
                                 onSelect={() => {
-                                  form.setValue("addressProofType", type);
+                                  form.setValue("addressProofType", type as ProofOfAddressType);
                                 }}
                               >
                                 <Check
@@ -240,7 +244,7 @@ export default function ProofOfAddress() {
                                       : "opacity-0"
                                   )}
                                 />
-                                {type}
+                                {getProofDisplayName(type)}
                               </CommandItem>
                             ))}
                           </CommandGroup>

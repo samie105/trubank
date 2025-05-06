@@ -51,7 +51,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
                 role="combobox"
                 className="w-[80px] justify-between"
               >
-                {value.split(" ")[0] || "+234"}
+                {value.split(" ")[0] ? value.split(" ")[0] : "+234"}
                 <ChevronDown className="ml-1 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
@@ -94,7 +94,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
             placeholder="Phone number"
             required
             type="tel"
-            value={value.split(" ")[1] || ""}
+            value={value? value.split(" ")[1] : ""}
             onChange={(e) => {
               const numericValue = e.target.value.replace(/\D/g, "");
               onChange(`${value.split(" ")[0]} ${numericValue}`);

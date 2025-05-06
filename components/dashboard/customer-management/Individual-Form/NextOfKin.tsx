@@ -21,15 +21,11 @@ import { useFormContext } from "@/contexts/FormContext";
 import { FormData } from "@/types/types";
 
 const formSchema = z.object({
-  nextOfKinFullName: z.string().min(1, "Full name is required"),
-  nextOfKinPhone: z.string().min(1, "Phone number is required"),
-  nextOfKinEmail: z
-    .string()
-    .email("Invalid email address")
-    .optional()
-    .or(z.literal("")),
-  nextOfKinAddress: z.string().min(1, "Address is required"),
-  nextOfKinRelationship: z.string().min(1, "Relationship is required"),
+  nextOfKinFullName: z.string().optional(),
+  nextOfKinPhone: z.string().optional(),
+  nextOfKinEmail: z.string().optional(),
+  nextOfKinAddress: z.string().optional(),
+  nextOfKinRelationship: z.string().optional(),
 });
 
 type NextOfKinFormData = Pick<

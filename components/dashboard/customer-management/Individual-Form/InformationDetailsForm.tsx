@@ -7,7 +7,7 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DateTimePicker } from "@/components/ui/date-picker";
-import { GetCountries, GetState } from "react-country-state-city";
+import { GetCountries } from "react-country-state-city";
 import { parseAsInteger, useQueryState } from "nuqs";
 import { Loader2, Check, ChevronDown } from "lucide-react";
 import {
@@ -33,8 +33,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useFormContext } from "@/contexts/FormContext";
-import { FormData, Country, State } from "@/types/types";
-import { PhoneInput } from "./PhoneInput";
+import { FormData, Country } from "@/types/types";
 import {
   Select,
   SelectContent,
@@ -48,21 +47,15 @@ const formSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   dob: z.date({ required_error: "Date of birth is required" }),
-  gender: z.enum(["Male", "Female"], { required_error: "Gender is required" }),
+  gender: z.string().min(1, "Gender is required"),
   email: z.string().email("Invalid email address"),
   phone: z.string().min(1, "Phone number is required"),
   country: z.string().min(1, "Country is required"),
-  state: z.string().min(1, "State is required"),
   address: z.string().min(1, "Address is required"),
-  maritalStatus: z.enum(["Married", "Single"], {
-    required_error: "Marital status is required",
-  }),
+  maritalStatus: z.string().min(1, "Marital status is required"),
   alternatePhone: z.string().min(1, "Alternate phone number is required"),
-  employmentStatus: z.enum(
-    ["Employed", "Self-employed", "Unemployed", "Student"],
-    { required_error: "Employment status is required" }
-  ),
-  tin: z.string().min(1, "Tax Identification Number is required").optional(),
+  employmentStatus: z.string().optional(),
+  tin: z.string().optional(),
 });
 
 export default function InformationDetailsForm() {
@@ -72,27 +65,27 @@ export default function InformationDetailsForm() {
     mode: "onChange",
     defaultValues: {
       ...formData,
-      dob: formData.dob instanceof Date ? formData.dob : new Date(formData.dob),
+      dob: formData.dob instanceof Date 
+        ? formData.dob 
+        : formData.dob 
+          ? new Date(formData.dob) 
+          : undefined,
     },
   });
 
-  const [countryId, setCountryId] = useState<number | null>(null);
-  const [, setStateId] = useState<number | null>(null);
   const [countriesList, setCountriesList] = useState<Country[]>([]);
-  const [stateList, setStateList] = useState<State[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const [, setStep] = useQueryState("step", parseAsInteger);
 
   const [openCountry, setOpenCountry] = useState(false);
-  const [openState, setOpenState] = useState(false);
   const router = useRouter();
   const memoizedCountriesList = useMemo(() => countriesList, [countriesList]);
-  const memoizedStateList = useMemo(() => stateList, [stateList]);
 
   const handleBack = async () => {
     await router.push("/dashboard/customer-management");
   };
+
   useEffect(() => {
     const fetchCountries = async () => {
       setIsLoading(true);
@@ -101,22 +94,10 @@ export default function InformationDetailsForm() {
         if (cachedCountries) {
           const parsedCountries = JSON.parse(cachedCountries);
           setCountriesList(parsedCountries);
-          const nigeriaCountry = parsedCountries.find(
-            (country: Country) => country.name === "Nigeria"
-          );
-          if (nigeriaCountry) {
-            setCountryId(nigeriaCountry.id);
-          }
         } else {
           const data = await GetCountries();
           setCountriesList(data);
           localStorage.setItem("countriesList", JSON.stringify(data));
-          const nigeriaCountry = data.find(
-            (country) => country.name === "Nigeria"
-          );
-          if (nigeriaCountry) {
-            setCountryId(nigeriaCountry.id);
-          }
         }
       } catch (error) {
         console.error("Failed to fetch countries:", error);
@@ -126,48 +107,7 @@ export default function InformationDetailsForm() {
     };
 
     fetchCountries();
-
-    const savedData = localStorage.getItem("customerForm");
-    if (savedData) {
-      const parsedData = JSON.parse(savedData);
-      Object.keys(parsedData).forEach((key) => {
-        if (key === "dob") {
-          form.setValue("dob", new Date(parsedData[key]));
-        } else {
-          form.setValue(key as keyof FormData, parsedData[key]);
-        }
-      });
-      form.trigger();
-    }
-  }, [form]);
-
-  useEffect(() => {
-    if (countryId !== null) {
-      const fetchStates = async () => {
-        setIsLoading(true);
-        try {
-          const cachedStates = localStorage.getItem(`stateList_${countryId}`);
-          if (cachedStates) {
-            const parsedStates = JSON.parse(cachedStates);
-            setStateList(parsedStates);
-          } else {
-            const data = await GetState(countryId);
-            setStateList(data);
-            localStorage.setItem(
-              `stateList_${countryId}`,
-              JSON.stringify(data)
-            );
-          }
-        } catch (error) {
-          console.error("Failed to fetch states:", error);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
-      fetchStates();
-    }
-  }, [countryId]);
+  }, []);
 
   const onSubmit = (data: FormData) => {
     const updatedData = { ...formData, ...data };
@@ -261,10 +201,7 @@ export default function InformationDetailsForm() {
                               value={gender}
                               key={gender}
                               onSelect={() => {
-                                form.setValue(
-                                  "gender",
-                                  gender as "Male" | "Female"
-                                );
+                                form.setValue("gender", gender);
                               }}
                             >
                               <Check
@@ -278,6 +215,21 @@ export default function InformationDetailsForm() {
                               {gender}
                             </CommandItem>
                           ))}
+                          {/* Allow other values that don't match predefined options */}
+                          {field.value && 
+                            !["Male", "Female"].includes(field.value) && (
+                              <CommandItem
+                                value={field.value}
+                                key={field.value}
+                                onSelect={() => {
+                                  form.setValue("gender", field.value);
+                                }}
+                              >
+                                <Check className="mr-2 h-4 w-4 opacity-100" />
+                                {field.value}
+                              </CommandItem>
+                            )
+                          }
                         </CommandGroup>
                       </CommandList>
                     </Command>
@@ -304,11 +256,17 @@ export default function InformationDetailsForm() {
             control={form.control}
             name="phone"
             render={({ field }) => (
-              <PhoneInput
-                value={field.value}
-                onChange={(value) => form.setValue("phone", value)}
-                countriesList={memoizedCountriesList}
-              />
+              <FormItem>
+              <FormLabel>Phone Number</FormLabel>
+              <FormControl>
+                <Input
+                  type="tel"
+                  placeholder="Enter Phone Number"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
             )}
           />
           <FormField
@@ -365,9 +323,6 @@ export default function InformationDetailsForm() {
                               key={country.id}
                               onSelect={() => {
                                 form.setValue("country", country.name);
-                                setCountryId(country.id);
-                                form.setValue("state", "");
-                                setStateId(null);
                                 setOpenCountry(false);
                               }}
                             >
@@ -380,76 +335,6 @@ export default function InformationDetailsForm() {
                                 )}
                               />
                               {country.emoji || ""} {country.name}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="state"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>State</FormLabel>
-                <Popover open={openState} onOpenChange={setOpenState}>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={openState}
-                        className={cn(
-                          "w-full justify-between disabled:cursor-not-allowed",
-                          !field.value && "text-muted-foreground"
-                        )}
-                        disabled={!countryId || isLoading}
-                      >
-                        {isLoading ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Please wait
-                          </>
-                        ) : field.value ? (
-                          memoizedStateList.find(
-                            (state) => state.name === field.value
-                          )?.name
-                        ) : (
-                          "Select state"
-                        )}
-                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-full p-0">
-                    <Command>
-                      <CommandInput placeholder="Search state..." />
-                      <CommandList>
-                        <CommandEmpty>No state found.</CommandEmpty>
-                        <CommandGroup>
-                          {memoizedStateList.map((state) => (
-                            <CommandItem
-                              key={state.id}
-                              onSelect={() => {
-                                form.setValue("state", state.name);
-                                setStateId(state.id);
-                                setOpenState(false);
-                              }}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  state.name === field.value
-                                    ? "opacity-100"
-                                    : "opacity-0"
-                                )}
-                              />
-                              {state.name}
                             </CommandItem>
                           ))}
                         </CommandGroup>
@@ -481,7 +366,7 @@ export default function InformationDetailsForm() {
               <FormItem>
                 <FormLabel>Marital Status</FormLabel>
                 <Select
-                  onValueChange={field.onChange}
+                  onValueChange={(value) => field.onChange(value)}
                   defaultValue={field.value}
                 >
                   <FormControl>
@@ -490,8 +375,16 @@ export default function InformationDetailsForm() {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="Married">Married</SelectItem>
-                    <SelectItem value="Single">Single</SelectItem>
+                    <SelectItem value="married">Married</SelectItem>
+                    <SelectItem value="single">Single</SelectItem>
+                    <SelectItem value="divorced">Divorced</SelectItem>
+                    <SelectItem value="widowed">Widowed</SelectItem>
+                    {/* Allow custom values by keeping current value in dropdown if it doesn't match options */}
+                    {field.value && 
+                      !["married", "single", "divorced", "widowed"].includes(field.value.toLowerCase()) && (
+                        <SelectItem value={field.value}>{field.value}</SelectItem>
+                      )
+                    }
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -524,7 +417,7 @@ export default function InformationDetailsForm() {
               <FormItem>
                 <FormLabel>Occupation/Employment Status</FormLabel>
                 <Select
-                  onValueChange={field.onChange}
+                  onValueChange={(value) => field.onChange(value)}
                   defaultValue={field.value}
                 >
                   <FormControl>
@@ -537,6 +430,12 @@ export default function InformationDetailsForm() {
                     <SelectItem value="Self-employed">Self-employed</SelectItem>
                     <SelectItem value="Unemployed">Unemployed</SelectItem>
                     <SelectItem value="Student">Student</SelectItem>
+                    {/* Allow custom values by keeping current value in dropdown if it doesn't match options */}
+                    {field.value && 
+                      !["Employed", "Self-employed", "Unemployed", "Student"].includes(field.value) && (
+                        <SelectItem value={field.value}>{field.value}</SelectItem>
+                      )
+                    }
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -565,7 +464,7 @@ export default function InformationDetailsForm() {
           <Button
             type="submit"
             className="text-white"
-            disabled={isLoading || !form.formState.isValid}
+            disabled={isLoading}
           >
             {isLoading ? (
               <>

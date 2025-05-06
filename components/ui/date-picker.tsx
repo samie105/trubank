@@ -780,19 +780,15 @@ const DateTimePicker = React.forwardRef<
             ref={buttonRef}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {value ? (
-              format(
-                value,
-                hourCycle === 24
-                  ? initHourFormat.hour24
-                  : initHourFormat.hour12,
-                {
-                  locale: loc,
-                }
-              )
-            ) : (
-              <span>{placeholder}</span>
-            )}
+            {
+  value && !isNaN(value.getTime()) ? (
+    format(value, hourCycle === 24 ? initHourFormat.hour24 : initHourFormat.hour12, {
+      locale: loc,
+    })
+  ) : (
+    <span>{placeholder}</span>
+  )
+}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0">
