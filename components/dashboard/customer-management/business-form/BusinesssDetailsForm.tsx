@@ -62,9 +62,7 @@ export default function BusinesssDetailsForm() {
   });
 
   const onSubmit = (data: BusinessFormData) => {
-    const apiReadyData = {
-      ...data,
-    };
+ 
     
     console.log("Form submitted:", data);
     updateFormData(data);
