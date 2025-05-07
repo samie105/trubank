@@ -1104,6 +1104,7 @@ export default function CustomerTable() {
             </div>
           </div>
         </Card>
+        
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
