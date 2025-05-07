@@ -779,11 +779,6 @@ export default function CustomerTable() {
     }, 50)
   }
 
-  // Handle export customers
-  const handleExportCustomers = () => {
-    exportCustomers({ customerType: activeTab })
-  }
-
   const handlePageChange = (newPageNumber: number) => {
     setPagination((prev) => ({
       ...prev,
@@ -921,7 +916,19 @@ export default function CustomerTable() {
           <Button
             variant="gooeyLeft"
             className="bg-transparent border text-foreground"
-            onClick={handleExportCustomers}
+            onClick={() => exportCustomers({ 
+              customerType: activeTab,
+              format: "csv",
+              pageSize: pagination.pageSize,
+              pageNumber: pagination.pageNumber,
+              searchParams: {
+                searchTerm,
+                ...(filterSettings.dateFrom && { dateFrom: filterSettings.dateFrom.toISOString() }),
+                ...(filterSettings.dateTo && { dateTo: filterSettings.dateTo.toISOString() }),
+                ...(filterSettings.tierLevels.length > 0 && { tierLevels: filterSettings.tierLevels.join(",") }),
+                ...(filterSettings.kycStatuses.length > 0 && { kycStatuses: filterSettings.kycStatuses.join(",") })
+              }
+            })}
             disabled={exportStatus === "executing"}
           >
             {exportStatus === "executing" ? (
@@ -932,7 +939,37 @@ export default function CustomerTable() {
             ) : (
               <>
                 <Download className="w-4 h-4 md:mr-2" />
-                <span className="md:block hidden">Export</span>
+                <span className="md:block hidden">Export CSV</span>
+              </>
+            )}
+          </Button>
+          <Button
+            variant="gooeyLeft"
+            className="bg-transparent border text-foreground"
+            onClick={() => exportCustomers({ 
+              customerType: activeTab,
+              format: "pdf",
+              pageSize: pagination.pageSize,
+              pageNumber: pagination.pageNumber,
+              searchParams: {
+                searchTerm,
+                ...(filterSettings.dateFrom && { dateFrom: filterSettings.dateFrom.toISOString() }),
+                ...(filterSettings.dateTo && { dateTo: filterSettings.dateTo.toISOString() }),
+                ...(filterSettings.tierLevels.length > 0 && { tierLevels: filterSettings.tierLevels.join(",") }),
+                ...(filterSettings.kycStatuses.length > 0 && { kycStatuses: filterSettings.kycStatuses.join(",") })
+              }
+            })}
+            disabled={exportStatus === "executing"}
+          >
+            {exportStatus === "executing" ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin md:mr-2" />
+                <span className="md:block hidden">Exporting...</span>
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4 md:mr-2" />
+                <span className="md:block hidden">Export PDF</span>
               </>
             )}
           </Button>

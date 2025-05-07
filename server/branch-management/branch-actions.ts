@@ -2,6 +2,7 @@
 
 import { actionClient } from "@/lib/safe-action"
 import { z } from "zod"
+import { cookies } from "next/headers"
 
 // Define the schema for branch data
 const branchSchema = z.object({
@@ -25,22 +26,49 @@ let branches: Branch[] = [
 // Create branch action
 export const createBranchAction = actionClient.schema(branchSchema).action(async ({ parsedInput }) => {
   try {
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    const cookieStore = await cookies()
+    const accessToken = cookieStore.get("accessToken")?.value
 
-    // Generate a unique ID for the new branch
-    const newBranch = {
-      ...parsedInput,
-      id: crypto.randomUUID()
+    if (!accessToken) {
+      return {
+        success: false,
+        error: "Authentication required. Please log in again.",
+        statusCode: 401,
+      }
     }
 
-    // Add the new branch to our in-memory storage
-    branches.push(newBranch)
+    const apiUrl = process.env.API_URL || "https://trubank-gateway-fdfjczfafqehhbea.uksouth-01.azurewebsites.net"
+    const response = await fetch(`${apiUrl}/accountmanagement/create-branches`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(parsedInput)
+    })
 
-    return {
-      success: true,
-      message: "Branch created successfully",
-      branch: newBranch,
+    if (response.status === 401) {
+      return {
+        success: false,
+        error: "Your session has expired. Please log in again.",
+        statusCode: 401,
+      }
+    }
+
+    const data = await response.json()
+
+    if (data.isSuccess) {
+      return {
+        success: true,
+        message: "Branch created successfully",
+        branch: data.result,
+      }
+    } else {
+      return {
+        success: false,
+        error: data.error || data.message || "Failed to create branch",
+        statusCode: data.statCode || response.status,
+      }
     }
   } catch (error) {
     console.error("Error creating branch:", error)
@@ -131,12 +159,46 @@ export const deleteBranchAction = actionClient.schema(z.object({ id: z.string() 
 // Get all branches action
 export const getBranchesAction = actionClient.action(async () => {
   try {
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 300))
+    const cookieStore = await cookies()
+    const accessToken = cookieStore.get("accessToken")?.value
 
-    return {
-      success: true,
-      branches,
+    if (!accessToken) {
+      return {
+        success: false,
+        error: "Authentication required. Please log in again.",
+        statusCode: 401,
+      }
+    }
+
+    const apiUrl = process.env.API_URL || "https://trubank-gateway-fdfjczfafqehhbea.uksouth-01.azurewebsites.net"
+    const response = await fetch(`${apiUrl}/accountmanagement/Get-branches`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+      },
+    })
+
+    if (response.status === 401) {
+      return {
+        success: false,
+        error: "Your session has expired. Please log in again.",
+        statusCode: 401,
+      }
+    }
+
+    const data = await response.json()
+
+    if (data.isSuccess) {
+      return {
+        success: true,
+        branches: data.result,
+      }
+    } else {
+      return {
+        success: false,
+        error: data.error || data.message || "Failed to fetch branches",
+        statusCode: data.statCode || response.status,
+      }
     }
   } catch (error) {
     console.error("Error fetching branches:", error)
