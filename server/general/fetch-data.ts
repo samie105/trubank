@@ -22,19 +22,29 @@ export interface AccountType {
   name: string
 }
 
+// Define interfaces for product details
+interface ProductInterest {
+  type?: string;
+  rate?: number;
+}
+
+interface ProductFee {
+  type?: string;
+  amount?: number;
+}
+
+interface OverDraft {
+  limit?: number;
+}
+
 // Add this interface after the AccountType interface
 export interface ProductType {
   id: string
   name: string
-  accountType: string
-  interestType: string
-  interestRate: string
-  feeType: string
-  feeAmount: string
-  overdraftLimit: string
-  status: string
-  dateCreated: string
-  lastModified: string
+  accountTypeId: string
+  productInterest: ProductInterest | null
+  productFee: ProductFee | null
+  overDraft: OverDraft | null
 }
 
 // Add interfaces for customer account creation
@@ -77,6 +87,7 @@ export const fetchBranchesAction = actionClient.action(async () => {
     const accessToken = cookieStore.get("accessToken")?.value
 
     if (!accessToken) {
+      console.error("Branches fetch error: No access token found in cookies")
       return {
         success: false,
         error: "Authentication required. Please log in again.",
@@ -86,15 +97,20 @@ export const fetchBranchesAction = actionClient.action(async () => {
 
     // Call the API endpoint
     const apiUrl = process.env.API_URL || "https://trubank-gateway-fdfjczfafqehhbea.uksouth-01.azurewebsites.net"
-    const response = await fetch(`${apiUrl}/usermanagement/general/get-all-branch`, {
+    console.log(`Fetching branches from: ${apiUrl}/accountmanagement/Get-branches`)
+    
+    const response = await fetch(`${apiUrl}/accountmanagement/Get-branches`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
     })
 
+    console.log(`Branches API response status: ${response.status}`)
+
     // Handle different response status codes
     if (response.status === 401) {
+      console.error("Branches fetch error: Unauthorized (401)")
       return {
         success: false,
         error: "Your session has expired. Please log in again.",
@@ -103,6 +119,7 @@ export const fetchBranchesAction = actionClient.action(async () => {
     }
 
     if (response.status === 403) {
+      console.error("Branches fetch error: Forbidden (403)")
       return {
         success: false,
         error: "You don't have permission to access this resource.",
@@ -114,9 +131,10 @@ export const fetchBranchesAction = actionClient.action(async () => {
     let data
     try {
       const text = await response.text()
+      console.log("Raw branches response:", text.substring(0, 200) + (text.length > 200 ? "..." : ""))
       data = text ? JSON.parse(text) : {}
     } catch (parseError) {
-      console.error("Error parsing API response:", parseError)
+      console.error("Error parsing branches API response:", parseError)
       return {
         success: false,
         error: `Server returned status ${response.status} with invalid response format`,
@@ -126,12 +144,14 @@ export const fetchBranchesAction = actionClient.action(async () => {
 
     // Check if the request was successful
     if (data.isSuccess && data.result) {
+      console.log(`Successfully fetched ${data.result.length} branches`)
       return {
         success: true,
         data: data.result as Branch[],
       }
     } else {
       // Handle error cases
+      console.error("Branches fetch error in response:", data.error || data.message || "Unknown error")
       return {
         success: false,
         error: data.error || data.message || "Failed to fetch branches",
@@ -155,6 +175,7 @@ export const fetchAccountOfficersAction = actionClient.action(async () => {
     const accessToken = cookieStore.get("accessToken")?.value
 
     if (!accessToken) {
+      console.error("Account officers fetch error: No access token found in cookies")
       return {
         success: false,
         error: "Authentication required. Please log in again.",
@@ -164,6 +185,8 @@ export const fetchAccountOfficersAction = actionClient.action(async () => {
 
     // Call the API endpoint
     const apiUrl = process.env.API_URL || "https://trubank-gateway-fdfjczfafqehhbea.uksouth-01.azurewebsites.net"
+    console.log(`Fetching account officers from: ${apiUrl}/usermanagement/general/get-all-accountofficers`)
+    
     const response = await fetch(`${apiUrl}/usermanagement/general/get-all-accountofficers`, {
       method: "GET",
       headers: {
@@ -171,8 +194,11 @@ export const fetchAccountOfficersAction = actionClient.action(async () => {
       },
     })
 
+    console.log(`Account officers API response status: ${response.status}`)
+
     // Handle different response status codes
     if (response.status === 401) {
+      console.error("Account officers fetch error: Unauthorized (401)")
       return {
         success: false,
         error: "Your session has expired. Please log in again.",
@@ -181,6 +207,7 @@ export const fetchAccountOfficersAction = actionClient.action(async () => {
     }
 
     if (response.status === 403) {
+      console.error("Account officers fetch error: Forbidden (403)")
       return {
         success: false,
         error: "You don't have permission to access this resource.",
@@ -229,84 +256,7 @@ export const fetchAccountOfficersAction = actionClient.action(async () => {
 
 // Add this server action after the fetchAccountOfficersAction
 // Server action to fetch all account types
-export const fetchAccountTypesAction = actionClient.action(async () => {
-  try {
-    // Get the auth token from cookies
-    const cookieStore = await cookies()
-    const accessToken = cookieStore.get("accessToken")?.value
 
-    if (!accessToken) {
-      return {
-        success: false,
-        error: "Authentication required. Please log in again.",
-        statusCode: 401,
-      }
-    }
-
-    // Call the API endpoint
-    const apiUrl = process.env.API_URL || "https://trubank-gateway-fdfjczfafqehhbea.uksouth-01.azurewebsites.net"
-    const response = await fetch(`${apiUrl}/usermanagement/general/get-all-accounttypes`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    })
-
-    // Handle different response status codes
-    if (response.status === 401) {
-      return {
-        success: false,
-        error: "Your session has expired. Please log in again.",
-        statusCode: 401,
-      }
-    }
-
-    if (response.status === 403) {
-      return {
-        success: false,
-        error: "You don't have permission to access this resource.",
-        statusCode: 403,
-      }
-    }
-
-    // Safely parse the JSON response
-    let data
-    try {
-      const text = await response.text()
-      console.log("Raw account types response:", text)
-      data = text ? JSON.parse(text) : {}
-      console.log("Parsed account types data:", JSON.stringify(data, null, 2))
-    } catch (parseError) {
-      console.error("Error parsing API response:", parseError)
-      return {
-        success: false,
-        error: `Server returned status ${response.status} with invalid response format`,
-        statusCode: response.status,
-      }
-    }
-
-    // Check if the request was successful
-    if (data.isSuccess && data.result) {
-      return {
-        success: true,
-        data: data.result as AccountType[],
-      }
-    } else {
-      // Handle error cases
-      return {
-        success: false,
-        error: data.error || data.message || "Failed to fetch account types",
-        statusCode: data.statCode || response.status,
-      }
-    }
-  } catch (error) {
-    console.error("Error fetching account types:", error)
-    return {
-      success: false,
-      error: "An unexpected error occurred. Please try again.",
-    }
-  }
-})
 
 // Server action to fetch all product types
 export const fetchProductTypesAction = actionClient.action(async () => {
@@ -316,6 +266,7 @@ export const fetchProductTypesAction = actionClient.action(async () => {
     const accessToken = cookieStore.get("accessToken")?.value
 
     if (!accessToken) {
+      console.error("Product types fetch error: No access token found in cookies")
       return {
         success: false,
         error: "Authentication required. Please log in again.",
@@ -325,9 +276,10 @@ export const fetchProductTypesAction = actionClient.action(async () => {
 
     // Call the API endpoint
     const apiUrl = process.env.API_URL || "https://trubank-gateway-fdfjczfafqehhbea.uksouth-01.azurewebsites.net"
+    console.log(`Fetching product types from: ${apiUrl}/accountmanagement/Get-product-types`)
     
     // Use the correct endpoint for product types from the accountmanagement API
-    const response = await fetch(`${apiUrl}/accountmanagement/products/get-all`, {
+    const response = await fetch(`${apiUrl}/accountmanagement/Get-product-types`, {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${accessToken}`,
@@ -335,8 +287,11 @@ export const fetchProductTypesAction = actionClient.action(async () => {
       },
     })
 
+    console.log(`Product types API response status: ${response.status}`)
+
     // Handle different response status codes
     if (response.status === 401) {
+      console.error("Product types fetch error: Unauthorized (401)")
       return {
         success: false,
         error: "Your session has expired. Please log in again.",
@@ -345,6 +300,7 @@ export const fetchProductTypesAction = actionClient.action(async () => {
     }
 
     if (response.status === 403) {
+      console.error("Product types fetch error: Forbidden (403)")
       return {
         success: false,
         error: "You don't have permission to access this resource.",

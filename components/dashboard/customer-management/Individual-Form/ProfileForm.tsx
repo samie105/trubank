@@ -43,7 +43,7 @@ export default function ProfileForm() {
   // State for branches, account officers, and product types
   const [branches, setBranches] = useState<{ id: string; name: string }[]>([])
   const [accountOfficers, setAccountOfficers] = useState<{ id: string; fullName: string }[]>([])
-  const [productTypes, setProductTypes] = useState<{ id: string; name: string; accountType: string; status: string }[]>([])
+  const [productTypes, setProductTypes] = useState<{ id: string; name: string; accountTypeId: string }[]>([])
   const [isLoadingBranches, setIsLoadingBranches] = useState(true)
   const [isLoadingOfficers, setIsLoadingOfficers] = useState(true)
   const [isLoadingProductTypes, setIsLoadingProductTypes] = useState(true)
@@ -106,11 +106,13 @@ export default function ProfileForm() {
           </div>,
         )
       } else {
+        console.error("Branch fetch error:", data.data)
         toast.error(data.data?.error || "Failed to fetch branches")
       }
       setIsLoadingBranches(false)
     },
     onError(error) {
+      console.error("Branch fetch execution error:", error)
       toast.error(error.error.serverError || "An error occurred while fetching branches")
       setIsLoadingBranches(false)
     },
@@ -134,11 +136,13 @@ export default function ProfileForm() {
           </div>,
         )
       } else {
+        console.error("Account officers fetch error:", data.data)
         toast.error(data.data?.error || "Failed to fetch account officers")
       }
       setIsLoadingOfficers(false)
     },
     onError(error) {
+      console.error("Account officers fetch execution error:", error)
       toast.error(error.error.serverError || "An error occurred while fetching account officers")
       setIsLoadingOfficers(false)
     },
@@ -151,10 +155,10 @@ export default function ProfileForm() {
     },
     onSuccess(response) {
       if (response.data?.success) {
-        // Only use active products
+        // No need to filter by status since the API doesn't return status field
         const products = response.data.data || [];
-        const activeProducts = products.filter(product => product.status === "Active")
-        setProductTypes(activeProducts || [])
+        setProductTypes(products || [])
+        console.log("Product types set:", products)
       } else if (response.data?.statusCode === 401 || response.data?.error?.includes("Authentication required")) {
         toast.error(
           <div className="flex flex-col gap-2">
@@ -165,11 +169,13 @@ export default function ProfileForm() {
           </div>,
         )
       } else {
+        console.error("Product types fetch error:", response.data)
         toast.error(response.data?.error || "Failed to fetch product types")
       }
       setIsLoadingProductTypes(false)
     },
     onError(error) {
+      console.error("Product types fetch execution error:", error)
       toast.error(error.error.serverError || "An error occurred while fetching product types")
       setIsLoadingProductTypes(false)
     },
@@ -177,10 +183,34 @@ export default function ProfileForm() {
 
   // Fetch data on component mount
   useEffect(() => {
-    fetchBranches()
-    fetchAccountOfficers()
-    fetchProductTypes()
-  }, [fetchBranches, fetchAccountOfficers, fetchProductTypes])
+    const fetchAllData = async () => {
+      try {
+        console.log("Starting parallel data fetching...")
+        // Fetch all data in parallel
+        const fetchPromises = [
+         
+          Promise.resolve(fetchAccountOfficers()).catch((err: Error) => {
+            console.error("Error in fetchAccountOfficers Promise:", err)
+            return null;
+          }),
+          Promise.resolve(fetchProductTypes()).catch((err: Error) => {
+            console.error("Error in fetchProductTypes Promise:", err)
+            return null;
+          }), Promise.resolve(fetchBranches()).catch((err: Error) => {
+            console.error("Error in fetchBranches Promise:", err)
+            return null;
+          }),
+        ];
+        
+        await Promise.all(fetchPromises);
+        console.log("Completed parallel data fetching")
+      } catch (error) {
+        console.error("Unexpected error in fetchAllData:", error)
+      }
+    };
+
+    fetchAllData();
+  }, [fetchBranches, fetchAccountOfficers, fetchProductTypes]);
 
   useEffect(() => {
     const savedData = localStorage.getItem("customerForm")
@@ -331,14 +361,14 @@ export default function ProfileForm() {
           )}
 
           {isLoadingProductTypes ? (
-            <DropdownSkeleton label="Desired Product" />
+            <DropdownSkeleton label="Product Type" />
           ) : (
             <FormField
               control={form.control}
               name="productId"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Desired Product</FormLabel>
+                  <FormLabel>Product Type</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -371,7 +401,7 @@ export default function ProfileForm() {
                                 <Check
                                   className={cn("mr-2 h-4 w-4", type.id === field.value ? "opacity-100" : "opacity-0")}
                                 />
-                                {type.name} ({type.accountType})
+                                {type.name}
                               </CommandItem>
                             ))}
                           </CommandGroup>

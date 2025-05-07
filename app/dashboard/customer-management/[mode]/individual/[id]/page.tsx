@@ -2,6 +2,7 @@ import FormStepController from "@/components/dashboard/customer-management/Indiv
 import React from "react";
 
 export default function Page() {
+  //
   return (
     <div>
       <FormStepController />

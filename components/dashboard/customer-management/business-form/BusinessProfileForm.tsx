@@ -17,6 +17,7 @@ import {
   fetchBranchesAction, 
   fetchAccountOfficersAction, 
   fetchProductTypesAction,
+  ProductType,
   // Will be used when customer creation flow is implemented
   // createCustomerAccountAction 
 } from "@/server/general/fetch-data"
@@ -41,7 +42,7 @@ export default function BusinessProfileForm() {
   // State for branches, account officers, and product types
   const [branches, setBranches] = useState<{ id: string; name: string }[]>([])
   const [accountOfficers, setAccountOfficers] = useState<{ id: string; fullName: string }[]>([])
-  const [productTypes, setProductTypes] = useState<{ id: string; name: string; accountType: string; status: string }[]>([])
+  const [productTypes, setProductTypes] = useState<ProductType[]>([])
   const [isLoadingBranches, setIsLoadingBranches] = useState(true)
   const [isLoadingOfficers, setIsLoadingOfficers] = useState(true)
   const [isLoadingProductTypes, setIsLoadingProductTypes] = useState(true)
@@ -153,7 +154,7 @@ export default function BusinessProfileForm() {
       if (response.data?.success) {
         // Only use active products
         const products = response.data.data || [];
-        const activeProducts = products.filter(product => product.status === "Active")
+        const activeProducts = products.filter(product => product.accountTypeId !== null)
         setProductTypes(activeProducts || [])
       } else if (response.data?.statusCode === 401 || response.data?.error?.includes("Authentication required")) {
         toast.error(
@@ -336,14 +337,14 @@ export default function BusinessProfileForm() {
           )}
 
           {isLoadingProductTypes ? (
-            <DropdownSkeleton label="Desired Product" />
+            <DropdownSkeleton label="Product Type" />
           ) : (
             <FormField
               control={form.control}
               name="desiredAccount"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Desired Product</FormLabel>
+                  <FormLabel>Product Type</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -376,7 +377,7 @@ export default function BusinessProfileForm() {
                                 <Check
                                   className={cn("mr-2 h-4 w-4", type.id === field.value ? "opacity-100" : "opacity-0")}
                                 />
-                                {type.name} ({type.accountType})
+                                {type.name} ({type.accountTypeId})
                               </CommandItem>
                             ))}
                           </CommandGroup>
