@@ -1,5 +1,6 @@
 import { ArrowRight, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function HeroSection() {
   return (
@@ -25,20 +26,24 @@ export default function HeroSection() {
               variant="secondary"
               className="group inline-flex items-center gap-2 bg-white text-primary hover:bg-white/90"
             >
-              <a href="/products-solution">
-                Learn More
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </a>
+              <Link href="/products-solution">
+                <div className="flex items-center gap-2">
+                  Learn More
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </div>
+              </Link>
             </Button>
             <Button
               asChild
               variant="ghost"
               className="inline-flex items-center gap-2 border-2 border-none bg-transparent text-white transition-colors hover:bg-white/10 hover:text-white"
             >
-              <a href="/contacts">
-                <Building2 className="h-4 w-4" />
-                Request A Demo
-              </a>
+              <Link href="/waitlist">
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  Request A Demo
+                </div>
+              </Link>
             </Button>
           </div>
         </div>

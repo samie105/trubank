@@ -49,11 +49,7 @@ const addressProofTypes = [
 
 // Function to convert API values to user-friendly display values
 const getProofDisplayName = (type: string): string => {
-  const displayMap: Record<string, string> = {
-    "Utility_Bill": "Utility Bill",
-    "Water_Bill": "Water Bill",
-  };
-  return displayMap[type] || type;
+  return type.replace(/_/g, " ");
 };
 
 const issuingAuthorities = [

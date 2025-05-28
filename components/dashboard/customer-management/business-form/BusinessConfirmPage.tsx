@@ -180,6 +180,12 @@ const parseApiErrors = (error: any) => {
   return { errorMessage, errorDetails, errorFields, rawError };
 };
 
+// Format display values by replacing underscores with spaces
+const formatDisplayValue = (value: string | undefined): string | undefined => {
+  if (!value) return value;
+  return value.replace(/_/g, " ");
+};
+
 // Format field name to be more readable
 const formatFieldName = (fieldName: string): string => {
   return fieldName
@@ -476,7 +482,7 @@ export default function BusinessConfirmationPage({
     return (
       <div className="flex flex-col py-2">
         <span className="font-medium text-muted-foreground">{label}:</span>
-        <span className="font-semibold pt-2">{value}</span>
+        <span className="font-semibold pt-2">{formatDisplayValue(value)}</span>
       </div>
     )
   }

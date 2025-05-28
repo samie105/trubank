@@ -127,10 +127,18 @@ export const createBusinessAction = actionClient.schema(businessSchema).action(a
     formData.append("ProofOfAddress.UtilityDateIssuer", parsedInput.issueDateOfBill)
     formData.append("ProofOfAddress.UtilityFile", parsedInput.utilityBill || "")
 
-    // Log the form data keys for debugging
-    console.log(
-      "FormData keys:",
-      [...formData.entries()].map((entry) => entry[0]),
+    // Log the form data keys and values for debugging
+    console.log("FormData entries:", [...formData.entries()]
+      .map(([key, value]) => {
+        if (value instanceof File) {
+          return `${key}=File:${value.name.substring(0, 10)}...`;
+        }
+        if (typeof value === 'string' && value.length > 50) {
+          return `${key}=${value.substring(0, 50)}...`;
+        }
+        return `${key}=${value}`;
+      })
+      .join('&')
     )
 
     // Call the API endpoint with FormData

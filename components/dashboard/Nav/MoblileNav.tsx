@@ -251,7 +251,9 @@ export default function MobileNav() {
                                     : " text-muted-foreground"
                                 }`}
                               >
-                                <Link href={item.path}>{item.name}</Link>
+                                <Link href={item.path} className="flex items-center">
+                                  {item.name}
+                                </Link>
                               </SidebarMenuSubButton>
                             </SidebarMenuSubItem>
                           ) : (
@@ -299,7 +301,7 @@ export default function MobileNav() {
                                             : "py-5 text-muted-foreground"
                                         }
                                       >
-                                        <Link href={subItem.path} className="">
+                                        <Link href={subItem.path} className="flex items-center">
                                           {subItem.name}
                                         </Link>
                                       </SidebarMenuSubButton>
@@ -356,7 +358,9 @@ export default function MobileNav() {
                                   : " text-muted-foreground"
                               }
                             >
-                              <Link href={item.path}>{item.name}</Link>
+                              <Link href={item.path} className="flex items-center">
+                                {item.name}
+                              </Link>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
                         ))}
@@ -416,70 +420,68 @@ export default function MobileNav() {
                 <SidebarMenu>
                   <ResponsiveModal>
                     <SidebarMenuButton asChild>
-                      <div className="flex items-center py-5 mt-1 justify-between">
-                        {" "}
-                        <ResponsiveModalTrigger className="py-5">
-                          <div className="flex items-center gap-x-2  text-foreground">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              strokeWidth={1.5}
-                              stroke="currentColor"
-                              className="size-4 -rotate-90"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"
-                              />
-                            </svg>
-                            <p>Logout</p>
-                          </div>
-                        </ResponsiveModalTrigger>
-                        <div className="mt- flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <ThemeSwitch />
-                          </div>
+                      <ResponsiveModalTrigger className="flex w-full items-center py-5 mt-1 justify-between">
+                        <div className="flex items-center gap-x-2 text-foreground">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.5}
+                            stroke="currentColor"
+                            className="size-4 -rotate-90"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"
+                            />
+                          </svg>
+                          <p>Logout</p>
                         </div>
-                      </div>
+                        <div className="flex items-center space-x-2">
+                          <ThemeSwitch />
+                        </div>
+                      </ResponsiveModalTrigger>
                     </SidebarMenuButton>
                     <ResponsiveModalContent>
-                      <ResponsiveModalTitle>
-                        Confirm Logout
-                      </ResponsiveModalTitle>
+                      <ResponsiveModalTitle>Confirm Logout</ResponsiveModalTitle>
                       <ResponsiveModalDescription>
                         Confirm you want to logout
                       </ResponsiveModalDescription>
                       <ResponsiveModalFooter className="w-full mt-2">
                         <div className="flex w-full justify-between">
                           <ResponsiveModalClose asChild>
-                            <Button variant={"secondary"}> Cancel</Button>
-                          </ResponsiveModalClose>
-                          <Link href={"/auth/login"}>
-                            {" "}
-                            <Button
-                              variant={"default"}
-                              className="flex items-center text-white gap-x-2"
-                            >
-                              {" "}
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                strokeWidth={1.5}
-                                stroke="currentColor"
-                                className="size-4 -rotate-90"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"
-                                />
-                              </svg>
-                              <p>Logout</p>
+                            <Button variant={"secondary"}>
+                              <div className="flex items-center">
+                                Cancel
+                              </div>
                             </Button>
-                          </Link>
+                          </ResponsiveModalClose>
+                          <Button
+                            variant={"default"}
+                            className="flex items-center text-white gap-x-2"
+                            asChild
+                          >
+                            <Link href={"/auth/login"}>
+                              <div className="flex items-center gap-x-2">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  strokeWidth={1.5}
+                                  stroke="currentColor"
+                                  className="size-4 -rotate-90"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"
+                                  />
+                                </svg>
+                                <span>Logout</span>
+                              </div>
+                            </Link>
+                          </Button>
                         </div>
                       </ResponsiveModalFooter>
                     </ResponsiveModalContent>

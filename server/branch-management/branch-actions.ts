@@ -58,9 +58,9 @@ export const createBranchAction = actionClient.schema(branchSchema).action(async
     const data = await response.json()
 
     if (data.isSuccess) {
-      return {
-        success: true,
-        message: "Branch created successfully",
+    return {
+      success: true,
+      message: "Branch created successfully",
         branch: data.result,
       }
     } else {
@@ -189,8 +189,8 @@ export const getBranchesAction = actionClient.action(async () => {
     const data = await response.json()
 
     if (data.isSuccess) {
-      return {
-        success: true,
+    return {
+      success: true,
         branches: data.result,
       }
     } else {

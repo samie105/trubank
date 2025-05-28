@@ -133,7 +133,10 @@ export default function SolutionsPage() {
                       asChild
                     >
                       <Link href={feature.linkPath || "#"}>
-                        Read More <ArrowRight className="ml-1 size-4" />
+                        <div className="flex items-center">
+                          <span>Read More</span>
+                          <ArrowRight className="ml-1 size-4" />
+                        </div>
                       </Link>
                     </Button>
                   </div>

@@ -177,7 +177,7 @@ export const editBusinessAction = actionClient.schema(editBusinessSchema).action
       "FormData entries:",
       [...formData.entries()].map((entry) => `${entry[0]}: ${entry[1]}`),
     )
-
+console.log("here is the id",parsedInput.businessId)
     // Call the API endpoint with FormData
     const response = await fetch(`${apiUrl}/customermanagement/edit-business?UserId=${parsedInput.businessId}`, {
       method: "PUT",

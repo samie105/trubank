@@ -7,12 +7,12 @@ import { parseAsInteger, useQueryState } from "nuqs"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { fetchCustomerAction } from "@/server/customer-management/fetch-customer"
-import BusinessDetailForm from "./BusinesssDetailsForm"
+import BusinessDetailsForm from "./BusinessDetailsForm"
 import BusinessDocumentsUpload from "./BusinessDocumentsUpload"
 import ProofofAddressBusiness from "./ProofofAddressBusiness"
 import BusinessConfirmationPage from "./BusinessConfirmPage"
 import { BusinessFormSkeleton } from "./business-form-skeleton"
-import type { BusinessCustomer } from "@/server/customer-management/fetch-customers"
+import type { BusinessCustomerAPI } from "@/server/customer-management/types"
 import { BusinessFormData } from "@/types/types"
 import { useBusinessForm } from "@/contexts/BusinessFormContext"
 
@@ -67,10 +67,10 @@ export const formatBusinessDataForApi = (formData: BusinessFormData): BusinessFo
     Website: formData.website,
     
     // Critical account fields (top level)
-    BranchId: formData.branchId || formData.branch,
-    AccountOfficerId: formData.accountOfficerId || formData.accountOfficer,
+    BranchId: formData.branchId ?? formData.branch ?? undefined,
+    AccountOfficerId: formData.accountOfficerId ?? formData.accountOfficer ?? undefined,
     DesiredAccount: formData.desiredAccount,
-    Type: formData.type || 2, // Business customer type
+    Type: formData.type ?? 2, // Business customer type
     
     // Business Documents (nested)
     "BusinessIncorporationDocument.FileType": 9, // BusinessIncorporationCertificate
@@ -126,7 +126,7 @@ export default function BusinessFormController() {
 
       if (data.data?.success) {
         // Type assertion to BusinessCustomer since we're in the business form
-        const customerData = data.data.data as BusinessCustomer
+        const customerData = data.data.data as BusinessCustomerAPI
 
         if (customerData) {
           try {
@@ -207,7 +207,7 @@ export default function BusinessFormController() {
     if (isEditMode && customerId) {
       fetchCustomer({
         userId: customerId,
-        customerType: "business",
+        customerType: "Business",
       })
     }
   }, [isEditMode, customerId, fetchCustomer])
@@ -219,7 +219,7 @@ export default function BusinessFormController() {
 
   return (
     <div>
-      {step === 1 && <BusinessDetailForm />}
+      {step === 1 && <BusinessDetailsForm isEditMode={isEditMode} />}
       {step === 2 && <BusinessDocumentsUpload />}
       {step === 3 && <ProofofAddressBusiness isEditMode={isEditMode}/>}
       {step === 4 && <BusinessConfirmationPage isEditMode={isEditMode} customerId={customerId}/>}

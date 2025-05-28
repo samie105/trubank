@@ -80,8 +80,8 @@ export default function Navbar() {
 
         {/* Desktop Navigation - Centered */}
         <div className="flex-1">
-          <div className="hidden  justify-center lg:flex ">
-            <div className=" py-1 px-1.5 bg-white rounded-full gap-x-2">
+          <div className="hidden justify-center lg:flex">
+            <div className="py-1 px-1.5 bg-white rounded-full gap-x-2">
               {navigation.map((item) => {
                 if (item.children) {
                   return (
@@ -89,25 +89,23 @@ export default function Navbar() {
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="ghost"
-                          className={`h-10 gap-x-1 px-4 rounded-full text-black/50 hover:bg-neutral-100 hover:text-black/50 ${
-                            pathname.startsWith(item.href)
-                              ? "bg-primary text-white hover:bg-white hover:bg-primaryreq hover:text-white"
-                              : ""
-                          }`}
+                          className={`h-10 gap-x-1 px-4 rounded-full text-black/50 hover:bg-neutral-100 hover:text-black/50 ${pathname.startsWith(item.href) ? "bg-primary text-white hover:bg-white hover:bg-primaryreq hover:text-white" : ""}`}
                         >
-                          {item.name}{" "}
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            className="size-4"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
+                          <div className="flex items-center">
+                            {item.name}
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                              className="size-4 ml-1"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M12.53 16.28a.75.75 0 0 1-1.06 0l-7.5-7.5a.75.75 0 0 1 1.06-1.06L12 14.69l6.97-6.97a.75.75 0 1 1 1.06 1.06l-7.5 7.5Z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </div>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
@@ -118,14 +116,13 @@ export default function Navbar() {
                           <DropdownMenuItem
                             key={child.name}
                             asChild
-                            className="focus:bg-primary cursor-pointer "
+                            className="focus:bg-primary cursor-pointer"
                           >
-                            <Link
-                              href={child.href}
-                              className="flex py-2 items-center gap-2 bg-white  text-black/70"
-                            >
-                              <child.icon className="h-4 w-4" />
-                              {child.name}
+                            <Link href={child.href}>
+                              <div className="flex items-center gap-2 py-2 bg-white text-black/70 w-full">
+                                <child.icon className="h-4 w-4" />
+                                {child.name}
+                              </div>
                             </Link>
                           </DropdownMenuItem>
                         ))}
@@ -145,7 +142,11 @@ export default function Navbar() {
                         : ""
                     }`}
                   >
-                    <Link href={item.href}>{item.name}</Link>
+                    <Link href={item.href}>
+                      <div className="flex items-center">
+                        {item.name}
+                      </div>
+                    </Link>
                   </Button>
                 );
               })}
@@ -160,15 +161,20 @@ export default function Navbar() {
               className="hidden rounded-full hover:bg-white bg-white text-primary lg:inline-flex"
               asChild
             >
-              <Link href="/contacts">Request Demo</Link>
+              <Link href="/waitlist">
+                <div className="flex items-center">
+                  Request Demo
+                </div>
+              </Link>
             </Button>
 
             {/* Mobile Navigation */}
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="lg:hidden">
-                  <Menu className="h-6 w-6 text-white" />
-                  <span className="sr-only">Toggle navigation menu</span>
+                  <div className="flex items-center">
+                    <Menu className="h-6 w-6 text-white" />
+                  </div>
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-80 bg-white">
@@ -200,12 +206,11 @@ export default function Navbar() {
                                   : "text-black/40"
                               }`}
                             >
-                              <Link
-                                href={child.href}
-                                className="flex items-center hover:bg-neutral-100 hover:text-black gap-2"
-                              >
-                                <child.icon className="h-4 w-4" />
-                                {child.name}
+                              <Link href={child.href}>
+                                <div className="flex items-center gap-2 hover:bg-neutral-100 hover:text-black w-full p-2 rounded-md">
+                                  <child.icon className="h-4 w-4" />
+                                  {child.name}
+                                </div>
                               </Link>
                             </Button>
                           ))}
@@ -224,7 +229,11 @@ export default function Navbar() {
                             : "text-black/40 hover:bg-neutral-100 hover:text-black/90"
                         }`}
                       >
-                        <Link href={item.href}>{item.name}</Link>
+                        <Link href={item.href}>
+                          <div className="flex items-center">
+                            {item.name}
+                          </div>
+                        </Link>
                       </Button>
                     );
                   })}
@@ -232,7 +241,11 @@ export default function Navbar() {
                     className="mt-4 bg-primary text-white hover:bg-primary/90"
                     asChild
                   >
-                    <Link href="/contacts"></Link> Request Demo
+                    <Link href="/waitlist">
+                      <div className="flex items-center">
+                        Request Demo
+                      </div>
+                    </Link>
                   </Button>
                 </div>
               </SheetContent>

@@ -9,7 +9,7 @@ import { useQueryState } from "nuqs"
 import { parseAsInteger } from "nuqs"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
-import BusinessDetailsForm from "@/components/dashboard/customer-management/business-form/BusinesssDetailsForm"
+import BusinessDetailsForm from "@/components/dashboard/customer-management/business-form/BusinessDetailsForm"
 import BusinessConfirmPage from "@/components/dashboard/customer-management/business-form/BusinessConfirmPage"
 
 // Loading Component

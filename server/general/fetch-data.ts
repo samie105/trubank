@@ -12,8 +12,9 @@ export interface Branch {
 }
 
 export interface AccountOfficer {
-  id: string
+  id: string | null
   fullName: string
+  createdAt: string
 }
 
 // Add this interface after the AccountOfficer interface
@@ -188,10 +189,16 @@ export const fetchAccountOfficersAction = actionClient.action(async () => {
     console.log(`Fetching account officers from: ${apiUrl}/usermanagement/general/get-all-accountofficers`)
     
     const response = await fetch(`${apiUrl}/usermanagement/general/get-all-accountofficers`, {
-      method: "GET",
+      method: "POST",
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        "Authorization": `Bearer ${accessToken}`,
+        "Content-Type": "application/json"
       },
+      body: JSON.stringify({
+        pageSize: 10,
+        pageNumber: 0,
+        searchParams: {}
+      })
     })
 
     console.log(`Account officers API response status: ${response.status}`)
@@ -235,7 +242,7 @@ export const fetchAccountOfficersAction = actionClient.action(async () => {
     if (data.isSuccess && data.result) {
       return {
         success: true,
-        data: data.result as AccountOfficer[],
+        data: data.result.data as AccountOfficer[],
       }
     } else {
       // Handle error cases

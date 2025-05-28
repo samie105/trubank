@@ -15,7 +15,6 @@ import EmploymentDetails from "./EmploymentDetails"
 import GuarantorForm from "./GuarantorForm"
 import NextOfKin from "./NextOfKin"
 import ConfirmDetails from "./ConfirmPage"
-import type { IndividualCustomer } from "@/server/customer-management/fetch-customers"
 import type { FormData } from "@/types/types"
 import { BusinessFormSkeleton } from "../business-form/business-form-skeleton"
 
@@ -83,7 +82,7 @@ export const formatFormDataForApi = (formData: FormData): FormattedApiData => {
   const apiData: FormattedApiData = {
     // Critical account fields (top level)
     Branch: formData.branch,
-    AccountOfficer: formData.accountOfficer,
+    AccountOfficer: formData.accountOfficer || undefined,
     DesiredAccount: formData.desiredAccount,
     Type: 1, // Individual customer type
     
@@ -166,7 +165,7 @@ export default function FormStepController() {
 
       if (data.data?.success) {
         // Type assertion to IndividualCustomer since we're in the individual form
-        const customerData = data.data.data as IndividualCustomer
+        const customerData = data.data.data 
 
         if (customerData) {
           // Format the data to match the required structure
@@ -262,7 +261,7 @@ export default function FormStepController() {
     if (customerId) {
       fetchCustomer({
         userId: customerId,
-        customerType: "individual",
+        customerType: "Individual",
       })
     }
   }, [ customerId, fetchCustomer])

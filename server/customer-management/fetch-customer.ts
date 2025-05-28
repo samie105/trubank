@@ -3,12 +3,11 @@
 import { actionClient } from "@/lib/safe-action"
 import { z } from "zod"
 import { cookies } from "next/headers"
-import type { IndividualCustomer, BusinessCustomer } from "./fetch-customers"
 
 // Define the schema for fetching a single customer
 const fetchCustomerSchema = z.object({
   userId: z.string(),
-  customerType: z.enum(["individual", "business"]),
+  customerType: z.enum(["Individual", "Business", "Admin"]),
 })
 
 export const fetchCustomerAction = actionClient
@@ -29,7 +28,7 @@ export const fetchCustomerAction = actionClient
 
       // Determine the endpoint based on customer type
       const endpoint =
-        customerType === "individual"
+        customerType === "Individual"
           ? `/customermanagement/get-individual-user?UserId=${userId}`
           : `/customermanagement/get-business-user?UserId=${userId}`
 
@@ -86,7 +85,7 @@ console.log(response)
       if (data.isSuccess && data.result) {
         return {
           success: true,
-          data: data.result as (IndividualCustomer | BusinessCustomer),
+          data: data.result,
         }
       } else {
         // Handle error cases

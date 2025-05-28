@@ -44,7 +44,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { ResponsiveModal, ResponsiveModalTrigger, ResponsiveModalContent } from "@/components/ui/dialog-2"
+import { ResponsiveModal, ResponsiveModalTrigger, ResponsiveModalContent, ResponsiveModalHeader, ResponsiveModalTitle, ResponsiveModalDescription } from "@/components/ui/dialog-2"
 import { Label } from "@/components/ui/label"
 import {
   MultiSelector,
@@ -60,7 +60,12 @@ import CustomerModalFormCreation from "./CustomerModalFormCreation"
 import { toast } from "sonner"
 import { useSearchParams } from "next/navigation"
 import { useAction } from "next-safe-action/hooks"
-import { fetchCustomersAction, type CustomerTableData } from "@/server/customer-management/fetch-customers"
+import { 
+  type CustomerTableData, 
+  type CustomerType, 
+  type FetchCustomersInput
+} from "@/server/customer-management/types"
+import { fetchCustomersAction } from "@/server/customer-management/fetch-customers"
 import { exportCustomersAction } from "@/server/customer-management/export-customers"
 import { useRouter } from "next/navigation"
 import { logoutAction } from "@/server/auth/auth-server"
@@ -70,14 +75,7 @@ import { Switch } from "@/components/ui/switch"
 // Update imports to include the new server actions
 import { activateUserAction, deleteUserAction } from "@/server/customer-management/customer-actions"
 
-type CustomerType = "individual" | "business"
-
-// Enhanced CustomerTableData to include the full customer data
-interface EnhancedCustomerTableData extends CustomerTableData {
-  fullData?: any // Store the complete customer data
-}
-
-// Replace the ActionCell component with this updated version that uses Popover
+// ActionCell component with Popover
 function ActionCell({
   customer,
   onActivate,
@@ -85,94 +83,125 @@ function ActionCell({
   isActivating,
   isDeleting,
 }: {
-  customer: EnhancedCustomerTableData
+  customer: CustomerTableData
   onActivate: (id: string, activate: boolean) => void
   onDelete: (id: string) => void
   isActivating: string | null
   isDeleting: string | null
 }) {
   const [open, setOpen] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const router = useRouter()
   const isActive = customer.status === "active"
 
   // Create separate handler functions to avoid closure issues
   const handleActivate = () => {
-    onActivate(customer.fullId || customer.id, !isActive)
+    onActivate(customer.fullId, !isActive)
     setOpen(false)
   }
 
-  const handleDelete = () => {
-    if (confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
-      onDelete(customer.fullId || customer.id)
-      setOpen(false)
-    }
+  const handleDeleteClick = () => {
+    setShowDeleteConfirm(true)
+    setOpen(false)
+  }
+
+  const handleConfirmDelete = () => {
+    onDelete(customer.fullId)
+    setShowDeleteConfirm(false)
+  }
+
+  const handleCancelDelete = () => {
+    setShowDeleteConfirm(false)
   }
 
   const handleViewProfile = () => {
-    const viewId = customer.fullId || customer.id
-    router.push(`/dashboard/customer-management/view/${customer.type}/${viewId}`)
+    router.push(`/dashboard/customer-management/view/${customer.type}/${customer.fullId}`)
     setOpen(false)
   }
 
-  // Updated handleEditUser function to use the already fetched full customer data
   const handleEditUser = () => {
-    // Show loading toast
-
-    // Make sure we're using the full ID for the API request
-    const editId = customer.fullId || customer.id
-
-    // Navigate to the edit page - the page will fetch the customer data
-    router.push(`/dashboard/customer-management/edit/${customer.type}/${editId}`)
-
+    router.push(`/dashboard/customer-management/edit/${customer.type.toLowerCase()}/${customer.fullId}`)
     setOpen(false)
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="ghost" className="h-8 w-8 p-0" type="button">
-          <span className="sr-only">Open menu</span>
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-56 p-0" align="end">
-        <div className="py-1">
-          <button
-            className="w-full text-left px-4 py-2 text-sm hover:bg-muted-foreground/10"
-            onClick={handleViewProfile}
-            type="button"
-          >
-            View Profile
-          </button>
-          <button
-            className="w-full text-left px-4 py-2 text-sm hover:bg-muted-foreground/10"
-            onClick={handleEditUser}
-            type="button"
-          >
-            Edit User
-          </button>
-          <div className="flex items-center justify-between px-4 py-2 text-sm hover:bg-muted-foreground/10">
-            <span>{isActive ? "Deactivate" : "Activate"} User</span>
-            <Switch checked={isActive} disabled={isActivating === customer.id} onCheckedChange={handleActivate} />
+    <>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0" type="button">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-56 p-0" align="end">
+          <div className="py-1">
+            <button
+              className="w-full text-left px-4 py-2 text-sm hover:bg-muted-foreground/10"
+              onClick={handleViewProfile}
+              type="button"
+            >
+              View Profile
+            </button>
+            <button
+              className="w-full text-left px-4 py-2 text-sm hover:bg-muted-foreground/10"
+              onClick={handleEditUser}
+              type="button"
+            >
+              Edit User
+            </button>
+            <div className="flex items-center justify-between px-4 py-2 text-sm hover:bg-muted-foreground/10">
+              <span>{isActive ? "Deactivate" : "Activate"} User</span>
+              <Switch checked={isActive} disabled={isActivating === customer.fullId} onCheckedChange={handleActivate} />
+            </div>
+            <button
+              className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-500/10"
+              onClick={handleDeleteClick}
+              disabled={isDeleting === customer.fullId}
+              type="button"
+            >
+              {isDeleting === customer.fullId ? (
+                <span className="flex items-center">
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </span>
+              ) : (
+                "Delete User"
+              )}
+            </button>
           </div>
-          <button
-            className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-500/10"
-            onClick={handleDelete}
-            disabled={isDeleting === customer.id}
-            type="button"
-          >
-            {isDeleting === customer.id ? (
-              <span className="flex items-center">
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Deleting...
-              </span>
-            ) : (
-              "Delete User"
-            )}
-          </button>
-        </div>
-      </PopoverContent>
-    </Popover>
+        </PopoverContent>
+      </Popover>
+
+      {/* Delete Confirmation Dialog */}
+      <ResponsiveModal open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <ResponsiveModalContent>
+          <ResponsiveModalHeader>
+            <ResponsiveModalTitle>Confirm Deletion</ResponsiveModalTitle>
+            <ResponsiveModalDescription>
+              Are you sure you want to delete this user? This action cannot be undone.
+            </ResponsiveModalDescription>
+          </ResponsiveModalHeader>
+          <div className="flex justify-end space-x-2 mt-4">
+            <Button variant="outline" onClick={handleCancelDelete}>
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleConfirmDelete}
+              disabled={isDeleting === customer.fullId}
+            >
+              {isDeleting === customer.fullId ? (
+                <span className="flex items-center">
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </span>
+              ) : (
+                "Delete User"
+              )}
+            </Button>
+          </div>
+        </ResponsiveModalContent>
+      </ResponsiveModal>
+    </>
   )
 }
 
@@ -184,7 +213,7 @@ export default function CustomerTable() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
-  const [activeTab, setActiveTab] = useState<CustomerType>("individual")
+  const [activeTab, setActiveTab] = useState<CustomerType>("Individual")
   const [filterSettings, setFilterSettings] = useState({
     dateFrom: undefined as Date | undefined,
     dateTo: undefined as Date | undefined,
@@ -195,12 +224,12 @@ export default function CustomerTable() {
   const isCreating = params.get("creating")
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
-  const [individualCustomers, setIndividualCustomers] = useState<EnhancedCustomerTableData[]>([])
-  const [businessCustomers, setBusinessCustomers] = useState<EnhancedCustomerTableData[]>([])
+  const [individualCustomers, setIndividualCustomers] = useState<CustomerTableData[]>([])
+  const [businessCustomers, setBusinessCustomers] = useState<CustomerTableData[]>([])
   const [isLoadingIndividual, setIsLoadingIndividual] = useState(false)
   const [isLoadingBusiness, setIsLoadingBusiness] = useState(false)
   const [isInitialLoad, setIsInitialLoad] = useState(true)
-  const [isRefreshing, setIsRefreshing] = useState(false) // New state for refresh button
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [isActivating, setIsActivating] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
   const router = useRouter()
@@ -211,8 +240,6 @@ export default function CustomerTable() {
     totalPages: 0,
   })
 
-
-
   // Action to handle logout
   const { execute: executeLogout } = useAction(logoutAction, {
     onSuccess() {
@@ -220,54 +247,20 @@ export default function CustomerTable() {
     },
   })
 
-  // Handle re-login
-
   // Handle logout
   const handleLogout = () => {
     executeLogout()
   }
 
-  // Fetch individual customers action - updated to store full customer data
+  // Fetch individual customers action
   const { execute: fetchIndividualCustomers } = useAction(fetchCustomersAction, {
     onExecute() {
       setIsLoadingIndividual(true)
     },
     onSuccess(data) {
-      if (data.data?.success) {
-        // Transform the data for the table component, but keep the full data
-        const transformedData: EnhancedCustomerTableData[] = (data.data?.data as any[]).map((customer) => {
-          // Only store the essential data needed for the table and actions
-          const essentialData = {
-            id: customer.id,
-            customerId: customer.customerId,
-            firstName: customer.firstName,
-            lastName: customer.lastName,
-            emailAddress: customer.emailAddress,
-            phoneNumber: customer.phoneNumber,
-            status: customer.status,
-            createdAt: customer.createdAt,
-            profilePicture: customer.profilePicture,
-            accountTier: customer.accountTier,
-            kycStatus: customer.kycStatus,
-          }
-
-          return {
-            id: customer.customerId || customer.id.split("-")[0],
-            fullId: customer.id,
-            firstName: customer.firstName,
-            lastName: customer.lastName,
-            email: customer.emailAddress,
-            phone: customer.phoneNumber,
-            status: customer.status,
-            date: customer.createdAt,
-            avatar: customer.profilePicture?.profilePicture || "",
-            type: "individual",
-            tierLevel: customer.accountTier?.name || "Tier 1",
-            kycStatus: customer.kycStatus,
-            fullData: essentialData, // Store only essential data
-          }
-        })
-        setIndividualCustomers(transformedData || [])
+      if (data.data?.success && data.data.data) {
+        setIndividualCustomers(data.data.data)
+        
         if (data.data?.pagination) {
           setPagination((prev) => ({
             ...prev,
@@ -276,7 +269,6 @@ export default function CustomerTable() {
           }))
         }
       } else if (data.data?.statusCode === 401 || data.data?.error?.includes("Authentication required")) {
-        // Replace this:
         toast.error(
           <div className="flex items-center justify-between gap-2">
             <p>{data.data?.error || "Your session has expired. Please log in again."}</p>
@@ -290,57 +282,25 @@ export default function CustomerTable() {
       }
       setIsLoadingIndividual(false)
       setIsInitialLoad(false)
-      setIsRefreshing(false) // Reset refreshing state
+      setIsRefreshing(false)
     },
-    onError(error) {
-      toast.error(error.error.serverError || "An error occurred while fetching individual customers")
+    onError(error: any) {
+      toast.error(error.error?.serverError || "An error occurred while fetching individual customers")
       setIsLoadingIndividual(false)
       setIsInitialLoad(false)
-      setIsRefreshing(false) // Reset refreshing state
+      setIsRefreshing(false)
     },
   })
 
-  // Fetch business customers action - updated to store full customer data
+  // Fetch business customers action
   const { execute: fetchBusinessCustomers } = useAction(fetchCustomersAction, {
     onExecute() {
       setIsLoadingBusiness(true)
     },
     onSuccess(data) {
-      if (data.data?.success) {
-        // Transform the data for the table component, but keep the full data
-        const transformedData: EnhancedCustomerTableData[] = (data.data?.data as any[]).map((customer) => {
-          // Ensure we have a business name, even with the API typo
-          const businessName = customer.busienssName || customer.businessName || ""
-
-          // Only store the essential data needed for the table and actions
-          const essentialData = {
-            id: customer.id,
-            customerId: customer.customerId,
-            busienssName: businessName, // Keep the original field name with typo
-            emailAddress: customer.emailAddress,
-            phoneNumber: customer.phoneNumber,
-            status: customer.status,
-            createdAt: customer.createdAt,
-            accountTier: customer.accountTier,
-            kycStatus: customer.kycStatus,
-          }
-
-          return {
-            id: customer.customerId || customer.id.split("-")[0],
-            fullId: customer.id,
-            businessName: businessName, // Use the extracted business name
-            email: customer.emailAddress,
-            phone: customer.phoneNumber,
-            status: customer.status,
-            date: customer.createdAt,
-            avatar: "",
-            type: "business",
-            tierLevel: customer.accountTier?.name || "Tier 1",
-            kycStatus: customer.kycStatus,
-            fullData: essentialData, // Store only essential data
-          }
-        })
-        setBusinessCustomers(transformedData || [])
+      if (data.data?.success && data.data.data) {
+        setBusinessCustomers(data.data.data)
+        
         if (data.data?.pagination) {
           setPagination((prev) => ({
             ...prev,
@@ -349,7 +309,6 @@ export default function CustomerTable() {
           }))
         }
       } else if (data.data?.statusCode === 401 || data.data?.error?.includes("Authentication required")) {
-        // Replace this:
         toast.error(
           <div className="flex items-center justify-between gap-2">
             <p>{data.data?.error || "Your session has expired. Please log in again."}</p>
@@ -363,13 +322,13 @@ export default function CustomerTable() {
       }
       setIsLoadingBusiness(false)
       setIsInitialLoad(false)
-      setIsRefreshing(false) // Reset refreshing state
+      setIsRefreshing(false)
     },
-    onError(error) {
-      toast.error(error.error.serverError || "An error occurred while fetching business customers")
+    onError(error: any) {
+      toast.error(error.error?.serverError || "An error occurred while fetching business customers")
       setIsLoadingBusiness(false)
       setIsInitialLoad(false)
-      setIsRefreshing(false) // Reset refreshing state
+      setIsRefreshing(false)
     },
   })
 
@@ -377,12 +336,10 @@ export default function CustomerTable() {
   const { execute: executeActivateUser } = useAction(activateUserAction, {
     onExecute(data) {
       setIsActivating(data.input.userId)
-      // Add loading toast for activation/deactivation
       const action = data.input.activate ? "Activating" : "Deactivating"
       toast.loading(`${action} user...`, { id: `user-status-${data.input.userId}` })
     },
     onSuccess(response) {
-      // Dismiss the loading toast
       toast.dismiss(`user-status-${response.input.userId}`)
 
       if (response.data?.success) {
@@ -390,26 +347,9 @@ export default function CustomerTable() {
           response.data.message || `User ${response.input.activate ? "activated" : "deactivated"} successfully`,
         )
 
-        // Update the customer lists with the new status
-        const updateCustomerList = (customers: EnhancedCustomerTableData[]) => {
-          return customers.map((customer) =>
-            customer.id === response.input.userId
-              ? {
-                  ...customer,
-                  status: response.input.activate ? ("active" as const) : ("inactive" as const),
-                  fullData: {
-                    ...customer.fullData,
-                    status: response.input.activate ? 1 : 0,
-                  },
-                }
-              : customer,
-          )
-        }
-
-        setIndividualCustomers((prev) => updateCustomerList(prev))
-        setBusinessCustomers((prev) => updateCustomerList(prev))
+        // Refresh the customer data after successful activation/deactivation
+        handleRefresh()
       } else if (response.data?.statusCode === 401 || response.data?.error?.includes("Authentication required")) {
-        // Replace this:
         toast.error(
           <div className="flex items-center justify-between gap-2">
             <p>{response.data?.error || "Your session has expired. Please log in again."}</p>
@@ -424,7 +364,6 @@ export default function CustomerTable() {
       setIsActivating(null)
     },
     onError(error) {
-      // Dismiss the loading toast on error
       if (error.input) {
         toast.dismiss(`user-status-${error.input.userId}`)
       }
@@ -433,7 +372,7 @@ export default function CustomerTable() {
     },
   })
 
-  // Update the executeDeleteUser action to include better toast handling
+  // Update the executeDeleteUser action
   const { execute: executeDeleteUser } = useAction(deleteUserAction, {
     onExecute(data) {
       setIsDeleting(data.input.userId)
@@ -444,12 +383,10 @@ export default function CustomerTable() {
 
       if (response.data?.success) {
         toast.success(response.data.message || "User deleted successfully")
-
-        // Remove the user from the customer lists
-        setIndividualCustomers((prev) => prev.filter((customer) => customer.id !== response.input.userId))
-        setBusinessCustomers((prev) => prev.filter((customer) => customer.id !== response.input.userId))
+        
+        // Refresh the customer data after successful deletion
+        handleRefresh()
       } else if (response.data?.statusCode === 401 || response.data?.error?.includes("Authentication required")) {
-        // Replace this:
         toast.error(
           <div className="flex items-center justify-between gap-2">
             <p>{response.data?.error || "Your session has expired. Please log in again."}</p>
@@ -506,9 +443,8 @@ export default function CustomerTable() {
         link.click()
         document.body.removeChild(link)
 
-        toast.success(`${activeTab === "individual" ? "Individual" : "Business"} customers exported successfully`)
+        toast.success(`${activeTab === "Individual" ? "Individual" : "Business"} customers exported successfully`)
       } else if (data.data?.statusCode === 401 || data.data?.error?.includes("Authentication required")) {
-        // Replace this:
         toast.error(
           <div className="flex items-center justify-between gap-2">
             <p>{data.data?.error || "Your session has expired. Please log in again."}</p>
@@ -527,24 +463,23 @@ export default function CustomerTable() {
     },
   })
 
-  const columns: ColumnDef<EnhancedCustomerTableData>[] = [
+  const columns: ColumnDef<CustomerTableData>[] = [
     {
       accessorKey: "id",
       header: "ID",
       cell: ({ row }) => {
-        // Get the full ID for copying to clipboard
-        const fullId = row.original.fullId || (row.getValue("id") as string)
-        // Get the short ID for display (part before the dash or the customerId)
-        const displayId = row.original.customerId || (row.getValue("id") as string).split("-")[0]
+        const customer = row.original
+        const fullId = customer.fullId
+        const displayId = customer.customerId || customer.id
 
         return (
           <div className="flex items-center gap-2">
             <Avatar className="w-8 h-8">
-              <AvatarImage src={row.original.avatar} alt="Customer avatar" />
+              <AvatarImage src={customer.avatar} alt="Customer avatar" />
               <AvatarFallback>
-                {activeTab === "individual"
-                  ? row.original.firstName?.[0] || "?"
-                  : row.original.businessName?.[0] || row.original.fullData?.busienssName?.[0] || "B"}
+                {activeTab === "Individual"
+                  ? customer.firstName?.[0] || "?"
+                  : customer.businessName?.[0] || "B"}
               </AvatarFallback>
             </Avatar>
             <div className="flex items-center gap-1">
@@ -565,36 +500,51 @@ export default function CustomerTable() {
       },
     },
     {
-      accessorKey: activeTab === "individual" ? "firstName" : "businessName",
+      accessorKey: activeTab === "Individual" ? "firstName" : "businessName",
       header: ({ column }) => {
         return (
           <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-            {activeTab === "individual" ? "First Name" : "Business Name"}
+            {activeTab === "Individual" ? "First Name" : "Business Name"}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         )
       },
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          {row.getValue(activeTab === "individual" ? "firstName" : "businessName")}
-        </div>
-      ),
+      cell: ({ row }) => {
+        const value = row.getValue(activeTab === "Individual" ? "firstName" : "businessName") as string
+        return (
+          <div className="flex items-center gap-2">
+            {value === "N/A" ? <span className="text-muted-foreground italic">Not provided</span> : value}
+          </div>
+        )
+      },
     },
-    ...(activeTab === "individual"
+    ...(activeTab === "Individual"
       ? [
           {
             accessorKey: "lastName",
             header: "Last Name",
-          } as ColumnDef<EnhancedCustomerTableData>,
+            cell: ({ row }) => {
+              const value = row.getValue("lastName") as string
+              return value === "N/A" ? <span className="text-muted-foreground italic">Not provided</span> : value
+            }
+          } as ColumnDef<CustomerTableData>,
         ]
       : []),
     {
       accessorKey: "email",
       header: "Email",
+      cell: ({ row }) => {
+        const value = row.getValue("email") as string
+        return value === "N/A" ? <span className="text-muted-foreground italic">Not provided</span> : value
+      }
     },
     {
       accessorKey: "phone",
       header: "Phone Number",
+      cell: ({ row }) => {
+        const value = row.getValue("phone") as string
+        return value === "N/A" ? <span className="text-muted-foreground italic">Not provided</span> : value
+      }
     },
     {
       accessorKey: "status",
@@ -614,6 +564,10 @@ export default function CustomerTable() {
     {
       accessorKey: "date",
       header: "Date",
+      cell: ({ row }) => {
+        const value = row.getValue("date") as string
+        return value === "N/A" ? <span className="text-muted-foreground italic">Not available</span> : value
+      }
     },
     {
       accessorKey: "tierLevel",
@@ -622,9 +576,30 @@ export default function CustomerTable() {
     {
       accessorKey: "kycStatus",
       header: "KYC Status",
+      cell: ({ row }) => {
+        const status = row.getValue("kycStatus") as string
+        let statusClass = ""
+        
+        switch(status) {
+          case "Approved":
+            statusClass = "text-green-600 dark:text-green-400"
+            break
+          case "Rejected":
+            statusClass = "text-red-600 dark:text-red-400"
+            break
+          case "Under Review":
+            statusClass = "text-amber-600 dark:text-amber-400"
+            break
+          case "Pending":
+            statusClass = "text-blue-600 dark:text-blue-400"
+            break
+          default:
+            statusClass = "text-gray-600 dark:text-gray-400"
+        }
+        
+        return <span className={statusClass}>{status}</span>
+      },
     },
-    // Update the columns definition to use the new handlers
-    // In the columns array, update the actions cell:
     {
       id: "actions",
       cell: ({ row }) => {
@@ -642,11 +617,10 @@ export default function CustomerTable() {
     },
   ]
 
-  const customers = activeTab === "individual" ? individualCustomers : businessCustomers
-  const isLoading = activeTab === "individual" ? isLoadingIndividual : isLoadingBusiness
+  const customers = activeTab === "Individual" ? individualCustomers : businessCustomers
+  const isLoading = activeTab === "Individual" ? isLoadingIndividual : isLoadingBusiness
 
-  // Add custom filter functions for the columns
-  // Add this after the columns definition but before creating the table
+  // Type-safe filter functions for table 
   type TableRow = {
     getValue: (columnId: string) => unknown
   }
@@ -685,8 +659,7 @@ export default function CustomerTable() {
     [],
   )
 
-  // Update the table creation to include the custom filter functions
-  // Replace the existing table creation with this:
+  // Initialize the table with type safety
   const table = useReactTable({
     data: customers,
     columns,
@@ -721,7 +694,6 @@ export default function CustomerTable() {
     })
   }
 
-  // Fix the filter functionality by updating the handleFilterApply function
   const handleFilterApply = () => {
     // For date filtering
     if (filterSettings.dateFrom || filterSettings.dateTo) {
@@ -785,37 +757,38 @@ export default function CustomerTable() {
       pageNumber: newPageNumber,
     }))
 
-    if (activeTab === "individual") {
-      fetchIndividualCustomers({
-        pageSize: pagination.pageSize,
-        pageNumber: newPageNumber,
-        customerType: "individual",
-      })
+    const params: FetchCustomersInput = {
+      pageSize: pagination.pageSize,
+      pageNumber: newPageNumber,
+      customerType: activeTab,
+    }
+
+    if (activeTab === "Individual") {
+      fetchIndividualCustomers(params)
     } else {
-      fetchBusinessCustomers({
-        pageSize: pagination.pageSize,
-        pageNumber: newPageNumber,
-        customerType: "business",
-      })
+      fetchBusinessCustomers(params)
     }
   }
 
   // Handle manual refresh
   const handleRefresh = () => {
     setIsRefreshing(true)
-    if (activeTab === "individual") {
-      fetchIndividualCustomers({
-        pageSize: pagination.pageSize,
-        pageNumber: pagination.pageNumber,
-        customerType: "individual",
-      })
-    } else {
-      fetchBusinessCustomers({
-        pageSize: pagination.pageSize,
-        pageNumber: pagination.pageNumber,
-        customerType: "business",
-      })
+    const params: FetchCustomersInput = {
+      pageSize: pagination.pageSize,
+      pageNumber: pagination.pageNumber,
+      customerType: activeTab,
     }
+
+    if (activeTab === "Individual") {
+      fetchIndividualCustomers(params)
+    } else {
+      fetchBusinessCustomers(params)
+    }
+  }
+
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    setActiveTab(value as CustomerType)
   }
 
   // Initial data loading
@@ -825,13 +798,13 @@ export default function CustomerTable() {
       fetchIndividualCustomers({
         pageSize: pagination.pageSize,
         pageNumber: pagination.pageNumber,
-        customerType: "individual",
+        customerType: "Individual",
       })
 
       fetchBusinessCustomers({
         pageSize: pagination.pageSize,
         pageNumber: pagination.pageNumber,
-        customerType: "business",
+        customerType: "Business",
       })
     }
   }, [fetchIndividualCustomers, fetchBusinessCustomers, isInitialLoad, pagination.pageNumber, pagination.pageSize])
@@ -913,66 +886,74 @@ export default function CustomerTable() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button
-            variant="gooeyLeft"
-            className="bg-transparent border text-foreground"
-            onClick={() => exportCustomers({ 
-              customerType: activeTab,
-              format: "csv",
-              pageSize: pagination.pageSize,
-              pageNumber: pagination.pageNumber,
-              searchParams: {
-                searchTerm,
-                ...(filterSettings.dateFrom && { dateFrom: filterSettings.dateFrom.toISOString() }),
-                ...(filterSettings.dateTo && { dateTo: filterSettings.dateTo.toISOString() }),
-                ...(filterSettings.tierLevels.length > 0 && { tierLevels: filterSettings.tierLevels.join(",") }),
-                ...(filterSettings.kycStatuses.length > 0 && { kycStatuses: filterSettings.kycStatuses.join(",") })
-              }
-            })}
-            disabled={exportStatus === "executing"}
-          >
-            {exportStatus === "executing" ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin md:mr-2" />
-                <span className="md:block hidden">Exporting...</span>
-              </>
-            ) : (
-              <>
-                <Download className="w-4 h-4 md:mr-2" />
-                <span className="md:block hidden">Export CSV</span>
-              </>
-            )}
-          </Button>
-          <Button
-            variant="gooeyLeft"
-            className="bg-transparent border text-foreground"
-            onClick={() => exportCustomers({ 
-              customerType: activeTab,
-              format: "pdf",
-              pageSize: pagination.pageSize,
-              pageNumber: pagination.pageNumber,
-              searchParams: {
-                searchTerm,
-                ...(filterSettings.dateFrom && { dateFrom: filterSettings.dateFrom.toISOString() }),
-                ...(filterSettings.dateTo && { dateTo: filterSettings.dateTo.toISOString() }),
-                ...(filterSettings.tierLevels.length > 0 && { tierLevels: filterSettings.tierLevels.join(",") }),
-                ...(filterSettings.kycStatuses.length > 0 && { kycStatuses: filterSettings.kycStatuses.join(",") })
-              }
-            })}
-            disabled={exportStatus === "executing"}
-          >
-            {exportStatus === "executing" ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin md:mr-2" />
-                <span className="md:block hidden">Exporting...</span>
-              </>
-            ) : (
-              <>
-                <Download className="w-4 h-4 md:mr-2" />
-                <span className="md:block hidden">Export PDF</span>
-              </>
-            )}
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="ml-auto">
+                <Download className="mr-2 h-4 w-4" />
+                <span>Export</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="p-2 cursor-pointer" align="end">
+              <DropdownMenuItem
+                className="py-2 cursor-pointer"
+                onClick={() => exportCustomers({ 
+                  customerType: activeTab,
+                  format: "csv",
+                  pageSize: pagination.pageSize,
+                  pageNumber: pagination.pageNumber,
+                  searchParams: {
+                    searchTerm,
+                    ...(filterSettings.dateFrom && { dateFrom: filterSettings.dateFrom.toISOString() }),
+                    ...(filterSettings.dateTo && { dateTo: filterSettings.dateTo.toISOString() }),
+                    ...(filterSettings.tierLevels.length > 0 && { tierLevels: filterSettings.tierLevels.join(",") }),
+                    ...(filterSettings.kycStatuses.length > 0 && { kycStatuses: filterSettings.kycStatuses.join(",") })
+                  }
+                })}
+                disabled={exportStatus === "executing"}
+              >
+                {exportStatus === "executing" ? (
+                  <span className="flex items-center">
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Exporting CSV...
+                  </span>
+                ) : (
+                  <span className="flex items-center">
+                    <Download className="h-4 w-4 mr-2" />
+                    Export CSV
+                  </span>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="py-2 cursor-pointer"
+                onClick={() => exportCustomers({ 
+                  customerType: activeTab,
+                  format: "pdf",
+                  pageSize: pagination.pageSize,
+                  pageNumber: pagination.pageNumber,
+                  searchParams: {
+                    searchTerm,
+                    ...(filterSettings.dateFrom && { dateFrom: filterSettings.dateFrom.toISOString() }),
+                    ...(filterSettings.dateTo && { dateTo: filterSettings.dateTo.toISOString() }),
+                    ...(filterSettings.tierLevels.length > 0 && { tierLevels: filterSettings.tierLevels.join(",") }),
+                    ...(filterSettings.kycStatuses.length > 0 && { kycStatuses: filterSettings.kycStatuses.join(",") })
+                  }
+                })}
+                disabled={exportStatus === "executing"}
+              >
+                {exportStatus === "executing" ? (
+                  <span className="flex items-center">
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Exporting PDF...
+                  </span>
+                ) : (
+                  <span className="flex items-center">
+                    <Download className="h-4 w-4 mr-2" />
+                    Export PDF
+                  </span>
+                )}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="gooeyLeft" className="bg-transparent border text-foreground">
@@ -1134,12 +1115,13 @@ export default function CustomerTable() {
       <div className="flex items-center justify-between">
         <Tabs
           className="p-0 m-0"
-          defaultValue="individual"
-          onValueChange={(value) => setActiveTab(value as CustomerType)}
+          defaultValue="Individual"
+          value={activeTab}
+          onValueChange={handleTabChange}
         >
           <TabsList className="bg-transparent p-0">
-            <TabsTrigger value="individual">Individual</TabsTrigger>
-            <TabsTrigger value="business">Business</TabsTrigger>
+            <TabsTrigger value="Individual">Individual</TabsTrigger>
+            <TabsTrigger value="Business">Business</TabsTrigger>
           </TabsList>
         </Tabs>
 

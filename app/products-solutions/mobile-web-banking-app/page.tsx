@@ -1,9 +1,11 @@
+"use client"
 import { Footer } from "@/components/main/Footer";
 import Navbar from "@/components/main/Navbar";
 import MobileBanking from "@/components/main/Product-solution/Mobile-Web";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import React from "react";
+import Link from "next/link";
 
 export default function page() {
   return (
@@ -25,7 +27,7 @@ export default function page() {
             </h3>
             <p className="text-sm mt-3 font-medium text-white/80">
               Let Trubank transform your digital banking experience with a
-              tailored solution that fits your needs. Whether you’re looking to
+              tailored solution that fits your needs. Whether you&apos;re looking to
               enhance customer satisfaction, streamline operations, or expand
               your services, our Mobile/Web Banking App delivers unmatched
               value.
@@ -33,9 +35,12 @@ export default function page() {
             <Button
               size="lg"
               className="mt-6 bg-white text-primary hover:bg-white/90"
+              asChild
             >
-              Get Started Today
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <Link href="/waitlist">
+                Get Started Today
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
             </Button>
           </div>
         </div>

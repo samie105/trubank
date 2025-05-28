@@ -28,11 +28,11 @@ export default function AboutPage() {
 
         {/* Content */}
         <div className="relative z-20 mx-auto flex min-h-[60vh] max-w-7xl flex-col items-center justify-center px-4 text-center text-white sm:px-6 lg:px-8">
-          <span className="inline-block mt-20 rounded-full bg-white px-4 py-1 text-sm font-medium text-primary">
+          <div className="inline-block mt-20 rounded-full bg-white px-4 py-1 text-sm font-medium text-primary">
             Our Story
-          </span>
+          </div>
           <h1 className="mt-6 text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-            Redefining{" "}
+            Redefining
             <span className="text-yellow-300">Financial Innovation</span>
             <br />
             for a Connected World
@@ -120,9 +120,9 @@ export default function AboutPage() {
                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white">
                         {value.id}
                       </div>
-                      <span className="text-lg font-medium text-gray-900">
+                      <div className="text-lg font-medium text-gray-900">
                         {value.name}
-                      </span>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -132,9 +132,9 @@ export default function AboutPage() {
                       <div className="flex size-8 items-center justify-center rounded-full bg-primary text-white">
                         {value.id}
                       </div>
-                      <span className="text-lg font-medium text-gray-900">
+                      <div className="text-lg font-medium text-gray-900">
                         {value.name}
-                      </span>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -144,7 +144,7 @@ export default function AboutPage() {
             {/* Image */}
             <div className="relative aspect-square lg:aspect-auto order-first lg:order-none">
               <Image
-                src="/assets/about-us/core_values.svg" // Replace with your image path
+                src="/assets/about-us/core_values.svg"
                 alt="Core Values Illustration"
                 fill
                 className="object-contain"

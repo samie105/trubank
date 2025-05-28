@@ -28,7 +28,7 @@ import { logoutAction } from "@/server/auth/auth-server"
 // Define form schema
 const formSchema = z.object({
   branch: z.string().min(1, "Please select a branch"),
-  accountOfficer: z.string().min(1, "Account officer is required"),
+  accountOfficer: z.string().nullable(),
   desiredAccount: z.string().min(1, "Desired account is required"),
 })
 
@@ -41,7 +41,7 @@ export default function BusinessProfileForm() {
 
   // State for branches, account officers, and product types
   const [branches, setBranches] = useState<{ id: string; name: string }[]>([])
-  const [accountOfficers, setAccountOfficers] = useState<{ id: string; fullName: string }[]>([])
+  const [accountOfficers, setAccountOfficers] = useState<{ id: string | null; fullName: string; createdAt: string }[]>([])
   const [productTypes, setProductTypes] = useState<ProductType[]>([])
   const [isLoadingBranches, setIsLoadingBranches] = useState(true)
   const [isLoadingOfficers, setIsLoadingOfficers] = useState(true)
@@ -80,11 +80,6 @@ export default function BusinessProfileForm() {
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      branch: formData.branch || "",
-      accountOfficer: formData.accountOfficer || "",
-      desiredAccount: formData.desiredAccount || "",
-    },
   })
 
   router.prefetch("/dashboard/customer-management/create/business")
@@ -178,17 +173,41 @@ export default function BusinessProfileForm() {
 
   // Fetch data on component mount
   useEffect(() => {
-    fetchBranches()
-    fetchAccountOfficers()
-    fetchProductTypes()
-  }, [fetchBranches, fetchAccountOfficers, fetchProductTypes])
+    const fetchAllData = async () => {
+      try {
+        console.log("Starting parallel data fetching...")
+        // Fetch all data in parallel
+        const fetchPromises = [
+          Promise.resolve(fetchBranches()).catch((err) => {
+            console.error("Error in fetchBranches Promise:", err)
+            return null;
+          }),
+          Promise.resolve(fetchAccountOfficers()).catch((err) => {
+            console.error("Error in fetchAccountOfficers Promise:", err)
+            return null;
+          }),
+          Promise.resolve(fetchProductTypes()).catch((err) => {
+            console.error("Error in fetchProductTypes Promise:", err)
+            return null;
+          }),
+        ];
+        
+        await Promise.all(fetchPromises);
+        console.log("Completed parallel data fetching")
+      } catch (error) {
+        console.error("Unexpected error in fetchAllData:", error)
+      }
+    };
+
+    fetchAllData();
+  }, [fetchBranches, fetchAccountOfficers, fetchProductTypes]);
 
   useEffect(() => {
     const savedData = localStorage.getItem("CustomerBusinessForm")
     if (savedData) {
       const parsedData = JSON.parse(savedData)
       if (parsedData.branch) form.setValue("branch", parsedData.branch)
-      if (parsedData.accountOfficer) form.setValue("accountOfficer", parsedData.accountOfficer)
+      if (parsedData.accountOfficer !== undefined) form.setValue("accountOfficer", parsedData.accountOfficer)
       if (parsedData.desiredAccount) form.setValue("desiredAccount", parsedData.desiredAccount)
     }
   }, [form])
@@ -217,7 +236,7 @@ export default function BusinessProfileForm() {
             Customer Assignment <br /> and Account Setup
           </h2>
           <h2 className="text-sm text-center font-medium text-muted-foreground">
-            Assign the customer to a branch and an officer, <br /> then proceed to create their account
+            Assign the customer to a branch, a product type and an officer, <br /> then proceed to create their account
           </h2>
 
           {isLoadingBranches ? (
@@ -308,23 +327,30 @@ export default function BusinessProfileForm() {
                         <CommandList>
                           <CommandEmpty>No account officer found.</CommandEmpty>
                           <CommandGroup>
-                            {accountOfficers.map((officer) => (
-                              <CommandItem
-                                key={officer.id}
-                                value={officer.fullName}
-                                onSelect={() => {
-                                  field.onChange(officer.id)
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    officer.id === field.value ? "opacity-100" : "opacity-0",
-                                  )}
-                                />
-                                {officer.fullName}
-                              </CommandItem>
-                            ))}
+                            {accountOfficers.map((officer) => {
+                              // Use name as unique identifier for UI comparison only
+                              const displayIdentifier = officer.id || officer.fullName;
+                              return (
+                                <CommandItem
+                                  key={displayIdentifier}
+                                  value={officer.fullName}
+                                  onSelect={() => {
+                                    // Always pass the actual ID (even if null) to the form
+                                    field.onChange(officer.id)
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      (field.value === officer.id || 
+                                       (field.value === null && officer.id === null)) 
+                                       ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  {officer.fullName}
+                                </CommandItem>
+                              );
+                            })}
                           </CommandGroup>
                         </CommandList>
                       </Command>
@@ -377,7 +403,7 @@ export default function BusinessProfileForm() {
                                 <Check
                                   className={cn("mr-2 h-4 w-4", type.id === field.value ? "opacity-100" : "opacity-0")}
                                 />
-                                {type.name} ({type.accountTypeId})
+                                {type.name}
                               </CommandItem>
                             ))}
                           </CommandGroup>
@@ -394,7 +420,7 @@ export default function BusinessProfileForm() {
 
         <div className="flex justify-between">
           <Button type="button" variant="outline" onClick={() => setCreating(false)}>
-            Previous
+            Back
           </Button>
           <div className="space-x-2">
             <Button type="submit" className="text-white">

@@ -301,8 +301,10 @@ export default function ProductTable() {
           </DropdownMenu> */}
           <Button className="bg-primary hover:bg-primary" asChild>
             <Link href={"manage-product/create-product"}>
-              <Plus className="md:mr-2 h-4 w-4" />{" "}
-              <span className="hidden md:block">Create New Product</span>
+              <div className="flex items-center">
+                <Plus className="md:mr-2 h-4 w-4" />
+                <span className="hidden md:block">Create New Product</span>
+              </div>
             </Link>
           </Button>
           <Button variant="outline" size="icon">

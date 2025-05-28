@@ -12,7 +12,7 @@ export function TableSkeleton({ columns, rows = 5 }: TableSkeletonProps) {
       {Array(rows)
         .fill(null)
         .map((_, rowIndex) => (
-          <TableRow key={`skeleton-row-${rowIndex}`} className="animate-pulse">
+          <TableRow key={`skeleton-row-${rowIndex}`} className="">
             {Array(columns)
               .fill(null)
               .map((_, colIndex) => (

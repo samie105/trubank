@@ -2,215 +2,22 @@
 "use server"
 
 import { actionClient } from "@/lib/safe-action"
-import { z } from "zod"
 import { cookies } from "next/headers"
-
-// Define the schema for pagination and search parameters
-const fetchCustomersSchema = z.object({
-  pageSize: z.number().default(10),
-  pageNumber: z.number().default(0),
-  searchParams: z.record(z.string()).optional(),
-  customerType: z.enum(["individual", "business"]),
-})
-
-// Define types for the API responses
-export interface IndividualCustomer {
-  id: string
-  firstName: string
-  middleName: string
-  lastName: string
-  fullName: string
-  gender: string
-  customerId: string
-  dateOfBirth: string
-  maritalStatus: string
-  nationality: string
-  residentialAddress: string
-  emailAddress: string
-  passwordHash: string
-  phoneNumber: string
-  alternatePhoneNumber: string
-  employmentStatus: string
-  taxIdentificationNumber: string
-  branchId: string
-  accountOfficerId: string
-  idType: string
-  idNumber: string
-  idIssuingAuthority: string
-  proofOfAddressType: string
-  meansOfIdentification: {
-    meansOfIdentificationFile: string
-    meansOfIdentificationFileType: string
-    meansOfIdentificationFileName: string
-  }
-  idExpiryDate: string
-  proofOfAddress: {
-    proofOfAddressFile: string
-    proofOfAddressType: string
-    proofOfAddressFileName: string
-  }
-  proofOfAddressIssuingAuthority: string
-  proofOfAddressDateIssue: string
-  profilePicture: {
-    profilePicture: string
-    profilePictureType: string
-    profilePictureName: string
-  }
-  employmentDetailsId: string
-  guarantorDetailsId: string
-  nextOfKinDetailsId: string
-  desiredAccount: string
-  type: number
-  kycStatus: number
-  status: number
-  lastLogin: string
-  lastModified: string
-  isActive: boolean
-  isDeleted: boolean
-  createdAt: string
-  updatedAt: string
-  employmentDetails: {
-    id: string
-    appUserId: string
-    currentEmployerName: string
-    employerAddress: string
-    jobTitle: string
-    employementStateDate: string
-    employementEndDate: string
-    employmentVerificationDocument: string
-    employmentVerificationDocumentName: string
-    employmentVerificationDocumentType: string
-  }
-  guarantorDetails: {
-    id: string
-    appUserId: string
-    guarantorFullName: string
-    guarantorRelationshipToCustomer: string
-    guarantorPhoneNumber: string
-    guarantorEmailAddress: string
-    guarantorAddress: string
-    guarantorFileDocument: string
-    guarantorDocumentName: string
-    guarantorDocumentType: string
-  }
-  nextOfKinDetails: {
-    id: string
-    appUserId: string
-    nextOfKinFullName: string
-    nextOfKinRelationshipToCustomer: string
-    nextOfKinPhoneNumber: string
-    nextOfKinEmailAddress: string
-    nextOfKinAddress: string
-  }
-  accountTier: {
-    id: string
-    name: string
-    description: string
-    minAmount: number
-    maxAmount: number
-  }
-  accountOfficer: {
-    id: string
-    fullName: string
-  }
-  branch: {
-    id: string
-    name: string
-  }
-}
-
-// Update the BusinessCustomer interface to match the actual API response
-export interface BusinessCustomer {
-  id: string
-  busienssName: string // Spelling as in API response
-  registrationNumber: string
-  taxIdentificationNumber: string
-  natureOfBusiness: string
-  busienssType: string // Spelling as in API response
-  businessAddress: string
-  phoneNumber: string
-  emailAddress: string
-  website: string
-  customerId: string
-  passwordHash: string
-  accountTierId: string
-  accountOfficerId: string
-  branchId: string
-  incorporationCertificate: {
-    incorporationCertificateFile: string
-    incorporationCertificateType: string
-    incorporationCertificateFileName: string
-  }
-  memorandumAssociation: {
-    memorandumAssociationFile: string
-    memorandumAssociationType: string
-    memorandumAssociationFileName: string
-  }
-  businessLicence: {
-    businessLicenceFile: string
-    businessLicenceType: string
-    businessLicenceFileName: string
-  }
-  utilityType: string
-  utilityIssuer: string
-  utilityDateIssuer: string
-  utility: {
-    utilityFile: string
-    utilityFileType: string
-    utilityFileName: string
-  }
-  productType: string
-  retries: number
-  type: number
-  kycStatus: number
-  lastLogin: string
-  lastModified: string
-  dateDeleted: string
-  isActive: boolean
-  isDeleted: boolean
-  createdAt: string
-  updatedAt: string
-  status: number
-  operationBy: string
-  accountTier: {
-    id: string
-    name: string
-    description: string
-    minAmount: number
-    maxAmount: number
-  }
-  accountOfficer: {
-    id: string
-    fullName: string
-  }
-  branch: {
-    id: string
-    name: string
-  }
-}
-
-// Update the CustomerTableData interface to include fullId and customerId
-export interface CustomerTableData {
-  id: string
-  fullId?: string // Store the full ID for API requests
-  customerId?: string // Store the customerId if available
-  firstName?: string
-  lastName?: string
-  businessName?: string
-  email: string
-  phone: string
-  status: "active" | "inactive"
-  date: string
-  avatar: string
-  type: "individual" | "business"
-  tierLevel: string
-  kycStatus: string
-  fullData?: any // Store the complete customer data
-}
+import {
+  fetchCustomersSchema,
+  type FetchCustomersInput,
+  type CustomerTableData,
+  type IndividualCustomerAPI,
+  type BusinessCustomerAPI,
+  type ApiResponse,
+  type ApiResponseStructure,
+  type StatusType,
+  type KycStatusType
+} from "./types"
 
 // Helper function to map API status codes to readable strings
-function mapKycStatus(statusCode: number): string {
-  const kycStatusMap: Record<number, string> = {
+function mapKycStatus(statusCode: number): KycStatusType {
+  const kycStatusMap: Record<number, KycStatusType> = {
     0: "Pending",
     1: "Under Review",
     2: "Approved",
@@ -219,25 +26,40 @@ function mapKycStatus(statusCode: number): string {
   return kycStatusMap[statusCode] || "Unknown"
 }
 
-// Helper function to map API status codes to readable strings
-function mapStatus(statusCode: number): "active" | "inactive" {
-  return statusCode === 1 ? "active" : "inactive"
+// Helper function to map active status from boolean
+function mapStatus(isActive: boolean): StatusType {
+  return isActive ? "active" : "inactive"
 }
 
 // Helper function to format date
 function formatDate(dateString: string): string {
-  const date = new Date(dateString)
-  const options: Intl.DateTimeFormatOptions = {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
+  try {
+    if (!dateString) return "N/A";
+    
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return "N/A";
+    }
+    
+    const options: Intl.DateTimeFormatOptions = {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    };
+    return date.toLocaleDateString("en-US", options);
+  } catch {
+    return "N/A";
   }
-  return date.toLocaleDateString("en-US", options)
+}
+
+// Safe getter for potentially undefined values
+function safeGetString(value: string | null | undefined): string {
+  return value ? value.trim() : "N/A";
 }
 
 export const fetchCustomersAction = actionClient
   .schema(fetchCustomersSchema)
-  .action(async ({ parsedInput: { pageSize, pageNumber, searchParams, customerType } }) => {
+  .action(async ({ parsedInput }: { parsedInput: FetchCustomersInput }): Promise<ApiResponse<CustomerTableData[]>> => {
     try {
       // Get the auth token from cookies
       const cookieStore = await cookies()
@@ -251,19 +73,18 @@ export const fetchCustomersAction = actionClient
         }
       }
 
-      // Create the request body with field selection to optimize the response
+      const { pageSize, pageNumber, searchParams, customerType } = parsedInput
+
+      // Create the request body
       const requestBody = {
         pageSize,
         pageNumber,
         searchParams: searchParams || {},
-        // Add field selection if the API supports it
-        // This is a comment for now, as we don't know if the API supports field selection
-        // fields: ["id", "customerId", "firstName", "lastName", "emailAddress", "phoneNumber", "status", "createdAt", "profilePicture", "accountTier", "kycStatus"]
       }
 
       // Determine the endpoint based on customer type
       const endpoint =
-        customerType === "individual"
+        customerType === "Individual"
           ? "/customermanagement/get-all-individual-users"
           : "/customermanagement/get-all-business-users"
 
@@ -296,7 +117,7 @@ export const fetchCustomersAction = actionClient
       }
 
       // Safely parse the JSON response
-      let data
+      let data: ApiResponseStructure<IndividualCustomerAPI | BusinessCustomerAPI>
       try {
         const text = await response.text()
         data = text ? JSON.parse(text) : {}
@@ -311,40 +132,69 @@ export const fetchCustomersAction = actionClient
 
       // Check if the request was successful
       if (data.isSuccess && data.result?.data) {
-        // Transform the data for the table component
-        const transformedData =
-          customerType === "individual"
-            ? (data.result.data as IndividualCustomer[]).map((customer) => ({
-                id: customer.id,
-                fullId: customer.id, // Store the full ID for API requests
-                customerId: customer.customerId, // Store the customerId if available
-                firstName: customer.firstName,
-                lastName: customer.lastName,
-                email: customer.emailAddress,
-                phone: customer.phoneNumber,
-                status: mapStatus(customer.status),
-                date: formatDate(customer.createdAt),
-                avatar: customer.profilePicture?.profilePicture || "",
-                type: "individual",
-                tierLevel: customer.accountTier?.name || "Tier 1",
-                kycStatus: mapKycStatus(customer.kycStatus),
-                fullData: customer, // Include the complete customer data
-              }))
-            : (data.result.data as BusinessCustomer[]).map((customer) => ({
-                id: customer.id,
-                fullId: customer.id, // Store the full ID for API requests
-                customerId: customer.customerId, // Store the customerId if available
-                businessName: customer.busienssName, // Note the typo in the API response
-                email: customer.emailAddress,
-                phone: customer.phoneNumber,
-                status: mapStatus(customer.status),
-                date: formatDate(customer.createdAt),
-                avatar: "",
-                type: "business",
-                tierLevel: customer.accountTier?.name || "Tier 1",
-                kycStatus: mapKycStatus(customer.kycStatus),
-                fullData: customer, // Include the complete customer data
-              }))
+        // Transform the data based on customer type
+        let transformedData: CustomerTableData[] = []
+        
+        if (customerType === "Individual") {
+          // Cast the data to the correct type
+          const individualData = data.result.data as IndividualCustomerAPI[]
+          console.log(individualData[0])
+          
+          // Filter out deleted users and transform the data
+          transformedData = individualData
+            .filter(customer => !customer.isDeleted)
+            .map((customer) => ({
+              id: customer.customerId || customer.id.substring(0, 8),
+              fullId: customer.id,
+              customerId: customer.customerId,
+              firstName: safeGetString(customer.firstName),
+              lastName: safeGetString(customer.lastName),
+              email: safeGetString(customer.emailAddress),
+              phone: safeGetString(customer.phoneNumber),
+              status: mapStatus(customer.isActive),
+              date: formatDate(customer.createdAt),
+              avatar: customer.profilePicture?.profilePicture || "",
+              type: "Individual" as const,
+              tierLevel: customer.accountTier?.name || "Tier 1",
+              kycStatus: mapKycStatus(customer.kycStatus),
+              originalData: customer,
+            }))
+        } else {
+          // Cast the data to the correct type
+          const businessData = data.result.data as BusinessCustomerAPI[]
+          
+          // Filter out deleted users and transform the data
+          transformedData = businessData
+            .filter(customer => !customer.isDeleted)
+            .map((customer) => ({
+              id: customer.customerId || customer.id.substring(0, 8),
+              fullId: customer.id,
+              customerId: customer.customerId,
+              businessName: safeGetString(customer.busienssName || customer.businessName),
+              email: safeGetString(customer.emailAddress),
+              phone: safeGetString(customer.phoneNumber),
+              status: mapStatus(customer.isActive),
+              date: formatDate(customer.createdAt),
+              avatar: "", // Business customers don't have avatars
+              type: "Business" as const,
+              tierLevel: customer.accountTier?.name || "Tier 1",
+              kycStatus: mapKycStatus(customer.kycStatus),
+              originalData: customer,
+            }))
+        }
+
+        // Log a sample of the transformed data for debugging
+        if (transformedData.length > 0) {
+          console.log("Sample transformed customer data:", {
+            id: transformedData[0].id,
+            fullId: transformedData[0].fullId,
+            email: transformedData[0].email,
+            phone: transformedData[0].phone,
+            date: transformedData[0].date,
+            status: transformedData[0].status,
+            kycStatus: transformedData[0].kycStatus
+          })
+        }
 
         return {
           success: true,

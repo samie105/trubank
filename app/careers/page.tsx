@@ -1,3 +1,4 @@
+"use client"
 import CareersPage from "@/components/main/careers/career";
 import CTAsection from "@/components/main/CTA-section";
 import { Footer } from "@/components/main/Footer";

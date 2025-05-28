@@ -10,7 +10,7 @@ export type DocumentType =
   | "DriverLicense"
   | "InternationalPassport"
   | "VotersCard"
-  | "NationalIdentityCard"
+  | "NationalIdentityCard" 
   | "BVN"
   | "Cac"
   | "BusinessIncorporationCertificate"
@@ -78,88 +78,12 @@ export type FormData = {
   customerType?: CustomerType;
   requireSmsAlert?: boolean;
   requireEmailAlert?: boolean;
-  customerId?: string;
 };
-
-export interface CustomerApiResponse {
-  id?: string;
-  firstName?: string;
-  lastName?: string;
-  dateOfBirth?: string;
-  gender?: string;
-  emailAddress?: string;
-  phoneNumber?: string;
-  nationality?: string;
-  maritalStatus?: string;
-  alternatePhoneNumber?: string;
-  employmentStatus?: string;
-  taxIdenttfictionNumber?: string;
-  residentialAddress?: string;
-  idType?: string;
-  idNumber?: string;
-  idExpiryDate?: string;
-  idIssuingAuthority?: string;
-  proofOfAddressType?: string;
-  proofOfAddressIssuingAuthority?: string;
-  proofOfAddressDateIssue?: string;
-  branchId?: string;
-  accountOfficerId?: string;
-  desiredAccount?: string;
-  meansOfIdentification?: {
-    meansOfIdentificationFile?: string;
-    meansOfIdentificationFileType?: string;
-    meansOfIdentificationFileName?: string;
-  };
-  proofOfAddress?: {
-    proofOfAddressFile?: string;
-    proofOfAddressType?: string;
-    proofOfAddressFileName?: string;
-  };
-  profilePicture?: {
-    profilePicture?: string;
-    profilePictureType?: string;
-    profilePictureName?: string;
-  };
-  branch?: {
-    id?: string;
-    name?: string;
-  };
-  accountOfficer?: {
-    id?: string;
-    fullName?: string;
-  };
-  employmentDetails?: {
-    currentEmployerName?: string;
-    employerAddress?: string;
-    jobTitle?: string;
-    employementStateDate?: string;
-    employementEndDate?: string;
-    employmentVerificationDocument?: string;
-  };
-  guarantorDetails?: {
-    guarantorFullName?: string;
-    guarantorRelationshipToCustomer?: string;
-    guarantorPhoneNumber?: string;
-    guarantorEmailAddress?: string;
-    guarantorAddress?: string;
-    guarantorFileDocument?: string;
-  };
-  nextOfKinDetails?: {
-    nextOfKinFullName?: string;
-    nextOfKinRelationshipToCustomer?: string;
-    nextOfKinPhoneNumber?: string;
-    nextOfKinEmailAddress?: string;
-    nextOfKinAddress?: string;
-  };
-  [key: string]: string | number | boolean | object | undefined;
-}
 
 export type FormContextType = {
   formData: FormData;
   updateFormData: (data: Partial<FormData>) => void;
-  loadEditData: (customerId: string, data: CustomerApiResponse) => void;
 };
-
 export type BusinessFormData = {
   businessName: string;
   registrationNumber: string;
@@ -184,56 +108,6 @@ export type BusinessFormData = {
   desiredAccount?: string;
   type?: number;
   customerId?: string;
-  businessId?: string;
-};
-
-export interface BusinessApiResponse {
-  id?: string;
-  busienssName?: string;
-  busienssType?: string;
-  businessAddress?: string;
-  emailAddress?: string;
-  phoneNumber?: string;
-  registrationNumber?: string;
-  website?: string;
-  taxIdentificationNumber?: string;
-  natureOfBusiness?: string;
-  branchId?: string;
-  accountOfficerId?: string;
-  desiredAccount?: string;
-  branch?: {
-    id?: string;
-    name?: string;
-  };
-  accountOfficer?: {
-    id?: string;
-    fullName?: string;
-  };
-  businessIncorporationDocument?: {
-    theFile?: string;
-    fileType?: number;
-  };
-  memorandumOfAssociationDocument?: {
-    theFile?: string;
-    fileType?: number;
-  };
-  businessLicenseDocument?: {
-    theFile?: string;
-    fileType?: number;
-  };
-  proofOfAddress?: {
-    utilityFile?: string;
-    utilityType?: number;
-    utilityIssuer?: string;
-    utilityDateIssuer?: string;
-  };
-  [key: string]: string | number | boolean | object | undefined;
-}
-
-export type BusinessFormContextType = {
-  formData: BusinessFormData;
-  updateFormData: (data: Partial<BusinessFormData>) => void;
-  loadEditData: (businessId: string, data: BusinessApiResponse) => void;
 };
 
 export type Country = {
@@ -263,4 +137,4 @@ export type State = {
   state_code: string;
   latitude: string;
   longitude: string;
-};
+}; 

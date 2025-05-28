@@ -1,6 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import React from "react";
 import { Button } from "../ui/button";
+import Link from "next/link";
 
 export default function CTAsection() {
   return (
@@ -18,9 +19,12 @@ export default function CTAsection() {
         <Button
           size="lg"
           className="mt-6 bg-white text-primary hover:bg-white/90"
+          asChild
         >
-          Get Started Today
-          <ArrowRight className="ml-2 h-4 w-4" />
+          <Link href="/waitlist">
+            Get Started Today
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Link>
         </Button>
       </div>
     </div>

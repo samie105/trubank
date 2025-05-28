@@ -162,7 +162,7 @@ export default function CreateProductPage() {
         localStorage.removeItem("createProductForm");
       }
     }
-  }, []);
+  }, [form]);
 
   // Go to previous step
   const handlePrevious = () => {

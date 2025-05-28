@@ -6,11 +6,20 @@ import { cookies } from "next/headers"
 
 // Define the schema for form validation - more flexible for edit mode
 const customerSchema = z.object({
+  // Required fields
+  branch: z.string().uuid("Branch must be a valid UUID"),
+  accountOfficer: z.string().uuid("Account Officer must be a valid UUID"),
+  desiredAccount: z.string().uuid("Desired Account must be a valid UUID"),
+  currentEmployerName: z.string().optional(),
+  employerAddress: z.string().optional(),
+  jobTitle: z.string().optional(),
+  
+  // Optional fields
   firstName: z.string().optional(),
   lastName: z.string().optional(),
   dob: z.string().or(z.date()).optional(),
-  gender: z.string().optional(), // Allow any string instead of enum
-  email: z.string().optional(),
+  gender: z.string().optional(),
+  email: z.string().email().optional(),
   phone: z.string().optional(),
   country: z.string().optional(),
   maritalStatus: z.string().optional(),
@@ -18,7 +27,6 @@ const customerSchema = z.object({
   employmentStatus: z.string().optional(),
   occupation: z.string().optional(),
   tin: z.string().optional(),
-  // Removed state field
   address: z.string().optional(),
   idType: z.string().optional(),
   idNumber: z.string().optional(),
@@ -33,12 +41,6 @@ const customerSchema = z.object({
   addressProofType: z.string().optional(),
   issuingAuthorityPOA: z.string().optional(),
   profileImage: z.string().nullable().optional(),
-  branch: z.string().optional(),
-  accountOfficer: z.string().optional(),
-  desiredAccount: z.string().optional(),
-  employerAddress: z.string().optional(),
-  jobTitle: z.string().optional(),
-  currentEmployerName: z.string().optional(),
   startDate: z.string().or(z.date()).optional(),
   endDate: z.string().or(z.date()).optional(),
   employmentDocument: z.string().nullable().optional(),
@@ -53,9 +55,7 @@ const customerSchema = z.object({
   nextOfKinEmail: z.string().optional(),
   nextOfKinAddress: z.string().optional(),
   nextOfKinRelationship: z.string().optional(),
-  // Only customerId is required
   customerId: z.string().min(1, "Customer ID is required"),
-  // Add alert preferences
   requireSmsAlert: z.boolean().default(false),
   requireEmailAlert: z.boolean().default(false),
 })
@@ -64,7 +64,7 @@ export type EditCustomerFormData = z.infer<typeof customerSchema>
 
 // Helper functions with more flexible handling
 function mapIdTypeToNumber(idType: string | undefined): number {
-  if (!idType) return 1; // Default to the first type if undefined
+  if (!idType) return 1;
 
   const idTypeMap: Record<string, number> = {
     // Add mappings from types.d.ts format
@@ -88,7 +88,7 @@ function mapIdTypeToNumber(idType: string | undefined): number {
 }
 
 function mapProofTypeToNumber(proofType: string | undefined): number {
-  if (!proofType) return 1; // Default to the first type if undefined
+  if (!proofType) return 1;
   
   const proofTypeMap: Record<string, number> = {
     // Add mappings from types.d.ts format
@@ -148,7 +148,7 @@ export const editCustomerAction = actionClient.schema(customerSchema).action(asy
 
     // Set API endpoint for individual customer
     const apiUrl = process.env.API_URL || "https://trubank-gateway-fdfjczfafqehhbea.uksouth-01.azurewebsites.net"
-    const apiEndpointBase = `${apiUrl}/customermanagement/edit-individual`
+    const apiEndpointBase = `${apiUrl}/customermanagement/edit-individual?UserId=${parsedInput.customerId}`
     
     // Create FormData
     const formData = new FormData()
@@ -158,23 +158,23 @@ export const editCustomerAction = actionClient.schema(customerSchema).action(asy
     
     // Use values directly from parsedInput
     formData.append("Type", "1"); // Individual customer type
-    formData.append("Branch", parsedInput.branch || "");
-    formData.append("AccountOfficer", parsedInput.accountOfficer || "");
-    formData.append("DesiredAccount", parsedInput.desiredAccount || "");
+    formData.append("Branch", parsedInput.branch);
+    formData.append("AccountOfficer", parsedInput.accountOfficer);
+    formData.append("DesiredAccount", parsedInput.desiredAccount);
     
     // Add alert preferences
-    formData.append("RequireSmsAlert", String(parsedInput.requireSmsAlert || false));
-    formData.append("RequireEmailAlert", String(parsedInput.requireEmailAlert || false));
+    formData.append("RequireSmsAlert", String(parsedInput.requireSmsAlert));
+    formData.append("RequireEmailAlert", String(parsedInput.requireEmailAlert));
     
     // Continue with the rest of the form data
-    formData.append("MeansOfIdentity.IdType", String(parsedInput.idType ? mapIdTypeToNumber(parsedInput.idType) : 1));
+    formData.append("MeansOfIdentity.IdType", String(mapIdTypeToNumber(parsedInput.idType || "")));
     formData.append("MeansOfIdentity.IdNumber", parsedInput.idNumber || "");
     formData.append("MeansOfIdentity.IdIssuingAuthority", parsedInput.issuingAuthority || "");
     formData.append(
       "MeansOfIdentity.IdExpiryDate",
       parsedInput.expiryDate instanceof Date
         ? parsedInput.expiryDate.toISOString()
-        : parsedInput.expiryDate || new Date().toISOString(),
+        : parsedInput.expiryDate || ""
     );
     formData.append("MeansOfIdentity.IdFile", parsedInput.idDocument || "");
     
@@ -185,7 +185,7 @@ export const editCustomerAction = actionClient.schema(customerSchema).action(asy
     formData.append("PersonalInformations.Gender", parsedInput.gender || "");
     formData.append(
       "PersonalInformations.DateOfBirth",
-      parsedInput.dob instanceof Date ? parsedInput.dob.toISOString() : parsedInput.dob || new Date().toISOString(),
+      parsedInput.dob instanceof Date ? parsedInput.dob.toISOString() : parsedInput.dob || ""
     );
     formData.append("PersonalInformations.MaritalStatus", parsedInput.maritalStatus || "");
     formData.append("PersonalInformations.Nationality", parsedInput.country || "");
@@ -199,14 +199,14 @@ export const editCustomerAction = actionClient.schema(customerSchema).action(asy
     // Add proofOfAddress fields
     formData.append(
       "ProofOfAddress.ProofOfAddressType",
-      String(parsedInput.addressProofType ? mapProofTypeToNumber(parsedInput.addressProofType) : 1),
+      String(mapProofTypeToNumber(parsedInput.addressProofType || ""))
     );
     formData.append("ProofOfAddress.ProofOfAddressIssuingAuthority", parsedInput.issuingAuthorityPOA || "");
     formData.append(
       "ProofOfAddress.ProofOfAddressDateIssue",
       parsedInput.dateOfIssue instanceof Date
         ? parsedInput.dateOfIssue.toISOString()
-        : parsedInput.dateOfIssue || new Date().toISOString(),
+        : parsedInput.dateOfIssue || ""
     );
     formData.append("ProofOfAddress.ProofOfAddressFile", parsedInput.proofOfAddress || "");
     
@@ -218,13 +218,13 @@ export const editCustomerAction = actionClient.schema(customerSchema).action(asy
       "EmploymentDetails.EmployementStateDate",
       parsedInput.startDate instanceof Date
         ? parsedInput.startDate.toISOString()
-        : parsedInput.startDate || new Date().toISOString(),
+        : parsedInput.startDate || ""
     );
     formData.append(
       "EmploymentDetails.EmployementEndDate",
       parsedInput.endDate instanceof Date
         ? parsedInput.endDate.toISOString()
-        : parsedInput.endDate || new Date().toISOString(),
+        : parsedInput.endDate || ""
     );
     formData.append("EmploymentDetails.EmploymentVerificationDocument", parsedInput.employmentDocument || "");
     
@@ -248,7 +248,6 @@ export const editCustomerAction = actionClient.schema(customerSchema).action(asy
     
     // Debug the FormData contents before sending
     debugFormData(formData);
-    
     // Make the API call for individual update using formData
     const updateResponse = await fetch(apiEndpointBase, {
       method: "PUT",
@@ -339,4 +338,3 @@ async function processApiResponse(response: Response) {
     };
   }
 }
-

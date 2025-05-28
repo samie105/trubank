@@ -10,13 +10,32 @@ const formSchema = z.object({
   message: z.string().min(10, "Message must be at least 10 characters"),
 });
 
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyFrXwKzkG3KIG2yXCWojO7CWSC_9SbEwszyC5Dkxwyv1nNjqFBlW2jDPgRtygQ1XQrQw/exec';
+
 export const submitContact = actionClient
   .schema(formSchema)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .action(async ({ parsedInput }) => {
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    try {
+      const formData = new FormData();
+      formData.append('Name', parsedInput.name);
+      formData.append('Email', parsedInput.email);
+      formData.append('Subject', parsedInput.subject);
+      formData.append('Message', parsedInput.message);
 
-    // Simulate success (you can add error simulation with Math.random())
-    return { success: true };
+      const response = await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (result.status === 'success') {
+        return { success: true, message: result.message };
+      } else {
+        return { success: false, message: result.message || 'Failed to send message' };
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      return { success: false, message: 'An error occurred while sending the message' };
+    }
   });

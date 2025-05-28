@@ -1,7 +1,8 @@
 "use client";
 
 import { FormData, IDType, ProofOfAddressType } from "@/types/types";
-import React, { createContext, useContext, useState, useEffect } from "react";
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 // Define a more specific type for the API response structure to avoid using 'any'
 interface CustomerApiResponse {
@@ -12,6 +13,8 @@ interface CustomerApiResponse {
   gender?: string;
   emailAddress?: string;
   phoneNumber?: string;
+  email?: string;
+  phone?: string;
   nationality?: string;
   maritalStatus?: string;
   alternatePhoneNumber?: string;
@@ -78,202 +81,175 @@ interface CustomerApiResponse {
   [key: string]: string | number | boolean | object | undefined; // More specific index signature
 }
 
-// Extend FormData type to include customerId for edit operations
-interface EditFormData extends FormData {
-  customerId?: string;
+// Define the store state structure
+interface FormState {
+  formData: FormData;
+  updateFormData: (data: Partial<FormData>) => void;
+  loadEditData: (customerId: string, data: CustomerApiResponse) => void;
 }
 
-type FormContextType = {
-  formData: EditFormData;
-  updateFormData: (data: Partial<EditFormData>) => void;
-  loadEditData: (customerId: string, data: CustomerApiResponse) => void;
-};
+// Create the Zustand store with persistence
+export const useFormStore = create<FormState>()(
+  persist(
+    (set) => ({
+      formData: {
+        firstName: "",
+        lastName: "",
+        dob: new Date(),
+        gender: undefined,
+        email: "",
+        phone: "+234",
+        country: "Nigeria",
+        maritalStatus: "",
+        alternatePhone: "",
+        employmentStatus: "",
+        tin: "",
+        address: "",
+        idType: undefined,
+        idNumber: "",
+        IdFile: null,
+        expiryDate: new Date(),
+        issuingAuthority: "",
+        issuingAuthorityPOA: "",
+        proofOfAddress: null,
+        dateOfIssue: new Date(),
+        addressProofType: undefined,
+        profileImage: null,
+        branch: undefined,
+        accountOfficer: null,
+        desiredAccount: undefined,
+        productType: undefined,
+        employerAddress: "",
+        jobTitle: "",
+        startDate: new Date(),
+        endDate: new Date(),
+        employmentDocument: null,
+        guarantorFullName: "",
+        guarantorRelationship: "",
+        guarantorPhone: "",
+        guarantorEmail: "",
+        guarantorAddress: "",
+        guarantorId: null,
+        nextOfKinFullName: "",
+        nextOfKinPhone: "",
+        nextOfKinEmail: "",
+        nextOfKinAddress: "",
+        currentEmployerName: "",
+        nextOfKinRelationship: "",
+      },
+      updateFormData: (data) => 
+        set((state) => ({
+          formData: { ...state.formData, ...data }
+        })),
+      loadEditData: (customerId, data) => {
+        // Initialize an object to hold the mapped data
+        const mappedData: Partial<FormData> = {
+          customerId: customerId, // Store the customer ID for API calls
+        };
 
-const FormContext = createContext<FormContextType | undefined>(undefined);
-
-export const FormProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const [formData, setFormData] = useState<EditFormData>({
-    firstName: "",
-    lastName: "",
-    dob: new Date(),
-    gender: undefined,
-    email: "",
-    phone: "+234",
-    country: "Nigeria",
-    maritalStatus: "",
-    alternatePhone: "",
-    employmentStatus: "",
-    tin: "",
-    address: "",
-    idType: undefined,
-    idNumber: "",
-    IdFile: null,
-    expiryDate: new Date(),
-    issuingAuthority: "",
-    issuingAuthorityPOA: "",
-    proofOfAddress: null,
-    dateOfIssue: new Date(),
-    addressProofType: undefined,
-    profileImage: null,
-    branch: undefined,
-    accountOfficer: "",
-    desiredAccount: undefined,
-    productType: undefined,
-    employerAddress: "",
-    jobTitle: "",
-    startDate: new Date(),
-    endDate: new Date(),
-    employmentDocument: null,
-    guarantorFullName: "",
-    guarantorRelationship: "",
-    guarantorPhone: "",
-    guarantorEmail: "",
-    guarantorAddress: "",
-    guarantorId: null,
-    nextOfKinFullName: "",
-    nextOfKinPhone: "",
-    nextOfKinEmail: "",
-    nextOfKinAddress: "",
-    currentEmployerName: "",
-    nextOfKinRelationship: "",
-  });
-
-  useEffect(() => {
-    // Load form data from localStorage on initial render
-    const savedData = localStorage.getItem("customerForm");
-    if (savedData) {
-      setFormData(JSON.parse(savedData));
+        // Map API response fields to form fields
+        if (data.firstName) mappedData.firstName = data.firstName;
+        if (data.lastName) mappedData.lastName = data.lastName;
+        if (data.dateOfBirth) mappedData.dob = new Date(data.dateOfBirth);
+        if (data.gender) mappedData.gender = data.gender;
+        if (data.emailAddress) mappedData.email = data.emailAddress;
+        if (data.phoneNumber) mappedData.phone = data.phoneNumber;
+        // Double check both properties to ensure we don't miss either format
+        if (data.email) mappedData.email = data.email as string;
+        if (data.phone) mappedData.phone = data.phone as string;
+        
+        if (data.nationality) mappedData.country = data.nationality;
+        if (data.maritalStatus) mappedData.maritalStatus = data.maritalStatus;
+        if (data.alternatePhoneNumber) mappedData.alternatePhone = data.alternatePhoneNumber;
+        if (data.employmentStatus) mappedData.employmentStatus = data.employmentStatus;
+        if (data.taxIdenttfictionNumber) mappedData.tin = data.taxIdenttfictionNumber;
+        if (data.residentialAddress) mappedData.address = data.residentialAddress;
+        
+        // Identification data
+        if (data.idType) mappedData.idType = data.idType as IDType;
+        if (data.idNumber) mappedData.idNumber = data.idNumber;
+        if (data.meansOfIdentification?.meansOfIdentificationFile) {
+          mappedData.IdFile = data.meansOfIdentification.meansOfIdentificationFile;
+        }
+        if (data.idExpiryDate) mappedData.expiryDate = new Date(data.idExpiryDate);
+        if (data.idIssuingAuthority) mappedData.issuingAuthority = data.idIssuingAuthority;
+        
+        // Proof of Address
+        if (data.proofOfAddressType) mappedData.addressProofType = data.proofOfAddressType as ProofOfAddressType;
+        if (data.proofOfAddressIssuingAuthority) mappedData.issuingAuthorityPOA = data.proofOfAddressIssuingAuthority;
+        if (data.proofOfAddressDateIssue) mappedData.dateOfIssue = new Date(data.proofOfAddressDateIssue);
+        if (data.proofOfAddress?.proofOfAddressFile) {
+          mappedData.proofOfAddress = data.proofOfAddress.proofOfAddressFile;
+        }
+        
+        // Profile image
+        if (data.profilePicture?.profilePicture) mappedData.profileImage = data.profilePicture.profilePicture;
+        
+        // CRITICAL ACCOUNT FIELDS - important to preserve these
+        if (data.branchId) mappedData.branch = data.branchId;
+        if (data.branch?.id) mappedData.branch = data.branch.id;
+        
+        if (data.accountOfficerId) mappedData.accountOfficer = data.accountOfficerId;
+        if (data.accountOfficer?.id !== undefined) mappedData.accountOfficer = data.accountOfficer.id;
+        
+        if (data.desiredAccount) mappedData.desiredAccount = data.desiredAccount;
+        
+        // Employment details
+        if (data.employmentDetails) {
+          if (data.employmentDetails.currentEmployerName) mappedData.currentEmployerName = data.employmentDetails.currentEmployerName;
+          if (data.employmentDetails.employerAddress) mappedData.employerAddress = data.employmentDetails.employerAddress;
+          if (data.employmentDetails.jobTitle) mappedData.jobTitle = data.employmentDetails.jobTitle;
+          if (data.employmentDetails.employementStateDate) mappedData.startDate = new Date(data.employmentDetails.employementStateDate);
+          if (data.employmentDetails.employementEndDate) mappedData.endDate = new Date(data.employmentDetails.employementEndDate);
+          if (data.employmentDetails.employmentVerificationDocument) {
+            mappedData.employmentDocument = data.employmentDetails.employmentVerificationDocument;
+          }
+        }
+        
+        // Guarantor details
+        if (data.guarantorDetails) {
+          if (data.guarantorDetails.guarantorFullName) mappedData.guarantorFullName = data.guarantorDetails.guarantorFullName;
+          if (data.guarantorDetails.guarantorRelationshipToCustomer) {
+            mappedData.guarantorRelationship = data.guarantorDetails.guarantorRelationshipToCustomer;
+          }
+          if (data.guarantorDetails.guarantorPhoneNumber) mappedData.guarantorPhone = data.guarantorDetails.guarantorPhoneNumber;
+          if (data.guarantorDetails.guarantorEmailAddress) mappedData.guarantorEmail = data.guarantorDetails.guarantorEmailAddress;
+          if (data.guarantorDetails.guarantorAddress) mappedData.guarantorAddress = data.guarantorDetails.guarantorAddress;
+          if (data.guarantorDetails.guarantorFileDocument) mappedData.guarantorId = data.guarantorDetails.guarantorFileDocument;
+        }
+        
+        // Next of Kin details
+        if (data.nextOfKinDetails) {
+          if (data.nextOfKinDetails.nextOfKinFullName) mappedData.nextOfKinFullName = data.nextOfKinDetails.nextOfKinFullName;
+          if (data.nextOfKinDetails.nextOfKinRelationshipToCustomer) {
+            mappedData.nextOfKinRelationship = data.nextOfKinDetails.nextOfKinRelationshipToCustomer;
+          }
+          if (data.nextOfKinDetails.nextOfKinPhoneNumber) mappedData.nextOfKinPhone = data.nextOfKinDetails.nextOfKinPhoneNumber;
+          if (data.nextOfKinDetails.nextOfKinEmailAddress) mappedData.nextOfKinEmail = data.nextOfKinDetails.nextOfKinEmailAddress;
+          if (data.nextOfKinDetails.nextOfKinAddress) mappedData.nextOfKinAddress = data.nextOfKinDetails.nextOfKinAddress;
+        }
+        
+        console.log("Loading complete customer data for editing:", mappedData);
+        
+        // Update the store with the mapped data
+        set((state) => ({
+          formData: { ...state.formData, ...mappedData }
+        }));
+      },
+    }),
+    {
+      name: 'customer-form-storage',
     }
-  }, []);
+  )
+);
 
-  /**
-   * Updates form data and persists to localStorage.
-   * This ensures all previous data is preserved, and only changed fields are updated.
-   */
-  const updateFormData = (data: Partial<EditFormData>) => {
-    setFormData((prevData) => {
-      const newData = { ...prevData, ...data };
-      localStorage.setItem("customerForm", JSON.stringify(newData));
-      return newData;
-    });
-  };
+// For backward compatibility with the Context API approach
+// This allows existing components to work without changes
+export function FormProvider({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
+}
 
-  /**
-   * Special function for loading complete customer data in edit mode.
-   * This ensures we have all necessary fields from the existing record.
-   * 
-   * @param customerId - The ID of the customer being edited
-   * @param data - The complete customer data from the API
-   */
-  const loadEditData = (customerId: string, data: CustomerApiResponse) => {
-    // Initialize an object to hold the mapped data
-    const mappedData: Partial<EditFormData> = {
-      customerId: customerId, // Store the customer ID for API calls
-    };
-
-    // Map API response fields to form fields
-    if (data.firstName) mappedData.firstName = data.firstName;
-    if (data.lastName) mappedData.lastName = data.lastName;
-    if (data.dateOfBirth) mappedData.dob = new Date(data.dateOfBirth);
-    if (data.gender) mappedData.gender = data.gender;
-    if (data.emailAddress) mappedData.email = data.emailAddress;
-    if (data.phoneNumber) mappedData.phone = data.phoneNumber;
-    if (data.nationality) mappedData.country = data.nationality;
-    if (data.maritalStatus) mappedData.maritalStatus = data.maritalStatus;
-    if (data.alternatePhoneNumber) mappedData.alternatePhone = data.alternatePhoneNumber;
-    if (data.employmentStatus) mappedData.employmentStatus = data.employmentStatus;
-    if (data.taxIdenttfictionNumber) mappedData.tin = data.taxIdenttfictionNumber;
-    if (data.residentialAddress) mappedData.address = data.residentialAddress;
-    
-    // Identification data
-    if (data.idType) mappedData.idType = data.idType as IDType;
-    if (data.idNumber) mappedData.idNumber = data.idNumber;
-    if (data.meansOfIdentification?.meansOfIdentificationFile) {
-      mappedData.IdFile = data.meansOfIdentification.meansOfIdentificationFile;
-    }
-    if (data.idExpiryDate) mappedData.expiryDate = new Date(data.idExpiryDate);
-    if (data.idIssuingAuthority) mappedData.issuingAuthority = data.idIssuingAuthority;
-    
-    // Proof of Address
-    if (data.proofOfAddressType) mappedData.addressProofType = data.proofOfAddressType as ProofOfAddressType;
-    if (data.proofOfAddressIssuingAuthority) mappedData.issuingAuthorityPOA = data.proofOfAddressIssuingAuthority;
-    if (data.proofOfAddressDateIssue) mappedData.dateOfIssue = new Date(data.proofOfAddressDateIssue);
-    if (data.proofOfAddress?.proofOfAddressFile) {
-      mappedData.proofOfAddress = data.proofOfAddress.proofOfAddressFile;
-    }
-    
-    // Profile image
-    if (data.profilePicture?.profilePicture) mappedData.profileImage = data.profilePicture.profilePicture;
-    
-    // CRITICAL ACCOUNT FIELDS - important to preserve these
-    if (data.branchId) mappedData.branch = data.branchId;
-    else if (data.branch?.id) mappedData.branch = data.branch.id;
-    
-    if (data.accountOfficerId) mappedData.accountOfficer = data.accountOfficerId;
-    else if (data.accountOfficer?.id) mappedData.accountOfficer = data.accountOfficer.id;
-    
-    if (data.desiredAccount) mappedData.desiredAccount = data.desiredAccount;
-    // else if (data.productId) mappedData.productId = data.productId;
-    // else if (data.productType) mappedData.productType = data.productType;
-    
-    // Employment details
-    if (data.employmentDetails) {
-      if (data.employmentDetails.currentEmployerName) mappedData.currentEmployerName = data.employmentDetails.currentEmployerName;
-      if (data.employmentDetails.employerAddress) mappedData.employerAddress = data.employmentDetails.employerAddress;
-      if (data.employmentDetails.jobTitle) mappedData.jobTitle = data.employmentDetails.jobTitle;
-      if (data.employmentDetails.employementStateDate) mappedData.startDate = new Date(data.employmentDetails.employementStateDate);
-      if (data.employmentDetails.employementEndDate) mappedData.endDate = new Date(data.employmentDetails.employementEndDate);
-      if (data.employmentDetails.employmentVerificationDocument) {
-        mappedData.employmentDocument = data.employmentDetails.employmentVerificationDocument;
-      }
-    }
-    
-    // Guarantor details
-    if (data.guarantorDetails) {
-      if (data.guarantorDetails.guarantorFullName) mappedData.guarantorFullName = data.guarantorDetails.guarantorFullName;
-      if (data.guarantorDetails.guarantorRelationshipToCustomer) {
-        mappedData.guarantorRelationship = data.guarantorDetails.guarantorRelationshipToCustomer;
-      }
-      if (data.guarantorDetails.guarantorPhoneNumber) mappedData.guarantorPhone = data.guarantorDetails.guarantorPhoneNumber;
-      if (data.guarantorDetails.guarantorEmailAddress) mappedData.guarantorEmail = data.guarantorDetails.guarantorEmailAddress;
-      if (data.guarantorDetails.guarantorAddress) mappedData.guarantorAddress = data.guarantorDetails.guarantorAddress;
-      if (data.guarantorDetails.guarantorFileDocument) mappedData.guarantorId = data.guarantorDetails.guarantorFileDocument;
-    }
-    
-    // Next of Kin details
-    if (data.nextOfKinDetails) {
-      if (data.nextOfKinDetails.nextOfKinFullName) mappedData.nextOfKinFullName = data.nextOfKinDetails.nextOfKinFullName;
-      if (data.nextOfKinDetails.nextOfKinRelationshipToCustomer) {
-        mappedData.nextOfKinRelationship = data.nextOfKinDetails.nextOfKinRelationshipToCustomer;
-      }
-      if (data.nextOfKinDetails.nextOfKinPhoneNumber) mappedData.nextOfKinPhone = data.nextOfKinDetails.nextOfKinPhoneNumber;
-      if (data.nextOfKinDetails.nextOfKinEmailAddress) mappedData.nextOfKinEmail = data.nextOfKinDetails.nextOfKinEmailAddress;
-      if (data.nextOfKinDetails.nextOfKinAddress) mappedData.nextOfKinAddress = data.nextOfKinDetails.nextOfKinAddress;
-    }
-    
-    console.log("Loading complete customer data for editing:", mappedData);
-    
-    // Set the form data with the mapped values and save to localStorage
-    setFormData(prevData => {
-      const newData = { ...prevData, ...mappedData };
-      localStorage.setItem("customerForm", JSON.stringify(newData));
-      return newData;
-    });
-  };
-
-  return (
-    <FormContext.Provider value={{ formData, updateFormData, loadEditData }}>
-      {children}
-    </FormContext.Provider>
-  );
-};
-
-export const useFormContext = () => {
-  const context = useContext(FormContext);
-  if (context === undefined) {
-    throw new Error("useFormContext must be used within a FormProvider");
-  }
-  return context;
-};
+export function useFormContext() {
+  const { formData, updateFormData, loadEditData } = useFormStore();
+  return { formData, updateFormData, loadEditData };
+}

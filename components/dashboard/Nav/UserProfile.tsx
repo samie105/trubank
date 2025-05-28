@@ -57,33 +57,28 @@ export default function Component() {
         <div className="border-t  p-2">
           <ResponsiveModal>
             <Button variant={"ghost"} className="w-full" asChild>
-              <div className="flex items-center py-5 mt-1 justify-between">
-                {" "}
-                <ResponsiveModalTrigger className="py-5">
-                  <div className="flex items-center gap-x-2  text-foreground">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={1.5}
-                      stroke="currentColor"
-                      className="size-4 -rotate-90"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"
-                      />
-                    </svg>
-                    <p>Logout</p>
-                  </div>
-                </ResponsiveModalTrigger>
-                <div className="mt- flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <ThemeSwitch />
-                  </div>
+              <ResponsiveModalTrigger className="flex w-full items-center py-5 mt-1 justify-between">
+                <div className="flex items-center gap-x-2 text-foreground">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="size-4 -rotate-90"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"
+                    />
+                  </svg>
+                  <p>Logout</p>
                 </div>
-              </div>
+                <div className="flex items-center space-x-2">
+                  <ThemeSwitch />
+                </div>
+              </ResponsiveModalTrigger>
             </Button>
             <ResponsiveModalContent>
               <ResponsiveModalTitle>Confirm Logout</ResponsiveModalTitle>

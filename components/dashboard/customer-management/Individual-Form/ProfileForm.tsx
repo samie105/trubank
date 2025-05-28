@@ -28,7 +28,7 @@ import { logoutAction } from "@/server/auth/auth-server"
 
 const formSchema = z.object({
   branch: z.string().optional(),
-  accountOfficer: z.string().optional(),
+  accountOfficer: z.string().nullable(),
   productId: z.string().optional(),
 }).passthrough();
 
@@ -42,7 +42,7 @@ export default function ProfileForm() {
 
   // State for branches, account officers, and product types
   const [branches, setBranches] = useState<{ id: string; name: string }[]>([])
-  const [accountOfficers, setAccountOfficers] = useState<{ id: string; fullName: string }[]>([])
+  const [accountOfficers, setAccountOfficers] = useState<{ id: string | null; fullName: string; createdAt: string }[]>([])
   const [productTypes, setProductTypes] = useState<{ id: string; name: string; accountTypeId: string }[]>([])
   const [isLoadingBranches, setIsLoadingBranches] = useState(true)
   const [isLoadingOfficers, setIsLoadingOfficers] = useState(true)
@@ -78,13 +78,21 @@ export default function ProfileForm() {
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      ...formData,
-      branch: formData.branch || "",
-      accountOfficer: formData.accountOfficer || "",
-      productId: formData.productId || "",
-    },
   })
+
+  useEffect(() => {
+    const savedData = localStorage.getItem("customerForm")
+    if (savedData) {
+      const parsedData = JSON.parse(savedData)
+      if (parsedData.branch) form.setValue("branch", parsedData.branch)
+      if (parsedData.accountOfficer !== undefined) form.setValue("accountOfficer", parsedData.accountOfficer)
+      if (parsedData.desiredAccount) {
+        form.setValue("productId", parsedData.desiredAccount)
+      } else if (parsedData.productId) {
+        form.setValue("productId", parsedData.productId)
+      }
+    }
+  }, [form])
 
   router.prefetch("/dashboard/customer-management/create/individual")
 
@@ -188,16 +196,16 @@ export default function ProfileForm() {
         console.log("Starting parallel data fetching...")
         // Fetch all data in parallel
         const fetchPromises = [
-         
-          Promise.resolve(fetchAccountOfficers()).catch((err: Error) => {
+          Promise.resolve(fetchBranches()).catch((err) => {
+            console.error("Error in fetchBranches Promise:", err)
+            return null;
+          }),
+          Promise.resolve(fetchAccountOfficers()).catch((err) => {
             console.error("Error in fetchAccountOfficers Promise:", err)
             return null;
           }),
-          Promise.resolve(fetchProductTypes()).catch((err: Error) => {
+          Promise.resolve(fetchProductTypes()).catch((err) => {
             console.error("Error in fetchProductTypes Promise:", err)
-            return null;
-          }), Promise.resolve(fetchBranches()).catch((err: Error) => {
-            console.error("Error in fetchBranches Promise:", err)
             return null;
           }),
         ];
@@ -212,24 +220,18 @@ export default function ProfileForm() {
     fetchAllData();
   }, [fetchBranches, fetchAccountOfficers, fetchProductTypes]);
 
-  useEffect(() => {
-    const savedData = localStorage.getItem("customerForm")
-    if (savedData) {
-      const parsedData = JSON.parse(savedData)
-      if (parsedData.branch) form.setValue("branch", parsedData.branch)
-      if (parsedData.accountOfficer) form.setValue("accountOfficer", parsedData.accountOfficer)
-      if (parsedData.productId) form.setValue("productId", parsedData.productId)
-    }
-  }, [form])
+  
 
   const onSubmit = async (data: ProfileFormData) => {
+    const { productId, ...restOfData } = data;
     const updatedData = {
       ...formData,
-      ...data,
+      ...restOfData,
+      desiredAccount: productId,
     }
     updateFormData(updatedData)
     localStorage.setItem("customerForm", JSON.stringify(updatedData))
-    console.log("Form submitted:", updatedData)
+    console.log("Form submitted, stored to localStorage:", updatedData)
     
     // Navigate to individual customer creation page
     router.push("/dashboard/customer-management/create/individual")
@@ -237,12 +239,18 @@ export default function ProfileForm() {
     // Note: Account creation would happen after customer creation
     // This would require integration with the customer creation API
   }
-
+ 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-4">
-          <h2 className="text-2xl font-bold">Profile Information</h2>
+        <h2 className="text-2xl font-bold text-center">
+            Customer Assignment <br /> and Account Setup
+          </h2>
+          <h2 className="text-sm text-center font-medium text-muted-foreground">
+            Assign the customer to a branch, an officer and a product type, <br /> then proceed to create their account
+          </h2>
+
 
           {isLoadingBranches ? (
             <DropdownSkeleton label="Branch" />
@@ -320,7 +328,7 @@ export default function ProfileForm() {
                           className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
                         >
                           {field.value
-                            ? accountOfficers.find((officer) => officer.id === field.value)?.fullName || field.value
+                            ? accountOfficers.find((officer) => officer.id === field.value)?.fullName || "Select account officer"
                             : "Select account officer"}
                           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
@@ -332,23 +340,30 @@ export default function ProfileForm() {
                         <CommandList>
                           <CommandEmpty>No account officer found.</CommandEmpty>
                           <CommandGroup>
-                            {accountOfficers.map((officer) => (
-                              <CommandItem
-                                key={officer.id}
-                                value={officer.fullName}
-                                onSelect={() => {
-                                  field.onChange(officer.id)
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    officer.id === field.value ? "opacity-100" : "opacity-0",
-                                  )}
-                                />
-                                {officer.fullName}
-                              </CommandItem>
-                            ))}
+                            {accountOfficers.map((officer) => {
+                              // Use name as unique identifier for UI comparison only
+                              const displayIdentifier = officer.id || officer.fullName;
+                              return (
+                                <CommandItem
+                                  key={displayIdentifier}
+                                  value={officer.fullName}
+                                  onSelect={() => {
+                                    // Always pass the actual ID (even if null) to the form
+                                    field.onChange(officer.id)
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      (field.value === officer.id || 
+                                       (field.value === null && officer.id === null)) 
+                                       ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  {officer.fullName}
+                                </CommandItem>
+                              );
+                            })}
                           </CommandGroup>
                         </CommandList>
                       </Command>
@@ -378,30 +393,33 @@ export default function ProfileForm() {
                           className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
                         >
                           {field.value
-                            ? productTypes.find((type) => type.id === field.value)?.name || field.value
-                            : "Select product"}
+                            ? productTypes.find((product) => product.id === field.value)?.name || field.value
+                            : "Select product type"}
                           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
                     <PopoverContent className="w-full p-0">
                       <Command>
-                        <CommandInput placeholder="Search product..." />
+                        <CommandInput placeholder="Search product type..." />
                         <CommandList>
-                          <CommandEmpty>No product found.</CommandEmpty>
+                          <CommandEmpty>No product type found.</CommandEmpty>
                           <CommandGroup>
-                            {productTypes.map((type) => (
+                            {productTypes.map((product) => (
                               <CommandItem
-                                key={type.id}
-                                value={type.name}
+                                key={product.id}
+                                value={product.name}
                                 onSelect={() => {
-                                  field.onChange(type.id)
+                                  field.onChange(product.id)
                                 }}
                               >
                                 <Check
-                                  className={cn("mr-2 h-4 w-4", type.id === field.value ? "opacity-100" : "opacity-0")}
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    product.id === field.value ? "opacity-100" : "opacity-0",
+                                  )}
                                 />
-                                {type.name}
+                                {product.name}
                               </CommandItem>
                             ))}
                           </CommandGroup>
@@ -415,26 +433,18 @@ export default function ProfileForm() {
             />
           )}
         </div>
-
         <div className="flex justify-between">
-          <Button type="button" variant="outline" onClick={() => setCreating(false)}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setCreating(false)}
+          >
             Back
           </Button>
-          <div className="space-x-2">
-            <Button type="submit" disabled={isLoadingOfficers||isLoadingProductTypes||isLoadingBranches} className="text-white">
-              {form.formState.isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Please wait
-                </>
-              ) : (
-                "Create Customer"
-              )}
-            </Button>
-          </div>
+          <Button type="submit">Create Customer</Button>
         </div>
       </form>
     </Form>
   )
 }
-
+ 

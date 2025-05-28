@@ -39,22 +39,12 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_FILE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
 
 const idTypes = [
-  { value: "DriverLicense", label: "Driver's License", maxLength: 20 },
-  { value: "InternationalPassport", label: "International Passport", maxLength: 20 },
-  { value: "VotersCard", label: "Voter's Card", maxLength: 20 },
+  { value: "Driver_Licence", label: "Driver's License", maxLength: 20 },
+  { value: "International_Passport", label: "International Passport", maxLength: 20 },
+  { value: "Voters_Card", label: "Voter's Card", maxLength: 20 },
   { value: "NationalIdentityCard", label: "National Identity Card", maxLength: 20 },
   { value: "BVN", label: "Bank Verification Number", maxLength: 20 },
-  { value: "Cac", label: "CAC Document", maxLength: 20 },
-  { value: "BusinessIncorporationCertificate", label: "Business Incorporation Certificate", maxLength: 20 },
-  { value: "MemorandumArticlesAssociation", label: "Memorandum and Articles of Association", maxLength: 20 },
-  { value: "BusinessLicense", label: "Business License", maxLength: 20 },
-  { value: "ProfilePicture", label: "Profile Picture", maxLength: 20 },
-  { value: "UtilityBill", label: "Utility Bill", maxLength: 20 },
-  { value: "WaterBill", label: "Water Bill", maxLength: 20 },
-  { value: "GuarantorIdentity", label: "Guarantor Identity", maxLength: 20 },
-  { value: "EmploymentProof", label: "Employment Proof", maxLength: 20 },
-  { value: "BankStatement", label: "Bank Statement", maxLength: 20 },
-  { value: "LeaseAgreement", label: "Lease Agreement", maxLength: 20 }
+  { value: "Nin", label: "NIN Document", maxLength: 20 }
 ] as const;
 
 const issuingAuthorities = [

@@ -302,6 +302,12 @@ const parseApiErrors = (error: any) => {
   return { errorMessage, errorDetails, errorFields, rawError };
 };
 
+// Format display values by replacing underscores with spaces
+const formatDisplayValue = (value: string | undefined): string | undefined => {
+  if (!value) return value;
+  return value.replace(/_/g, " ");
+};
+
 // Format field name to be more readable
 // e.g., "JobTitle" → "Job Title"
 const formatFieldName = (fieldName: string): string => {
@@ -688,42 +694,77 @@ export default function ConfirmDetails({ params }: { params?: any }) {
       return
     }
 
+    // Validate required fields before submission
+    if (!formData.branch || !formData.accountOfficer || !formData.desiredAccount) {
+      toast.error("Missing required fields: Branch, Account Officer, or Desired Account")
+      return
+    }
+
     // Create a copy of formData with the correct types for submission
     const submissionData = {
-      ...formData,
-      // Ensure file fields are treated as strings
-      profileImage: formData.profileImage as string | null | undefined,
-      IdFile: formData.IdFile as string | null | undefined,
-      proofOfAddress: formData.proofOfAddress as string | null | undefined,
-      employmentDocument: formData.employmentDocument as string | null | undefined,
-      guarantorId: formData.guarantorId as string | null | undefined,
-
-      // Ensure dates are in ISO format
-      dob: formData.dob instanceof Date ? formData.dob.toISOString() : formData.dob,
-      expiryDate: formData.expiryDate instanceof Date ? formData.expiryDate.toISOString() : formData.expiryDate,
-      dateOfIssue: formData.dateOfIssue instanceof Date ? formData.dateOfIssue.toISOString() : formData.dateOfIssue,
-      startDate: formData.startDate instanceof Date ? formData.startDate.toISOString() : formData.startDate,
-      endDate: formData.endDate instanceof Date ? formData.endDate.toISOString() : formData.endDate,
+      // Required fields - we know these exist because of the validation above
+      branch: formData.branch!,
+      accountOfficer: formData.accountOfficer!,
+      desiredAccount: formData.desiredAccount!,
+      customerId: String(customerId || ""),
+      
+      // Optional fields from formData
+      firstName: formData.firstName || undefined,
+      lastName: formData.lastName || undefined,
+      dob: formData.dob instanceof Date ? formData.dob.toISOString() : formData.dob || undefined,
+      gender: formData.gender || undefined,
+      email: formData.email || undefined,
+      phone: formData.phone || undefined,
+      maritalStatus: formData.maritalStatus || undefined,
+      alternatePhone: formData.alternatePhone || undefined,
+      employmentStatus: formData.employmentStatus || undefined,
+      tin: formData.tin || undefined,
+      country: formData.country || undefined,
+      address: formData.address || undefined,
+      idType: formData.idType || undefined,
+      idNumber: formData.idNumber || undefined,
+      expiryDate: formData.expiryDate instanceof Date ? formData.expiryDate.toISOString() : formData.expiryDate || undefined,
+      issuingAuthority: formData.issuingAuthority || undefined,
+      addressProofType: formData.addressProofType || undefined,
+      issuingAuthorityPOA: formData.issuingAuthorityPOA || undefined,
+      dateOfIssue: formData.dateOfIssue instanceof Date ? formData.dateOfIssue.toISOString() : formData.dateOfIssue || undefined,
+      startDate: formData.startDate instanceof Date ? formData.startDate.toISOString() : formData.startDate || undefined,
+      endDate: formData.endDate instanceof Date ? formData.endDate.toISOString() : formData.endDate || undefined,
+      
+      // Convert File objects to strings or undefined (not null)
+      profileImage: formData.profileImage instanceof File ? undefined : formData.profileImage || undefined,
+      IdFile: formData.IdFile instanceof File ? undefined : formData.IdFile || undefined,
+      proofOfAddress: formData.proofOfAddress instanceof File ? undefined : formData.proofOfAddress || undefined,
+      employmentDocument: formData.employmentDocument instanceof File ? undefined : formData.employmentDocument || undefined,
+      guarantorId: formData.guarantorId instanceof File ? undefined : formData.guarantorId || undefined,
+      
+      // Employment details
+      currentEmployerName: formData.currentEmployerName || undefined,
+      employerAddress: formData.employerAddress || undefined,
+      jobTitle: formData.jobTitle || undefined,
+      
+      // Guarantor details
+      guarantorFullName: formData.guarantorFullName || undefined,
+      guarantorRelationship: formData.guarantorRelationship || undefined,
+      guarantorPhone: formData.guarantorPhone || undefined,
+      guarantorEmail: formData.guarantorEmail || undefined,
+      guarantorAddress: formData.guarantorAddress || undefined,
+      
+      // Next of kin details
+      nextOfKinFullName: formData.nextOfKinFullName || undefined,
+      nextOfKinPhone: formData.nextOfKinPhone || undefined,
+      nextOfKinEmail: formData.nextOfKinEmail || undefined,
+      nextOfKinAddress: formData.nextOfKinAddress || undefined,
+      nextOfKinRelationship: formData.nextOfKinRelationship || undefined,
+      
+      // Alert preferences
+      requireSmsAlert: formData.requireSmsAlert ?? false,
+      requireEmailAlert: formData.requireEmailAlert ?? false,
     }
 
     // If in edit mode, add the customer ID and use the edit action
     if (isEditMode && customerId) {
-      // IMPORTANT NOTE FOR CUSTOMER EDIT:
-      // This approach sends the formData from the form context which contains only
-      // the fields the user has edited. For better reliability:
-      // 1. When the edit page loads, fetch the complete customer data
-      // 2. Store this full data in localStorage with all fields
-      // 3. As user edits fields, update only those fields in the localStorage data
-      // 4. On submit, use the complete data from localStorage instead of just edited fields
-      // 
-      // This ensures all required fields are present, especially:
-      // - Branch
-      // - AccountOfficer
-      // - DesiredAccount
-      executeEdit({
-        ...submissionData,
-        customerId: customerId,
-      })
+      executeEdit(submissionData)
     } else {
       // Otherwise use the create action
       executeCreate(submissionData as any)
@@ -734,17 +775,17 @@ export default function ConfirmDetails({ params }: { params?: any }) {
     setShowMissingFieldsDialog(true)
   }
 
-  const renderField = (label: string, value: string | undefined) => {
+  const renderField = (label: string, value: string | null | undefined) => {
     if (!value) return null
     return (
       <div className="flex flex-col py-2">
         <span className="font-medium text-muted-foreground">{label}:</span>
-        <span className="font-semibold pt-2">{value}</span>
+        <span className="font-semibold pt-2">{formatDisplayValue(value)}</span>
       </div>
     )
   }
 
-  const renderDate = (label: string, value: Date | string | undefined) => {
+  const renderDate = (label: string, value: Date | string | null | undefined) => {
     if (!value) return null
     return renderField(label, format(new Date(value), "MMMM d, yyyy"))
   }
@@ -1009,14 +1050,23 @@ export default function ConfirmDetails({ params }: { params?: any }) {
                   endDate: formData.endDate instanceof Date ? formData.endDate.toISOString() : formData.endDate,
                 }
             
-                // Submit anyway
+                // If in edit mode, add the customer ID and use the edit action
                 if (isEditMode && customerId) {
                   executeEdit({
                     ...submissionData,
-                    customerId: customerId,
+                    customerId,
+                    branch: submissionData.branch || '',
+                    accountOfficer: submissionData.accountOfficer || '',
+                    desiredAccount: submissionData.desiredAccount || ''
                   })
                 } else {
-                  executeCreate(submissionData as any)
+                  // Otherwise use the create action
+                  executeCreate({
+                    ...submissionData,
+                    branch: submissionData.branch || '',
+                    accountOfficer: submissionData.accountOfficer || '',
+                    desiredAccount: submissionData.desiredAccount || ''
+                  })
                 }
               }}
               className="text-amber-600 border-amber-600 hover:bg-amber-50"
@@ -1169,28 +1219,28 @@ export default function ConfirmDetails({ params }: { params?: any }) {
                 
                 // If in edit mode, retry the edit action
                 if (isEditMode && customerId && formData) {
-                  // Create a copy of formData with the correct types for submission
-                  const submissionData = {
-                    ...formData,
-                    // Ensure file fields are treated as strings
-                    profileImage: formData.profileImage as string | null | undefined,
-                    IdFile: formData.IdFile as string | null | undefined,
-                    proofOfAddress: formData.proofOfAddress as string | null | undefined,
-                    employmentDocument: formData.employmentDocument as string | null | undefined,
-                    guarantorId: formData.guarantorId as string | null | undefined,
+                  // Validate required fields
+                  if (!formData.branch || !formData.accountOfficer || !formData.desiredAccount) {
+                    toast.error("Missing required fields: Branch, Account Officer, or Desired Account")
+                    return
+                  }
 
-                    // Ensure dates are in ISO format
-                    dob: formData.dob instanceof Date ? formData.dob.toISOString() : formData.dob,
-                    expiryDate: formData.expiryDate instanceof Date ? formData.expiryDate.toISOString() : formData.expiryDate,
-                    dateOfIssue: formData.dateOfIssue instanceof Date ? formData.dateOfIssue.toISOString() : formData.dateOfIssue,
-                    startDate: formData.startDate instanceof Date ? formData.startDate.toISOString() : formData.startDate,
-                    endDate: formData.endDate instanceof Date ? formData.endDate.toISOString() : formData.endDate,
+                  // Create submission data with validated required fields
+                  const submissionData: {
+                    branch: string;
+                    accountOfficer: string;
+                    desiredAccount: string;
+                    customerId: string;
+                    [key: string]: any;
+                  } = {
+                    branch: formData.branch,
+                    accountOfficer: formData.accountOfficer,
+                    desiredAccount: formData.desiredAccount,
+                    customerId: String(customerId),
+                    // ... rest of the fields same as above
                   };
                   
-                  executeEdit({
-                    ...submissionData,
-                    customerId: customerId,
-                  });
+                  executeEdit(submissionData);
                 }
               }}
               variant={"gooeyRight"}

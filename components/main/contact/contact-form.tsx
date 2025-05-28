@@ -42,21 +42,24 @@ export function ContactForm() {
     onSuccess({ data }) {
       if (data?.success) {
         toast.success("Message sent successfully!", {
-          description: "We'll get back to you as soon as possible.",
+          description: data.message || "We'll get back to you as soon as possible.",
           id: toastId,
         });
         form.reset();
       } else {
-        toast.error("Failed to send message", { id: toastId });
+        toast.error("Failed to send message", { 
+          description: data?.message || "Please try again later.",
+          id: toastId 
+        });
       }
       toast.dismiss(toastId);
     },
     onExecute() {
       toastId = toast.loading("Sending your message...");
     },
-    onError(error) {
+    onError({ error }) {
       toast.error("Something went wrong", {
-        description: "Please try again later.",
+        description: error.serverError || "Please try again later.",
         id: toastId,
       });
       toast.dismiss(toastId);

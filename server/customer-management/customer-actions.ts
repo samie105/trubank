@@ -18,19 +18,19 @@ const deleteUserSchema = z.object({
 // Define schema for getting users
 const getUserSchema = z.object({
   userId: z.string(),
-  userType: z.enum(["individual", "business"]),
+  userType: z.enum(["Individual", "Business", "Admin"]),
 })
 
 // Define schema for getting all users
 const getAllUsersSchema = z.object({
   pageSize: z.number().default(10),
   pageNumber: z.number().default(0),
-  userType: z.enum(["individual", "business"]),
+  userType: z.enum(["Individual", "Business", "Admin"]),
 })
 
 // Define schema for exporting users
 const exportUsersSchema = z.object({
-  userType: z.enum(["individual", "business"]),
+  userType: z.enum(["Individual", "Business", "Admin"]),
   format: z.enum(["csv", "pdf"]),
 })
 
@@ -65,6 +65,11 @@ export const activateUserAction = actionClient
           isActivate: activate,
         }),
       })
+      console.log(JSON.stringify({
+        id: userId,
+        isActivate: activate,
+      }))
+      console.log(response)
       // Handle different response status codes
       if (response.status === 401) {
         return {
@@ -143,7 +148,7 @@ export const deleteUserAction = actionClient.schema(deleteUserSchema).action(asy
     }
 
     const apiUrl = process.env.API_URL || "https://trubank-gateway-fdfjczfafqehhbea.uksouth-01.azurewebsites.net"
-    const response = await fetch(`${apiUrl}/usermanagement/delete-user?UserId=${encodeURIComponent(userId)}`, {
+    const response = await fetch(`${apiUrl}/usermanagement/delete-user?UserId=${userId}`, {
       // This is now the full ID
       method: "DELETE",
       headers: {
@@ -229,9 +234,9 @@ export const getUserAction = actionClient.schema(getUserSchema).action(async ({ 
     }
 
     const apiUrl = process.env.API_URL || "https://trubank-gateway-fdfjczfafqehhbea.uksouth-01.azurewebsites.net"
-    const endpoint = userType === "individual" 
-      ? `/customermanagement/get-individual-user?UserId=${encodeURIComponent(userId)}`
-      : `/customermanagement/get-business-user?UserId=${encodeURIComponent(userId)}`
+    const endpoint = userType === "Individual"
+      ? `/customermanagement/get-user/${userId}`
+      : `/customermanagement/get-business-user/${userId}`
     
     const response = await fetch(`${apiUrl}${endpoint}`, {
       method: "GET",
@@ -320,9 +325,9 @@ export const getAllUsersAction = actionClient
       }
 
       const apiUrl = process.env.API_URL || "https://trubank-gateway-fdfjczfafqehhbea.uksouth-01.azurewebsites.net"
-      const endpoint = userType === "individual" 
-        ? `/customermanagement/get-all-individual-users`
-        : `/customermanagement/get-all-business-users`
+      const endpoint = userType === "Individual"
+        ? "/customermanagement/get-all-individual-users"
+        : "/customermanagement/get-all-business-users"
       
       // Create the request body as expected by the API
       const requestBody = {
@@ -430,14 +435,14 @@ export const exportUsersAction = actionClient
       const apiUrl = process.env.API_URL || "https://trubank-gateway-fdfjczfafqehhbea.uksouth-01.azurewebsites.net"
       let endpoint = ""
       
-      if (userType === "individual" && format === "csv") {
-        endpoint = "/customermanagement/export-all-individual-users-csv"
-      } else if (userType === "individual" && format === "pdf") {
-        endpoint = "/customermanagement/export-all-individual-users-pdf"
-      } else if (userType === "business" && format === "csv") {
-        endpoint = "/customermanagement/export-all-business-users-csv"
-      } else if (userType === "business" && format === "pdf") {
-        endpoint = "/customermanagement/export-all-business-users-pdf"
+      if (userType === "Individual" && format === "csv") {
+        endpoint = "/customermanagement/export-individual-users-csv"
+      } else if (userType === "Individual" && format === "pdf") {
+        endpoint = "/customermanagement/export-individual-users-pdf"
+      } else if (userType === "Business" && format === "csv") {
+        endpoint = "/customermanagement/export-business-users-csv"
+      } else if (userType === "Business" && format === "pdf") {
+        endpoint = "/customermanagement/export-business-users-pdf"
       }
       
       // Create the request body as expected by the API

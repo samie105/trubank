@@ -37,13 +37,14 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_FILE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
 
 const utilityBillTypes = [
-  "Electricity Bill",
-  "Water Bill",
-  "Gas Bill",
-  "Internet Bill",
-  "Phone Bill",
   "Utility_Bill",
+  "Water_Bill",
 ] as const;
+
+// Function to convert API values to user-friendly display values
+const getProofDisplayName = (type: string): string => {
+  return type.replace(/_/g, " ");
+};
 
 const utilityBillIssuers = [
   "IBEDC",
@@ -221,7 +222,7 @@ export default function ProofofAddressBusiness({isEditMode}:{isEditMode:boolean}
                             !field.value && "text-muted-foreground"
                           )}
                         >
-                          {field.value || "Select Bill Type"}
+                          {field.value ? getProofDisplayName(field.value) : "Select Bill Type"}
                           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
@@ -248,7 +249,7 @@ export default function ProofofAddressBusiness({isEditMode}:{isEditMode:boolean}
                                       : "opacity-0"
                                   )}
                                 />
-                                {type}
+                                {getProofDisplayName(type)}
                               </CommandItem>
                             ))}
                           </CommandGroup>

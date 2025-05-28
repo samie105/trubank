@@ -1,3 +1,4 @@
+"use client"
 import AboutPage from "@/components/main/About-Us";
 import CTAsection from "@/components/main/CTA-section";
 import { Footer } from "@/components/main/Footer";
