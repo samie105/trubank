@@ -29,86 +29,86 @@ interface Job {
   isRemote: boolean;
 }
 
-const jobs: Job[] = [
-  {
-    id: "1",
-    role: "Customer Relationship Manager",
-    team: "Customer Service",
-    office: "Lagos, Nigeria",
-    isRemote: false,
-  },
-  {
-    id: "2",
-    role: "Operations Analyst",
-    team: "Operations",
-    office: "Lagos, Nigeria",
-    isRemote: false,
-  },
-  {
-    id: "3",
-    role: "Branch Support Specialist",
-    team: "Customer Operations",
-    office: "Remote",
-    isRemote: true,
-  },
-  {
-    id: "4",
-    role: "Client Support Officer",
-    team: "Customer Service",
-    office: "Lagos, Nigeria",
-    isRemote: false,
-  },
-  {
-    id: "5",
-    role: "Software Engineer",
-    team: "Technology Development",
-    office: "Remote",
-    isRemote: true,
-  },
-  {
-    id: "6",
-    role: "Cybersecurity Analyst",
-    team: "IT Security",
-    office: "Lagos, Nigeria",
-    isRemote: false,
-  },
-  {
-    id: "7",
-    role: "Data Scientist",
-    team: "Data Analytics",
-    office: "Remote",
-    isRemote: true,
-  },
-  {
-    id: "8",
-    role: "API Integration Specialist",
-    team: "Technology Development",
-    office: "Lagos, Nigeria",
-    isRemote: false,
-  },
-  {
-    id: "9",
-    role: "Financial Analyst",
-    team: "Finance And Strategy",
-    office: "Lagos, Nigeria",
-    isRemote: false,
-  },
-  {
-    id: "10",
-    role: "Marketing Strategist",
-    team: "Marketing",
-    office: "Remote",
-    isRemote: true,
-  },
-  {
-    id: "11",
-    role: "Compliance Officer",
-    team: "Risk And Compliance",
-    office: "Lagos, Nigeria",
-    isRemote: false,
-  },
-];
-
+// const jobs: Job[] = [
+//   {
+//     id: "1",
+//     role: "Customer Relationship Manager",
+//     team: "Customer Service",
+//     office: "Lagos, Nigeria",
+//     isRemote: false,
+//   },
+//   {
+//     id: "2",
+//     role: "Operations Analyst",
+//     team: "Operations",
+//     office: "Lagos, Nigeria",
+//     isRemote: false,
+//   },
+//   {
+//     id: "3",
+//     role: "Branch Support Specialist",
+//     team: "Customer Operations",
+//     office: "Remote",
+//     isRemote: true,
+//   },
+//   {
+//     id: "4",
+//     role: "Client Support Officer",
+//     team: "Customer Service",
+//     office: "Lagos, Nigeria",
+//     isRemote: false,
+//   },
+//   {
+//     id: "5",
+//     role: "Software Engineer",
+//     team: "Technology Development",
+//     office: "Remote",
+//     isRemote: true,
+//   },
+//   {
+//     id: "6",
+//     role: "Cybersecurity Analyst",
+//     team: "IT Security",
+//     office: "Lagos, Nigeria",
+//     isRemote: false,
+//   },
+//   {
+//     id: "7",
+//     role: "Data Scientist",
+//     team: "Data Analytics",
+//     office: "Remote",
+//     isRemote: true,
+//   },
+//   {
+//     id: "8",
+//     role: "API Integration Specialist",
+//     team: "Technology Development",
+//     office: "Lagos, Nigeria",
+//     isRemote: false,
+//   },
+//   {
+//     id: "9",
+//     role: "Financial Analyst",
+//     team: "Finance And Strategy",
+//     office: "Lagos, Nigeria",
+//     isRemote: false,
+//   },
+//   {
+//     id: "10",
+//     role: "Marketing Strategist",
+//     team: "Marketing",
+//     office: "Remote",
+//     isRemote: true,
+//   },
+//   {
+//     id: "11",
+//     role: "Compliance Officer",
+//     team: "Risk And Compliance",
+//     office: "Lagos, Nigeria",
+//     isRemote: false,
+//   },
+// ];
+const jobs:Job[] = []
 const teams = Array.from(new Set(jobs.map((job) => job.team)));
 const offices = Array.from(new Set(jobs.map((job) => job.office)));
 
@@ -227,34 +227,45 @@ export function JobsTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredJobs.map((job) => (
-                <TableRow
-                  key={job.id}
-                  className="border-b hover:bg-gray-100 border-gray-200"
-                >
-                  <TableCell className="font-medium  text-gray-900">
-                    {job.role}
-                  </TableCell>
-                  <TableCell className="text-gray-500 ">{job.team}</TableCell>
-                  <TableCell className="text-gray-500 ">
-                    <div className="flex items-center gap-2">
-                      {job.isRemote ? (
-                        <World className="h-4 w-4 text-gray-400" />
-                      ) : (
-                        <div className="size-7 flex items-center justify-center">
-                          {nigeriaFlagUrl}
-                        </div>
-                      )}
-                      {job.office}
+              {filteredJobs.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="h-24 text-center">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <p className="text-sm text-gray-500">0 Records</p>
+                      {/* <p className="text-xs text-gray-400">Try adjusting your filters</p> */}
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <Button className="w-full bg-primary text-white hover:bg-primary/90">
-                      Apply
-                    </Button>
-                  </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                filteredJobs.map((job) => (
+                  <TableRow
+                    key={job.id}
+                    className="border-b hover:bg-gray-100 border-gray-200"
+                  >
+                    <TableCell className="font-medium  text-gray-900">
+                      {job.role}
+                    </TableCell>
+                    <TableCell className="text-gray-500 ">{job.team}</TableCell>
+                    <TableCell className="text-gray-500 ">
+                      <div className="flex items-center gap-2">
+                        {job.isRemote ? (
+                          <World className="h-4 w-4 text-gray-400" />
+                        ) : (
+                          <div className="size-7 flex items-center justify-center">
+                            {nigeriaFlagUrl}
+                          </div>
+                        )}
+                        {job.office}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Button className="w-full bg-primary text-white hover:bg-primary/90">
+                        Apply
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>

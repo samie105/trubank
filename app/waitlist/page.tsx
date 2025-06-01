@@ -114,7 +114,7 @@ export default function WaitlistPage() {
       <header className="bg-slate-700 py-6 shadow-lg">
         <div className="container mx-auto px-8 flex justify-center items-center">
           <div className="bg-white p-4 rounded-lg shadow-lg">
-            <Image src="/assets/logo-dark.png" alt="TruBank Logo" width={190} height={31} className="h-12 w-auto" />
+            <Image src="/assets/logo-white.png" alt="TruBank Logo" width={190} height={31} className="h-12 w-auto" />
           </div>
         </div>
       </header>

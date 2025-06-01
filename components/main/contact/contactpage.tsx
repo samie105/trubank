@@ -43,7 +43,7 @@ export default function ContactPage() {
                       Our Location
                     </h3>
                     <p className="mt-1 text-gray-600">
-                      TruBank HQ Lagos, Nigeria
+                      112 Chief (Dr) Fabian Nwaora Avenue, EFAB Estate Lokogoma, Abuja
                     </p>
                   </div>
                 </div>
@@ -54,7 +54,7 @@ export default function ContactPage() {
                     <h3 className="text-lg font-semibold text-black/80">
                       Phone
                     </h3>
-                    <p className="mt-1 text-gray-600">+234 800 123 4567</p>
+                    <p className="mt-1 text-gray-600">+2347051583304</p>
                   </div>
                 </div>
 
@@ -64,7 +64,7 @@ export default function ContactPage() {
                     <h3 className="text-lg font-semibold text-black/80">
                       Email
                     </h3>
-                    <p className="mt-1 text-gray-600">contact@trubank.com</p>
+                    <p className="mt-1 text-gray-600">info@trubank.ng</p>
                   </div>
                 </div>
               </div>
@@ -72,7 +72,7 @@ export default function ContactPage() {
               {/* Map */}
               <div className="aspect-[4/3] w-full overflow-hidden rounded-lg">
                 <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3964.7286885532544!2d3.3791206!3d6.4511364!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103b8c58aa4e9d31%3A0x9ddabc4518c15d15!2sVictoria%20Island%2C%20Lagos!5e0!3m2!1sen!2sng!4v1645754558774!5m2!1sen!2sng"
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3940.5076902536187!2d7.413972675774285!3d9.002386089377927!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x104e73a0d5f6b0d9%3A0x5e5a8d9c5c5c5c5c!2sEFAB%20Estate%20Lokogoma!5e0!3m2!1sen!2sng!4v1710876547774!5m2!1sen!2sng"
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}

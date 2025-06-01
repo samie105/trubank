@@ -22,7 +22,7 @@ const navigation = [
     name: "Resources",
     href: "/resources",
     children: [
-      { name: "Blog", href: "/resources/blog", icon: MessageSquare },
+      { name: "Blog", href: "https://blogs.trubank.ng", icon: MessageSquare },
       {
         name: "Whitepapers & Case Studies",
         href: "/resources/whitepapers",
