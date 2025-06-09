@@ -7,9 +7,8 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DateTimePicker } from "@/components/ui/date-picker";
-import { GetCountries } from "react-country-state-city";
 import { parseAsInteger, useQueryState } from "nuqs";
-import { Loader2, Check, ChevronDown } from "lucide-react";
+import { Loader2, Check, ChevronDown, AlertCircle } from "lucide-react";
 import {
   Form,
   FormField,
@@ -31,9 +30,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { useFormContext } from "@/contexts/FormContext";
-import { FormData, Country } from "@/types/types";
+import { FormData } from "@/types/types";
 import {
   Select,
   SelectContent,
@@ -42,6 +42,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
+import { fetchCountries, type Country } from "@/server/customer-management/fetchCountries";
 
 const formSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -50,7 +51,7 @@ const formSchema = z.object({
   gender: z.string().min(1, "Gender is required"),
   email: z.string().email("Invalid email address"),
   phone: z.string().min(1, "Phone number is required"),
-  country: z.string().min(1, "Country is required"),
+  country: z.string().min(1, "Country is required"), // This is now the country ID
   address: z.string().min(1, "Address is required"),
   maritalStatus: z.string().min(1, "Marital status is required"),
   alternatePhone: z.string().min(1, "Alternate phone number is required"),
@@ -74,7 +75,10 @@ export default function InformationDetailsForm() {
   });
 
   const [countriesList, setCountriesList] = useState<Country[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start with loading state true
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [fetchRetries, setFetchRetries] = useState(0);
+  const MAX_RETRIES = 10;
 
   const [, setStep] = useQueryState("step", parseAsInteger);
 
@@ -86,28 +90,46 @@ export default function InformationDetailsForm() {
     await router.push("/dashboard/customer-management");
   };
 
-  useEffect(() => {
-    const fetchCountries = async () => {
-      setIsLoading(true);
-      try {
-        const cachedCountries = localStorage.getItem("countriesList");
-        if (cachedCountries) {
-          const parsedCountries = JSON.parse(cachedCountries);
-          setCountriesList(parsedCountries);
-        } else {
-          const data = await GetCountries();
-          setCountriesList(data);
-          localStorage.setItem("countriesList", JSON.stringify(data));
-        }
-      } catch (error) {
-        console.error("Failed to fetch countries:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Function to get country name by ID
+  const getCountryNameById = (id: string): string => {
+    const country = memoizedCountriesList.find(country => country.id === id);
+    return country ? country.name : "";
+  };
 
-    fetchCountries();
-  }, []);
+  // Function to retry fetching countries
+  const retryFetchCountries = () => {
+    setErrorMessage(null);
+    setFetchRetries(prev => prev + 1);
+    getCountriesData();
+  };
+
+  // Function to fetch countries data
+  const getCountriesData = async () => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    
+    try {
+      // Direct fetch from server action - no localStorage caching
+      const countries = await fetchCountries();
+      
+      if (countries && Array.isArray(countries)) {
+        setCountriesList(countries);
+      } else {
+        throw new Error("Invalid countries data received");
+      }
+    } catch (error) {
+      console.error("Failed to fetch countries:", error);
+      setErrorMessage(error instanceof Error ? error.message : "Failed to load countries. Please try again.");
+      setCountriesList([]); // Set empty array on error to prevent undefined errors
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getCountriesData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Don't include getCountriesData in deps to avoid infinite loops
 
   const onSubmit = (data: FormData) => {
     const updatedData = { ...formData, ...data };
@@ -116,6 +138,7 @@ export default function InformationDetailsForm() {
     console.log("Form submitted:", data);
     setStep(2);
   };
+
   return (
     <Form {...form}>
       <form
@@ -123,6 +146,28 @@ export default function InformationDetailsForm() {
         className="space-y-4 animate__fadeIn animate__animated animate__faster"
       >
         <h2 className="text-lg font-semibold">Create Individual Customer</h2>
+
+        {/* Error Alert */}
+        {errorMessage && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="flex items-center justify-between">
+              <span>{errorMessage}</span>
+              {fetchRetries < MAX_RETRIES && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={retryFetchCountries}
+                  className="ml-4"
+                  disabled={isLoading}
+                >
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Retry"}
+                </Button>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -291,20 +336,10 @@ export default function InformationDetailsForm() {
                         {isLoading ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Please wait
+                            Loading countries...
                           </>
                         ) : field.value ? (
-                          memoizedCountriesList.find(
-                            (country) => country.name === field.value
-                          )?.emoji ? (
-                            `${
-                              memoizedCountriesList.find(
-                                (country) => country.name === field.value
-                              )?.emoji
-                            } ${field.value}`
-                          ) : (
-                            field.value
-                          )
+                          getCountryNameById(field.value) || field.value
                         ) : (
                           "Select country"
                         )}
@@ -316,28 +351,37 @@ export default function InformationDetailsForm() {
                     <Command>
                       <CommandInput placeholder="Search country..." />
                       <CommandList>
-                        <CommandEmpty>No country found.</CommandEmpty>
-                        <CommandGroup>
-                          {memoizedCountriesList.map((country) => (
-                            <CommandItem
-                              key={country.id}
-                              onSelect={() => {
-                                form.setValue("country", country.name);
-                                setOpenCountry(false);
-                              }}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  country.name === field.value
-                                    ? "opacity-100"
-                                    : "opacity-0"
-                                )}
-                              />
-                              {country.emoji || ""} {country.name}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
+                        {isLoading ? (
+                          <div className="flex items-center justify-center p-4 text-sm">
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Loading countries...
+                          </div>
+                        ) : (
+                          <>
+                            <CommandEmpty>No country found.</CommandEmpty>
+                            <CommandGroup>
+                              {memoizedCountriesList.map((country) => (
+                                <CommandItem
+                                  key={country.id}
+                                  onSelect={() => {
+                                    form.setValue("country", country.id);
+                                    setOpenCountry(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      country.id === field.value
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                  />
+                                  {country.countryCode && `${country.countryCode} `} {country.name}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </>
+                        )}
                       </CommandList>
                     </Command>
                   </PopoverContent>
@@ -401,7 +445,7 @@ export default function InformationDetailsForm() {
                 <FormControl>
                   <Input
                     placeholder="Enter alternate phone number"
-                    type="number"
+                    type="tel"
                     {...field}
                   />
                 </FormControl>
@@ -450,7 +494,7 @@ export default function InformationDetailsForm() {
               <FormItem>
                 <FormLabel>Tax Identification Number (TIN)</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter TIN" type="number" {...field} />
+                  <Input placeholder="Enter TIN" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

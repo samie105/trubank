@@ -193,27 +193,33 @@ export default function ProfileForm() {
   useEffect(() => {
     const fetchAllData = async () => {
       try {
-        console.log("Starting parallel data fetching...")
-        // Fetch all data in parallel
-        const fetchPromises = [
-          Promise.resolve(fetchBranches()).catch((err) => {
-            console.error("Error in fetchBranches Promise:", err)
-            return null;
-          }),
-          Promise.resolve(fetchAccountOfficers()).catch((err) => {
-            console.error("Error in fetchAccountOfficers Promise:", err)
-            return null;
-          }),
-          Promise.resolve(fetchProductTypes()).catch((err) => {
-            console.error("Error in fetchProductTypes Promise:", err)
-            return null;
-          }),
-        ];
+        console.log("Starting sequential data fetching...")
         
-        await Promise.all(fetchPromises);
-        console.log("Completed parallel data fetching")
+        // Fetch data one at a time
+        try {
+           fetchBranches();
+          console.log("Branches fetched successfully");
+        } catch (err) {
+          console.error("Error in fetchBranches:", err);
+        }
+        
+        try {
+           fetchAccountOfficers();
+          console.log("Account officers fetched successfully");
+        } catch (err) {
+          console.error("Error in fetchAccountOfficers:", err);
+        }
+        
+        try {
+           fetchProductTypes();
+          console.log("Product types fetched successfully");
+        } catch (err) {
+          console.error("Error in fetchProductTypes:", err);
+        }
+        
+        console.log("Completed sequential data fetching");
       } catch (error) {
-        console.error("Unexpected error in fetchAllData:", error)
+        console.error("Unexpected error in fetchAllData:", error);
       }
     };
 

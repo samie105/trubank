@@ -361,6 +361,7 @@ export default function SidebarComp() {
           <SidebarMenu>
             <ResponsiveModal>
               <SidebarMenuButton asChild>
+                <div className="flex w-full items-center hover:bg-accent hover:text-accent-foreground rounded-md py-5 mt-1 justify-between">
                 <ResponsiveModalTrigger className="flex w-full items-center py-5 mt-1 justify-between">
                   <div className="flex items-center gap-x-2 text-foreground">
                     <svg
@@ -378,11 +379,11 @@ export default function SidebarComp() {
                       />
                     </svg>
                     <p>Logout</p>
-                  </div>
+                  </div>   </ResponsiveModalTrigger>
                   <div className="flex items-center space-x-2">
                     <ThemeSwitch />
                   </div>
-                </ResponsiveModalTrigger>
+             </div>
               </SidebarMenuButton>
               <ResponsiveModalContent>
                 <ResponsiveModalTitle>Confirm Logout</ResponsiveModalTitle>

@@ -1,529 +1,611 @@
 "use client"
 
-import { useState } from "react"
-import { ArrowRight, ArrowUpRight, Filter } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { TransactionItem } from "./transaction-item"
-import { MetricCard } from "./metric-card"
-import {
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-} from "recharts"
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts"
+import { TrendingUp, Users, Eye } from "lucide-react"
 
-// Sample data for charts
-const customerData = [
-  { name: "Feb", individual: 8000, business: 10000 },
-  { name: "Mar", individual: 12000, business: 8000 },
-  { name: "Apr", individual: 9000, business: 15000 },
-  { name: "May", individual: 18000, business: 12000 },
-  { name: "Jun", individual: 23230, business: 10000 },
-  { name: "Jul", individual: 16000, business: 18000 },
-  { name: "Aug", individual: 21000, business: 22000 },
-]
+export default function DashboardOverview() {
+  // Chart data
+  const verificationData = [
+    { name: "Individual", value: 60, count: 210 },
+    { name: "Business", value: 40, count: 140 },
+  ]
 
-const revenueData = [
-  { name: "Revenue", value: 200050200 },
-  { name: "Expenses", value: 120023800 },
-]
+  const totalActiveAccountData = [
+    { name: "Savings", value: 19000, color: "#f59e0b" },
+    { name: "Current", value: 11000, color: "#8b5cf6" },
+  ]
 
-const accountData = [
-  { name: "Savings", value: 19000 },
-  { name: "Current", value: 11000 },
-]
+  const newAccountData = [
+    { name: "Savings", value: 400, color: "#f59e0b" },
+    { name: "Current", value: 300, color: "#8b5cf6" },
+  ]
 
-const newAccountData = [
-  { name: "Savings", value: 400 },
-  { name: "Current", value: 300 },
-]
+  const accountStatusData = [
+    { name: "Total Blocked", value: 2200, color: "#ef4444" },
+    { name: "Total Frozen", value: 1250, color: "#06b6d4" },
+    { name: "Total Closed", value: 1500, color: "#8b5cf6" },
+  ]
 
-const COLORS = ["#f97316", "#60a5fa"]
+  const revenueExpenseData = [
+    { name: "Total Revenue", value: 200050200, color: "#10b981" },
+    { name: "Total Expenses", value: 120023800, color: "#f59e0b" },
+  ]
 
-export function DashboardOverview() {
-  const [timeframe, setTimeframe] = useState("6 months")
+  const customerGrowthData = [
+    { month: "Feb", individual: 8000, business: 5000, total: 13000 },
+    { month: "Mar", individual: 12000, business: 7000, total: 19000 },
+    { month: "Apr", individual: 15000, business: 8500, total: 23500 },
+    { month: "May", individual: 18000, business: 6000, total: 24000 },
+    { month: "Jun", individual: 23230, business: 9000, total: 32230 },
+    { month: "Jul", individual: 20000, business: 8000, total: 28000 },
+    { month: "Aug", individual: 22000, business: 9500, total: 31500 },
+  ]
+
+  const transactions = [
+    { type: "Send", recipient: "Samuel ikechukwu", amount: -13000000, icon: "↗" },
+    { type: "Received", recipient: "Mary Johnson", amount: 8000000, icon: "↙" },
+    { type: "Received", recipient: "Mary Johnson", amount: 6000000, icon: "↙" },
+    { type: "Received", recipient: "Mary Johnson", amount: 3000000, icon: "↙" },
+    { type: "Send", recipient: "Samuel ikechukwu", amount: -1500000, icon: "↗" },
+  ]
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount)
+  }
+
+  // const formatNumber = (num: number) => {
+  //   return new Intl.NumberFormat().format(num)
+  // }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* First row - full width on all screens */}
-      <Card className="lg:col-span-2">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-xl">Recent Transactions</CardTitle>
-          <Button variant="ghost" size="sm" className="gap-1">
-            View all <ArrowRight className="h-4 w-4" />
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-4">
-              <TransactionItem type="received" name="Received from Mary Johnson" amount="+₦3,000,000.00" />
-              <TransactionItem type="sent" name="Send to Samuel Ikechukwu" amount="-₦1,500,000.00" />
-            </div>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center">
-                    <span className="text-orange-500">₦</span>
-                  </div>
-                  <span className="text-muted-foreground">Total Deposit</span>
-                </div>
-                <span className="font-semibold">₦61,000,000</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center">
-                    <span className="text-orange-500">₦</span>
-                  </div>
-                  <span className="text-muted-foreground">Total Withdrawal</span>
-                </div>
-                <span className="font-semibold">₦43,000,000</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center">
-                    <span className="text-orange-500">₦</span>
-                  </div>
-                  <span className="text-muted-foreground">Total Bills Payment</span>
-                </div>
-                <span className="font-semibold">₦31,000,000</span>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Financial Metrics */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-xl">Financial Metrics</CardTitle>
-          <Button variant="outline" size="icon">
-            <Filter className="h-4 w-4" />
-          </Button>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <MetricCard title="Total Assets" value="₦350,100,000,000" showEye={true} showMore={true} />
-          <MetricCard title="Total Liabilities" value="₦205,100,000,000" showEye={true} showMore={true} />
-          <MetricCard title="Net Income" value="₦205,100,000,000" showEye={true} showMore={true} />
-        </CardContent>
-      </Card>
-
-      {/* Customer Growth Chart */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <div className="space-y-1">
-            <CardTitle className="text-xl">Total Customers</CardTitle>
-            <Tabs defaultValue="individual" className="w-full max-w-[300px]">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="individual">Individual</TabsTrigger>
-                <TabsTrigger value="business">Business</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-          <Select defaultValue={timeframe} onValueChange={setTimeframe}>
-            <SelectTrigger className="w-[130px]">
-              <SelectValue placeholder="Select timeframe" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1 month">1 month</SelectItem>
-              <SelectItem value="3 months">3 months</SelectItem>
-              <SelectItem value="6 months">6 months</SelectItem>
-              <SelectItem value="1 year">1 year</SelectItem>
-            </SelectContent>
-          </Select>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
-                data={customerData}
-                margin={{
-                  top: 10,
-                  right: 10,
-                  left: 0,
-                  bottom: 0,
-                }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip
-                  formatter={(value) => [`${value}`, "Customers"]}
-                  labelFormatter={(label) => `Month: ${label}`}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="individual"
-                  stackId="1"
-                  stroke="#f59e0b"
-                  fill="#fef3c7"
-                  name="Individual"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="business"
-                  stackId="1"
-                  stroke="#f97316"
-                  fill="#ffedd5"
-                  name="Business"
-                  strokeDasharray="3 3"
-                />
-                <Legend />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Revenue & Expenses */}
-      <Card className="lg:col-span-2">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-xl">Revenue & Expenses</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-            <div className="h-[250px] md:col-span-1">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={revenueData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                    nameKey="name"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {revenueData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={index === 0 ? "#22c55e" : "#f97316"} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => [`₦${value.toLocaleString()}`, ""]} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="space-y-4 md:col-span-2">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span className="text-sm">Total Revenue</span>
-                <span className="ml-auto font-semibold">₦200,050,200</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                <span className="text-sm">Total Expenses</span>
-                <span className="ml-auto font-semibold">₦120,023,800</span>
-              </div>
-              <div className="pt-4">
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart
-                    data={[
-                      { name: "Jan", revenue: 150000000, expenses: 90000000 },
-                      { name: "Feb", revenue: 170000000, expenses: 100000000 },
-                      { name: "Mar", revenue: 160000000, expenses: 95000000 },
-                      { name: "Apr", revenue: 180000000, expenses: 105000000 },
-                      { name: "May", revenue: 190000000, expenses: 110000000 },
-                      { name: "Jun", revenue: 200050200, expenses: 120023800 },
-                    ]}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis tickFormatter={(value) => `₦${(value / 1000000).toFixed(0)}M`} />
-                    <Tooltip formatter={(value) => [`₦${value.toLocaleString()}`, ""]} />
-                    <Legend />
-                    <Bar dataKey="revenue" name="Revenue" fill="#22c55e" />
-                    <Bar dataKey="expenses" name="Expenses" fill="#f97316" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* User Statistics */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-xl">User Statistics</CardTitle>
-          <Select defaultValue="today">
-            <SelectTrigger className="w-[100px]">
-              <SelectValue placeholder="Period" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="today">Today</SelectItem>
-              <SelectItem value="week">This Week</SelectItem>
-              <SelectItem value="month">This Month</SelectItem>
-            </SelectContent>
-          </Select>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="h-6 w-6 rounded-full bg-orange-100 flex items-center justify-center">
-                    <span className="text-orange-500 text-xs">👤</span>
-                  </div>
-                  <span className="text-sm text-muted-foreground">Active Users</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-3xl font-bold">3,000</span>
-                  <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full">
-                    +11.02% <ArrowUpRight className="h-3 w-3 inline" />
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="h-6 w-6 rounded-full bg-orange-100 flex items-center justify-center">
-                    <span className="text-orange-500 text-xs">👤</span>
-                  </div>
-                  <span className="text-sm text-muted-foreground">New Users</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-3xl font-bold">35</span>
-                  <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full">
-                    +4.05% <ArrowUpRight className="h-3 w-3 inline" />
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          <div className="mt-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium">Users Pending Verification</h3>
-                  <span className="text-xl font-bold">350</span>
-                </div>
-                <div className="h-[200px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={[
-                          { name: "Individual", value: 210 },
-                          { name: "Business", value: 140 },
-                        ]}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        <Cell fill="#f97316" />
-                        <Cell fill="#60a5fa" />
-                      </Pie>
-                      <Tooltip formatter={(value) => [`${value} Users`, ""]} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                    <span className="text-sm">Individual</span>
-                    <span className="ml-auto font-medium">60%</span>
-                    <ArrowUpRight className="h-3 w-3 text-green-600" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-blue-400"></div>
-                    <span className="text-sm">Business</span>
-                    <span className="ml-auto font-medium">40%</span>
-                    <ArrowUpRight className="h-3 w-3 text-green-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Account Metrics */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-xl">Account Metrics</CardTitle>
-          <Select defaultValue="today">
-            <SelectTrigger className="w-[100px]">
-              <SelectValue placeholder="Period" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="today">Today</SelectItem>
-              <SelectItem value="week">This Week</SelectItem>
-              <SelectItem value="month">This Month</SelectItem>
-            </SelectContent>
-          </Select>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Card>
-              <CardContent className="p-4 flex flex-col items-center">
-                <h3 className="text-sm text-muted-foreground mb-2">Total Active Account</h3>
-                <div className="h-[150px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={accountData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={40}
-                        outerRadius={60}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {accountData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => [`${value} Accounts`, ""]} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="text-center mb-2">
-                  <span className="text-xl font-bold">30000</span>
-                  <span className="text-xs text-muted-foreground block">Accounts</span>
-                </div>
-                <div className="w-full space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-                      <span>Savings</span>
+    <div className="">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left Column */}
+        <div className="space-y-6">
+          {/* User Statistics & Pending Verification Combined */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-lg font-medium">User Statistics</CardTitle>
+              <Select defaultValue="today">
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="week">Week</SelectItem>
+                  <SelectItem value="month">Month</SelectItem>
+                </SelectContent>
+              </Select>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Active Users and New Users Stats */}
+              <div className="grid grid-cols-2 gap-4">
+                <Card className="">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                        <Users className="w-4 h-4 text-primary" />
+                      </div>
+                      <span className="text-sm text-muted-foreground">Active Users</span>
                     </div>
-                    <span>19000</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-blue-400"></div>
-                      <span>Current</span>
+                    <div className="text-3xl font-bold">3,000</div>
+                    <div className="flex items-center gap-1 text-green-600 text-sm">
+                      <TrendingUp className="w-4 h-4" />
+                      +11.02%
                     </div>
-                    <span>11000</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 flex flex-col items-center">
-                <h3 className="text-sm text-muted-foreground mb-2">New Account Created</h3>
-                <div className="h-[150px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={newAccountData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={40}
-                        outerRadius={60}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {newAccountData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => [`${value} Accounts`, ""]} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="text-center mb-2">
-                  <span className="text-xl font-bold">700</span>
-                  <span className="text-xs text-muted-foreground block">Accounts</span>
-                </div>
-                <div className="w-full space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-                      <span>Savings</span>
+                  </CardContent>
+                </Card>
+
+                <Card className="">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                        <Users className="w-4 h-4 text-primary" />
+                      </div>
+                      <span className="text-sm text-muted-foreground">New Users</span>
                     </div>
-                    <span>400</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-blue-400"></div>
-                      <span>Current</span>
+                    <div className="text-3xl font-bold">35</div>
+                    <div className="flex items-center gap-1 text-green-600 text-sm">
+                      <TrendingUp className="w-4 h-4" />
+                      +4.05%
                     </div>
-                    <span>300</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          <div className="mt-4">
-            <Card>
-              <CardContent className="p-4">
-                <h3 className="text-sm font-medium mb-2">Account Status</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="h-[200px] md:col-span-1">
-                    <ResponsiveContainer width="100%" height="100%">
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Users Pending Verification */}
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-medium mb-4">Users Pending Verification</h3>
+                <div className="flex items-center justify-center mb-4">
+                  <div className="relative">
+                    <ChartContainer
+                      config={{
+                        individual: { label: "Individual", color: "#f59e0b" },
+                        business: { label: "Business", color: "#8b5cf6" },
+                      }}
+                      className="h-48 w-48"
+                    >
                       <PieChart>
                         <Pie
-                          data={[
-                            { name: "Blocked", value: 2200 },
-                            { name: "Frozen", value: 1250 },
-                            { name: "Closed", value: 1500 },
-                          ]}
+                          data={verificationData}
                           cx="50%"
                           cy="50%"
-                          innerRadius={40}
-                          outerRadius={60}
-                          fill="#8884d8"
+                          innerRadius={60}
+                          outerRadius={90}
                           dataKey="value"
                         >
-                          <Cell fill="#ef4444" />
-                          <Cell fill="#3b82f6" />
+                          <Cell fill="#f59e0b" />
                           <Cell fill="#8b5cf6" />
                         </Pie>
-                        <Tooltip formatter={(value) => [`${value} Accounts`, ""]} />
+                        <ChartTooltip content={<ChartTooltipContent />} />
                       </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="space-y-3 md:col-span-2">
-                    <div className="text-center md:text-left">
-                      <span className="text-xl font-bold">5000</span>
-                      <span className="text-xs text-muted-foreground block">Accounts</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                        <span>Total Blocked</span>
-                      </div>
-                      <span>2200</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                        <span>Total Frozen</span>
-                      </div>
-                      <span>1250</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-purple-500"></div>
-                        <span>Total Closed</span>
-                      </div>
-                      <span>1500</span>
+                    </ChartContainer>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <Users className="w-6 h-6 text-muted-foreground mb-1" />
+                      <div className="text-2xl font-bold">350</div>
+                      <div className="text-sm text-muted-foreground">Users</div>
                     </div>
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-primary rounded-full"></div>
+                      <span className="text-sm">Individual</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">60%</span>
+                      <TrendingUp className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                      <span className="text-sm">Business</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">40%</span>
+                      <TrendingUp className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Recent Transactions */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-lg font-medium">Recent Transactions</CardTitle>
+              <Button variant="outline" size="sm" className="text-primary hover:bg-background ">
+                View all
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {transactions.map((transaction, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                        <span className="text-primary text-sm">{transaction.icon}</span>
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium">
+                          {transaction.type} {transaction.type === "Send" ? "to" : "from"} {transaction.recipient}
+                        </div>
+                      </div>
+                    </div>
+                    <div className={`font-medium ${transaction.amount > 0 ? "text-green-600" : "text-red-600"}`}>
+                      {transaction.amount > 0 ? "+" : ""}
+                      {formatCurrency(transaction.amount)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Financial Metrics */}
+          <div className="grid grid-cols-1 gap-4">
+            <Card className="bg-background">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">Total Assets</span>
+                      <Eye className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    <div className="text-2xl font-bold">₦350,100,000,000</div>
+                  </div>
+                  <Button variant="outline" size="sm" className="text-primary hover:bg-background ">
+                    Show more
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-background">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">Total Liabilities</span>
+                      <Eye className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    <div className="text-2xl font-bold">₦205,100,000,000</div>
+                  </div>
+                  <Button variant="outline" size="sm" className="text-primary hover:bg-background ">
+                    Show more
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-background">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">Net Income</span>
+                      <Eye className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    <div className="text-2xl font-bold">₦205,100,000,000</div>
+                  </div>
+                  <Button variant="outline" size="sm" className="text-primary hover:bg-background ">
+                    Show more
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Revenue & Expenses */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg font-medium">Revenue & Expenses</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-center mb-4">
+                <ChartContainer
+                  config={{
+                    revenue: { label: "Total Revenue", color: "#10b981" },
+                    expenses: { label: "Total Expenses", color: "#f59e0b" },
+                  }}
+                  className="h-48 w-48"
+                >
+                  <PieChart>
+                    <Pie data={revenueExpenseData} cx="50%" cy="50%" innerRadius={40} outerRadius={80} dataKey="value">
+                      {revenueExpenseData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                  </PieChart>
+                </ChartContainer>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span className="text-sm">Total Revenue</span>
+                  </div>
+                  <span className="font-medium">₦200,050,200</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-primary rounded-full"></div>
+                    <span className="text-sm">Total Expenses</span>
+                  </div>
+                  <span className="font-medium">₦120,023,800</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column */}
+        <div className="space-y-6">
+          {/* Account Metrics */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-lg font-medium">Account Metrics</CardTitle>
+              <Select defaultValue="today">
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="week">Week</SelectItem>
+                  <SelectItem value="month">Month</SelectItem>
+                </SelectContent>
+              </Select>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <Card className="">
+                  <CardContent className="p-4 text-center">
+                    <div className="text-sm text-muted-foreground mb-2">Total Active Account</div>
+                    <div className="relative mx-auto w-32 h-32 mb-2">
+                      <ChartContainer
+                        config={{
+                          savings: { label: "Savings", color: "#f59e0b" },
+                          current: { label: "Current", color: "#8b5cf6" },
+                        }}
+                        className="h-32 w-32"
+                      >
+                        <PieChart>
+                          <Pie
+                            data={totalActiveAccountData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={35}
+                            outerRadius={55}
+                            dataKey="value"
+                          >
+                            {totalActiveAccountData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ChartContainer>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <div className="text-lg font-bold">30000</div>
+                        <div className="text-xs text-muted-foreground">Accounts</div>
+                      </div>
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-primary rounded-full"></div>
+                          <span>Savings</span>
+                        </div>
+                        <span>19000</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                          <span>Current</span>
+                        </div>
+                        <span>11000</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-background">
+                  <CardContent className="p-4 text-center">
+                    <div className="text-sm text-muted-foreground mb-2">New Account Created</div>
+                    <div className="relative mx-auto w-32 h-32 mb-2">
+                      <ChartContainer
+                        config={{
+                          savings: { label: "Savings", color: "#f59e0b" },
+                          current: { label: "Current", color: "#8b5cf6" },
+                        }}
+                        className="h-32 w-32"
+                      >
+                        <PieChart>
+                          <Pie
+                            data={newAccountData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={35}
+                            outerRadius={55}
+                            dataKey="value"
+                          >
+                            {newAccountData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ChartContainer>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <div className="text-lg font-bold">700</div>
+                        <div className="text-xs text-muted-foreground">Accounts</div>
+                      </div>
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-primary rounded-full"></div>
+                          <span>Savings</span>
+                        </div>
+                        <span>400</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                          <span>Current</span>
+                        </div>
+                        <span>300</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Account Status */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg font-medium">Account Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-center mb-4">
+                <div className="relative">
+                  <ChartContainer
+                    config={{
+                      blocked: { label: "Total Blocked", color: "#ef4444" },
+                      frozen: { label: "Total Frozen", color: "#06b6d4" },
+                      closed: { label: "Total Closed", color: "#8b5cf6" },
+                    }}
+                    className="h-32 w-32"
+                  >
+                    <PieChart>
+                      <Pie data={accountStatusData} cx="50%" cy="50%" innerRadius={35} outerRadius={60} dataKey="value">
+                        {accountStatusData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ChartContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <div className="text-xl font-bold">5000</div>
+                    <div className="text-xs text-muted-foreground">Accounts</div>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <span>Total Blocked</span>
+                  </div>
+                  <span className="font-medium">2200</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-cyan-500 rounded-full"></div>
+                    <span>Total Frozen</span>
+                  </div>
+                  <span className="font-medium">1250</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                    <span>Total Closed</span>
+                  </div>
+                  <span className="font-medium">1500</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Total Transactions */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-lg font-medium">Total Transactions</CardTitle>
+              <Select defaultValue="today">
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="week">Week</SelectItem>
+                  <SelectItem value="month">Month</SelectItem>
+                </SelectContent>
+              </Select>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold mb-4">₦135,000,000</div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center">
+                      <span className="text-primary text-xs">₦</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">Total Deposit</span>
+                  </div>
+                  <span className="font-medium">₦61,000,000</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center">
+                      <span className="text-primary text-xs">₦</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">Total Withdrawal</span>
+                  </div>
+                  <span className="font-medium">₦43,000,000</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center">
+                      <span className="text-primary text-xs">₦</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">Total Bills Payment</span>
+                  </div>
+                  <span className="font-medium">₦31,000,000</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Total Customers Chart */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div className="flex items-center gap-4">
+                <CardTitle className="text-lg font-medium text-primary">Total Customers</CardTitle>
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="sm" className="text-primary">
+                    Individual
+                  </Button>
+                  <Button variant="ghost" size="sm" className="text-muted-foreground">
+                    Business
+                  </Button>
+                </div>
+              </div>
+              <Select defaultValue="6months">
+                <SelectTrigger className="w-24">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="6months">6 months</SelectItem>
+                  <SelectItem value="1year">1 year</SelectItem>
+                </SelectContent>
+              </Select>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer
+                config={{
+                  individual: { label: "Individual", color: "#f59e0b" },
+                  business: { label: "Business", color: "#8b5cf6" },
+                }}
+                className="h-64"
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={customerGrowthData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#666" }} />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12, fill: "#666" }}
+                      tickFormatter={(value) => `${value / 1000}K`}
+                    />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line
+                      type="monotone"
+                      dataKey="individual"
+                      stroke="#f59e0b"
+                      strokeWidth={2}
+                      dot={{ fill: "#f59e0b", strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, fill: "#f59e0b" }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="business"
+                      stroke="#8b5cf6"
+                      strokeWidth={2}
+                      strokeDasharray="5 5"
+                      dot={{ fill: "#8b5cf6", strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, fill: "#8b5cf6" }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   )
 }
