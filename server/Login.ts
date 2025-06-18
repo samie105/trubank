@@ -85,20 +85,23 @@ export const loginAction = actionClient.schema(loginSchema).action(async ({ pars
       // Handle case where statCode indicates an error or data.result is null
       console.error("Login failed:", data)
 
-      // Determine the error message based on statCode
-      let errorMessage = data.error || data.message || "Invalid credentials"
-
-      // Handle specific error codes
-      if (data.statCode === 400) {
-        errorMessage = "Invalid username or password"
-      } else if (data.statCode === 401) {
-        errorMessage = "Unauthorized access"
-      } else if (data.statCode === 403) {
-        errorMessage = "Account locked or disabled"
-      } else if (data.statCode === 404) {
-        errorMessage = "User not found"
-      } else if (data.statCode >= 500) {
-        errorMessage = "Server error. Please try again later."
+      // Always use the server's actual message if available
+      let errorMessage = data.message || data.error || "Invalid credentials"
+      
+      // Only use generic messages if the server didn't provide a specific message
+      if (!data.message && !data.error) {
+        // Handle specific error codes with generic messages only if no specific message
+        if (data.statCode === 400) {
+          errorMessage = "Invalid username or password"
+        } else if (data.statCode === 401) {
+          errorMessage = "Unauthorized access"
+        } else if (data.statCode === 403) {
+          errorMessage = "Account locked or disabled"
+        } else if (data.statCode === 404) {
+          errorMessage = "User not found"
+        } else if (data.statCode >= 500) {
+          errorMessage = "Server error. Please try again later."
+        }
       }
 
       return {

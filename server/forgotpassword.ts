@@ -242,18 +242,18 @@ export const resetPasswordAction = actionClient
 
       console.log("Resetting password for:", email, "with OTP:", otp)
 
-      // Call the API to reset password with JSON body
+      // Create FormData for the request
+      const formData = new FormData();
+      formData.append("Username", email);
+      formData.append("ResetCode", otp);
+      formData.append("NewPassword", password);
+      formData.append("customerType", "3"); // Using the customerType from the example
+
+      // Call the API to reset password with FormData
       const response = await fetch(`${process.env.API_URL}/usermanagement/auth/reset-password`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          Username: email,
-          ResetCode: otp,
-          NewPassword: password,
-          customerType: 3, // Using the customerType from the example
-        }),
+        // No Content-Type header needed - browser will set it automatically with boundary
+        body: formData,
       })
 
       console.log("Reset password API response status:", response.status)

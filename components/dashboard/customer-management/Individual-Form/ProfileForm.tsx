@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { parseAsBoolean, parseAsInteger, useQueryState } from "nuqs"
-import { Loader2, Check, ChevronDown } from "lucide-react"
+import { Loader2, Check, ChevronDown, RotateCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
@@ -47,6 +47,7 @@ export default function ProfileForm() {
   const [isLoadingBranches, setIsLoadingBranches] = useState(true)
   const [isLoadingOfficers, setIsLoadingOfficers] = useState(true)
   const [isLoadingProductTypes, setIsLoadingProductTypes] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Action to handle logout
   const { execute: executeLogout } = useAction(logoutAction, {
@@ -189,40 +190,50 @@ export default function ProfileForm() {
     },
   })
 
+  // Function to fetch all data in parallel
+  const fetchAllData = async () => {
+    try {
+      console.log("Starting parallel data fetching...")
+      setIsRefreshing(true)
+      
+      // Execute all fetch operations in parallel for faster loading
+      const fetchPromises = [
+        new Promise((resolve) => {
+          fetchBranches();
+          resolve(null);
+        }).catch((err) => {
+          console.error("Error in fetchBranches Promise:", err)
+          return null;
+        }),
+        
+        new Promise((resolve) => {
+          fetchAccountOfficers();
+          resolve(null);
+        }).catch((err) => {
+          console.error("Error in fetchAccountOfficers Promise:", err)
+          return null;
+        }),
+        
+        new Promise((resolve) => {
+          fetchProductTypes();
+          resolve(null);
+        }).catch((err) => {
+          console.error("Error in fetchProductTypes Promise:", err)
+          return null;
+        }),
+      ];
+      
+      await Promise.all(fetchPromises);
+      console.log("Completed parallel data fetching")
+    } catch (error) {
+      console.error("Unexpected error in fetchAllData:", error)
+    } finally {
+      setIsRefreshing(false)
+    }
+  };
+
   // Fetch data on component mount
   useEffect(() => {
-    const fetchAllData = async () => {
-      try {
-        console.log("Starting sequential data fetching...")
-        
-        // Fetch data one at a time
-        try {
-           fetchBranches();
-          console.log("Branches fetched successfully");
-        } catch (err) {
-          console.error("Error in fetchBranches:", err);
-        }
-        
-        try {
-           fetchAccountOfficers();
-          console.log("Account officers fetched successfully");
-        } catch (err) {
-          console.error("Error in fetchAccountOfficers:", err);
-        }
-        
-        try {
-           fetchProductTypes();
-          console.log("Product types fetched successfully");
-        } catch (err) {
-          console.error("Error in fetchProductTypes:", err);
-        }
-        
-        console.log("Completed sequential data fetching");
-      } catch (error) {
-        console.error("Unexpected error in fetchAllData:", error);
-      }
-    };
-
     fetchAllData();
   }, [fetchBranches, fetchAccountOfficers, fetchProductTypes]);
 
@@ -250,7 +261,7 @@ export default function ProfileForm() {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-4">
-        <h2 className="text-2xl font-bold text-center">
+          <h2 className="text-2xl font-bold text-center">
             Customer Assignment <br /> and Account Setup
           </h2>
           <h2 className="text-sm text-center font-medium text-muted-foreground">
@@ -440,13 +451,25 @@ export default function ProfileForm() {
           )}
         </div>
         <div className="flex justify-between">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setCreating(false)}
-          >
-            Back
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setCreating(false)}
+            >
+              Back
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={fetchAllData}
+              disabled={isRefreshing}
+              title="Refresh data"
+            >
+              <RotateCcw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
           <Button type="submit">Create Customer</Button>
         </div>
       </form>

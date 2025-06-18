@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { parseAsBoolean, useQueryState } from "nuqs"
-import { Loader2, Check, ChevronDown } from "lucide-react"
+import { Loader2, Check, ChevronDown, RotateCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
@@ -46,6 +46,7 @@ export default function BusinessProfileForm() {
   const [isLoadingBranches, setIsLoadingBranches] = useState(true)
   const [isLoadingOfficers, setIsLoadingOfficers] = useState(true)
   const [isLoadingProductTypes, setIsLoadingProductTypes] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Action to handle logout
   const { execute: executeLogout } = useAction(logoutAction, {
@@ -171,34 +172,39 @@ export default function BusinessProfileForm() {
     },
   })
 
+  // Function to fetch all data in parallel
+  const fetchAllData = async () => {
+    try {
+      console.log("Starting parallel data fetching...")
+      setIsRefreshing(true)
+      
+      // Fetch all data in parallel
+      const fetchPromises = [
+        Promise.resolve(fetchBranches()).catch((err) => {
+          console.error("Error in fetchBranches Promise:", err)
+          return null;
+        }),
+        Promise.resolve(fetchAccountOfficers()).catch((err) => {
+          console.error("Error in fetchAccountOfficers Promise:", err)
+          return null;
+        }),
+        Promise.resolve(fetchProductTypes()).catch((err) => {
+          console.error("Error in fetchProductTypes Promise:", err)
+          return null;
+        }),
+      ];
+      
+      await Promise.all(fetchPromises);
+      console.log("Completed parallel data fetching")
+    } catch (error) {
+      console.error("Unexpected error in fetchAllData:", error)
+    } finally {
+      setIsRefreshing(false)
+    }
+  };
+
   // Fetch data on component mount
   useEffect(() => {
-    const fetchAllData = async () => {
-      try {
-        console.log("Starting parallel data fetching...")
-        // Fetch all data in parallel
-        const fetchPromises = [
-          Promise.resolve(fetchBranches()).catch((err) => {
-            console.error("Error in fetchBranches Promise:", err)
-            return null;
-          }),
-          Promise.resolve(fetchAccountOfficers()).catch((err) => {
-            console.error("Error in fetchAccountOfficers Promise:", err)
-            return null;
-          }),
-          Promise.resolve(fetchProductTypes()).catch((err) => {
-            console.error("Error in fetchProductTypes Promise:", err)
-            return null;
-          }),
-        ];
-        
-        await Promise.all(fetchPromises);
-        console.log("Completed parallel data fetching")
-      } catch (error) {
-        console.error("Unexpected error in fetchAllData:", error)
-      }
-    };
-
     fetchAllData();
   }, [fetchBranches, fetchAccountOfficers, fetchProductTypes]);
 
@@ -419,9 +425,21 @@ export default function BusinessProfileForm() {
         </div>
 
         <div className="flex justify-between">
-          <Button type="button" variant="outline" onClick={() => setCreating(false)}>
-            Back
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="outline" onClick={() => setCreating(false)}>
+              Back
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={fetchAllData}
+              disabled={isRefreshing}
+              title="Refresh data"
+            >
+              <RotateCcw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
           <div className="space-x-2">
             <Button type="submit" className="text-white">
               {form.formState.isSubmitting ? (
