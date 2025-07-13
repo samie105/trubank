@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -45,6 +47,7 @@ import {
   Download, 
   MoreVertical, 
   Settings, 
+  RotateCcw,
   Eye,
   Edit,
   Trash2,
@@ -54,8 +57,12 @@ import {
   Upload,
   X
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAction } from "next-safe-action/hooks";
+import { fetchAdminUsersAction } from "@/server/role-and-access/fetch-admin-users";
 import { toast } from "sonner";
 import Image from "next/image";
+import { exportAdminUsersAction } from "@/server/role-and-access/export-admin-users";
 
 interface Admin {
   id: string;
@@ -71,7 +78,7 @@ interface Admin {
   avatar?: string;
 }
 
-// Mock data for admins
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const mockAdmins: Admin[] = [
   {
     id: "1",
@@ -160,7 +167,8 @@ export default function ManageAdmin() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [admins, setAdmins] = useState<Admin[]>(mockAdmins);
+  const [admins, setAdmins] = useState<Admin[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   
   // Form states
@@ -682,6 +690,97 @@ export default function ManageAdmin() {
     }
   };
 
+  const { execute: loadAdmins } = useAction(fetchAdminUsersAction, {
+    onExecute() {
+      setIsLoading(true);
+      toast.loading("Fetching admins...", { id: "fetch-admins" });
+    },
+    onSuccess(apiResponse) {
+      toast.dismiss("fetch-admins");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const payload: any = apiResponse.data ?? {};
+      if (payload && (payload as any).success) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const successPayload = payload as { success: true; data: any[] };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setAdmins(
+          successPayload.data.map((u: any) => ({
+            id: u.id,
+            name: `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim(),
+            email: u.emailAddress,
+            phone: u.phoneNumber,
+            gender: u.gender,
+            role: u.role?.name ?? "",
+            position: u.position?.name ?? "",
+            department: u.department?.name ?? "",
+            team: u.team?.name ?? "",
+            status: u.isActive ? "Active" : "Inactive",
+            avatar: u.profile_picture?.file,
+          }))
+        );
+      } else {
+        const errMsg = (apiResponse as any)?.error || "Failed to load admins";
+        toast.error(errMsg);
+      }
+      setIsLoading(false);
+    },
+    onError(err) {
+      toast.dismiss("fetch-admins");
+      toast.error(err.error?.serverError || "Failed to load admins");
+      setIsLoading(false);
+    },
+  });
+
+  const { execute: exportAdmins } = useAction(exportAdminUsersAction, {
+    onExecute() {
+      toast.loading("Exporting admins...", { id: "export-admins" });
+    },
+    onSuccess(apiResponse) {
+      toast.dismiss("export-admins");
+      const payload = apiResponse.data;
+      // 1) If backend wrapper preserved structure { success, fileData }
+      if (payload && typeof payload === "object" && "fileData" in payload) {
+        const csv = (payload as { fileData: string }).fileData;
+        try {
+          const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.setAttribute("download", `admins_${Date.now()}.csv`);
+          document.body.appendChild(link);
+          link.click();
+          link.parentNode?.removeChild(link);
+          URL.revokeObjectURL(url);
+        } catch {
+          /* swallow */
+        }
+        toast.success("Admins exported successfully");
+      } else if (typeof payload === "string") {
+        // 2) If action returned raw CSV text directly
+        const blob = new Blob([payload], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", `admins_${Date.now()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        link.parentNode?.removeChild(link);
+        URL.revokeObjectURL(url);
+        toast.success("Admins exported successfully");
+      } else {
+        toast.error("Export failed");
+      }
+    },
+    onError(err) {
+      toast.dismiss("export-admins");
+      toast.error(err.error?.serverError || "Export failed");
+    },
+  });
+
+  React.useEffect(() => {
+    loadAdmins({});
+  }, [loadAdmins]);
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -705,14 +804,14 @@ export default function ManageAdmin() {
           }}>
             <ResponsiveModalTrigger asChild>
               <Button 
-                className="bg-primary hover:bg-primary/90 text-white"
+                className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2"
                 onClick={() => {
                   resetForm();
                   setIsCreateModalOpen(true);
                 }}
               >
-                Create New Admin
-                <Plus className="ml-2 w-4 h-4" />
+                <Plus className="w-4 h-4" />
+                <span className="hidden md:inline">Create New Admin</span>
               </Button>
             </ResponsiveModalTrigger>
             <ResponsiveModalContent className="sm:max-w-md">
@@ -756,9 +855,22 @@ export default function ManageAdmin() {
             </ResponsiveModalContent>
           </ResponsiveModal>
 
-          <Button variant="outline" className="text-muted-foreground border-border">
-            Export
-            <Download className="ml-2 w-4 h-4" />
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => loadAdmins({})}
+            className="text-muted-foreground border-border"
+          >
+            <RotateCcw className="w-4 h-4" />
+          </Button>
+
+          <Button
+            variant="outline"
+            className="text-muted-foreground border-border flex items-center gap-2"
+            onClick={() => exportAdmins({})}
+          >
+            <Download className="w-4 h-4" />
+            <span className="hidden md:inline">Export</span>
           </Button>
 
           <Button variant="outline" size="icon" className="text-muted-foreground border-border">
@@ -790,7 +902,7 @@ export default function ManageAdmin() {
                 <p className="text-sm font-medium text-muted-foreground">Active Admin</p>
                 <p className="text-3xl font-bold">{activeAdmins}</p>
               </div>
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center">
                 <UserCheck className="w-6 h-6 text-green-600" />
               </div>
             </div>
@@ -804,7 +916,7 @@ export default function ManageAdmin() {
                 <p className="text-sm font-medium text-muted-foreground">Inactive Admin</p>
                 <p className="text-3xl font-bold">{inactiveAdmins}</p>
               </div>
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center">
                 <UserX className="w-6 h-6 text-red-600" />
               </div>
             </div>
@@ -829,7 +941,30 @@ export default function ManageAdmin() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredAdmins.map((admin) => (
+            {isLoading ? (
+              [...Array(5)].map((_, idx) => (
+                <TableRow key={idx}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="w-8 h-8 rounded-full" />
+                      <div className="space-y-1">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-24" />
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-12" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-12" /></TableCell>
+                  <TableCell><Skeleton className="h-6 w-6" /></TableCell>
+                </TableRow>
+              ))
+            ) : (
+            filteredAdmins.map((admin) => (
               <TableRow key={admin.id}>
                 <TableCell>
                   <div className="flex items-center gap-3">
@@ -854,7 +989,7 @@ export default function ManageAdmin() {
                 <TableCell>
                   <Badge 
                     variant={admin.status === "Active" ? "default" : "secondary"}
-                    className={admin.status === "Active" ? "bg-green-100 text-green-700 hover:bg-green-200" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}
+                    className={admin.status === "Active" ? "bg-green-500/10 text-green-700 hover:bg-green-200" : "bg-gray-500/10 text-gray-700 hover:bg-gray-200"}
                   >
                     {admin.status}
                   </Badge>
@@ -898,12 +1033,13 @@ export default function ManageAdmin() {
                   </DropdownMenu>
                 </TableCell>
               </TableRow>
-            ))}
+            ))
+            )}
           </TableBody>
         </Table>
       </div>
 
-      {filteredAdmins.length === 0 && (
+      {!isLoading && filteredAdmins.length === 0 && (
         <div className="text-center py-8 text-muted-foreground">
           No administrators found matching your search.
         </div>

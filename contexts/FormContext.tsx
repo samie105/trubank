@@ -100,6 +100,7 @@ export const useFormStore = create<FormState>()(
         email: "",
         phone: "+234",
         country: "Nigeria",
+        countryName: "Nigeria",
         maritalStatus: "",
         alternatePhone: "",
         employmentStatus: "",
@@ -119,6 +120,10 @@ export const useFormStore = create<FormState>()(
         accountOfficer: null,
         desiredAccount: undefined,
         productType: undefined,
+        // Display names for UI purposes
+        branchName: undefined,
+        accountOfficerName: undefined,
+        productTypeName: undefined,
         employerAddress: "",
         jobTitle: "",
         startDate: new Date(),
@@ -158,7 +163,12 @@ export const useFormStore = create<FormState>()(
         if (data.email) mappedData.email = data.email as string;
         if (data.phone) mappedData.phone = data.phone as string;
         
-        if (data.nationality) mappedData.country = data.nationality;
+        if (data.nationality) {
+          mappedData.country = data.nationality;
+          // For existing customers, we might need to fetch the country name from the API
+          // For now, we'll use the country ID as the name if no name is provided
+          mappedData.countryName = data.nationality;
+        }
         if (data.maritalStatus) mappedData.maritalStatus = data.maritalStatus;
         if (data.alternatePhoneNumber) mappedData.alternatePhone = data.alternatePhoneNumber;
         if (data.employmentStatus) mappedData.employmentStatus = data.employmentStatus;
@@ -188,9 +198,11 @@ export const useFormStore = create<FormState>()(
         // CRITICAL ACCOUNT FIELDS - important to preserve these
         if (data.branchId) mappedData.branch = data.branchId;
         if (data.branch?.id) mappedData.branch = data.branch.id;
+        if (data.branch?.name) mappedData.branchName = data.branch.name;
         
         if (data.accountOfficerId) mappedData.accountOfficer = data.accountOfficerId;
         if (data.accountOfficer?.id !== undefined) mappedData.accountOfficer = data.accountOfficer.id;
+        if (data.accountOfficer?.fullName) mappedData.accountOfficerName = data.accountOfficer.fullName;
         
         if (data.desiredAccount) mappedData.desiredAccount = data.desiredAccount;
         

@@ -58,221 +58,167 @@ const groupMissingFieldsBySection = (missingFields: any[]) => {
   return grouped
 }
 
+// Map field path from API to UI field with proper section and message
+const mapFieldPathToUIField = (fieldPath: string, errorMessage: string): {key: string, label: string, section: string, message: string} => {
+  // Split the path to get section and field name
+  // e.g., "PersonalInformations.Nationality" → ["PersonalInformations", "Nationality"]
+  const pathParts = fieldPath.split('.');
+  const fieldName = pathParts[pathParts.length - 1]; // Get the last part as field name
+  const sectionName = pathParts.length > 1 ? pathParts[0] : "General";
+  
+  // Map section names to UI sections
+  const sectionMap: Record<string, string> = {
+    "PersonalInformations": "Personal Information",
+    "PersonalDetails": "Personal Information", 
+    "EmploymentDetails": "Employment Information",
+    "IdentificationDetails": "Identification",
+    "AddressDetails": "Address",
+    "GuarantorDetails": "Guarantor & Next of Kin Information",
+    "NextOfKinDetails": "Guarantor & Next of Kin Information",
+    "AccountDetails": "Account Information",
+    "ProofOfAddress": "Proof of Address"
+  };
+  
+  // Map field names to UI labels
+  const fieldMap: Record<string, string> = {
+    // Personal Information fields
+    "FirstName": "First Name",
+    "LastName": "Last Name",
+    "MiddleName": "Middle Name",
+    "DateOfBirth": "Date of Birth",
+    "Dob": "Date of Birth",
+    "Gender": "Gender",
+    "Email": "Email",
+    "EmailAddress": "Email",
+    "Phone": "Phone Number",
+    "PhoneNumber": "Phone Number",
+    "MaritalStatus": "Marital Status",
+    "AlternatePhone": "Alternate Phone",
+    "EmploymentStatus": "Employment Status",
+    "Tin": "Tax Identification Number",
+    "Nationality": "Nationality",
+    
+    // Address fields
+    "Country": "Country",
+    "Address": "Address",
+    "ResidentialAddress": "Address",
+    
+    // Identification fields
+    "IdType": "ID Type",
+    "IdNumber": "ID Number",
+    "ExpiryDate": "Expiry Date",
+    "IssuingAuthority": "Issuing Authority",
+    "IdDocument": "ID Document",
+    
+    // Proof of Address fields
+    "AddressProofType": "Type of Address Proof",
+    "IssuingAuthorityPOA": "Issuing Authority",
+    "DateOfIssue": "Date of Issue",
+    "ProofOfAddress": "Proof of Address Document",
+    
+    // Employment fields
+    "CurrentEmployerName": "Current Employer Name",
+    "EmployerName": "Current Employer Name",
+    "EmployerAddress": "Employer Address",
+    "JobTitle": "Job Title",
+    "StartDate": "Start Date",
+    "EndDate": "End Date",
+    "EmploymentDocument": "Employment Document",
+    
+    // Account Info fields
+    "Branch": "Branch",
+    "AccountOfficer": "Account Officer",
+    "ProductType": "Product Type",
+    "ProfileImage": "Profile Image",
+    "DesiredAccount": "Product Type"
+  };
+  
+  // Get the mapped section or create a proper section name
+  const section = sectionMap[sectionName] || formatFieldName(sectionName);
+  
+  // Get the mapped field label or create one from the field name
+  const label = fieldMap[fieldName] || formatFieldName(fieldName);
+  
+  return {
+    key: fieldName,
+    label,
+    section,
+    message: errorMessage
+  };
+};
+
 // Parse API error responses into usable format
 const parseApiErrors = (error: any) => {
-  // Initialize with default message
   let errorMessage = "Failed to update customer";
   const errorDetails: string[] = [];
-  const errorFields: {key: string, label: string, section: string, message?: string}[] = [];
-  // Initialize rawError variable
+  const errorFields: {key: string, label: string, section: string, message: string}[] = [];
   let rawError: any = error.data;
   
   try {
-    // First, log the complete error object for debugging
     console.log("Raw API error:", error);
-    console.log("Raw API error data:", error.data);
+    console.log("Raw API error data:", JSON.stringify(error.data, null, 2));
     
-    // Map DesiredAccount to ProductType in the error response
-    if (error?.data?.errors?.DesiredAccount) {
-      console.log("Mapping DesiredAccount error to ProductType");
-      error.data.errors.ProductType = error.data.errors.DesiredAccount;
-      delete error.data.errors.DesiredAccount;
-    }
-
-    // Keep the original error data for dynamic display
     rawError = error.data;
     
-    // Check for empty object response - a common error pattern
-    if (error.data && typeof error.data === 'object' && Object.keys(error.data).length === 0) {
-      console.log("Empty object response detected");
-      errorMessage = "Failed to update customer";
-      // Add employment fields as these are commonly required
-      errorFields.push(
-        {key: "CurrentEmployerName", label: "Current Employer Name", section: "Employment Information", message: "Required for employment details"},
-        {key: "EmployerAddress", label: "Employer Address", section: "Employment Information", message: "Required for employment details"},
-        {key: "JobTitle", label: "Job Title", section: "Employment Information", message: "Required for employment details"}
-      );
-      
-      // Return early with these default fields
-      return { errorMessage, errorDetails, errorFields, rawError };
-    }
-    
-    if (error.data) {
-      console.log("Raw API error data stringified:", JSON.stringify(error.data, null, 2));
-    }
-    
-    // Extract the main error message from various possible locations
+    // Extract the main error message
     if (error.data?.title) {
       errorMessage = error.data.title;
     } else if (error.data?.error) {
       errorMessage = error.data.error;
     } else if (error.error?.serverError) {
       errorMessage = error.error.serverError;
-    } else if (typeof error.data === 'string') {
-      // Sometimes the error might be a direct string
-      errorMessage = error.data;
-      
-      // Try to parse the error string as JSON in case it's a stringified object
-      try {
-        const parsedError = JSON.parse(error.data);
-        if (parsedError.errors || parsedError.validationErrors) {
-          error.data = parsedError; // Replace with parsed object for further processing
-          errorMessage = parsedError.title || parsedError.error || "Validation error";
-        }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (_) {
-        // Not valid JSON, keep as is
-      }
     }
     
-    // If there's a status code, include it
-    const errorStatus = error.data?.statusCode || (error.data as any)?.status;
-    if (errorStatus) {
-      errorMessage = `Error ${errorStatus}: ${errorMessage}`;
+    // Handle empty response
+    if (!error.data || (typeof error.data === 'object' && Object.keys(error.data).length === 0)) {
+      console.log("Empty API response detected");
+      return { 
+        errorMessage: "Failed to update customer - no error details provided", 
+        errorDetails: ["Empty response from server"], 
+        errorFields: [{
+          key: "general",
+          label: "Server Error",
+          section: "General Information",
+          message: "No specific error details were provided by the server"
+        }], 
+        rawError 
+      };
     }
     
-    // Try multiple approaches to extract validation errors
-    
-    // 1. Standard errors object with nested format
+    // Process validation errors from the API response
     if (error.data?.errors) {
       console.log("Processing validation errors:", error.data.errors);
       
       Object.entries(error.data.errors).forEach(([fieldPath, messages]) => {
         // Handle array of error messages
         const messageList = Array.isArray(messages) ? messages : [messages];
-        const messageText = messageList.join(', ');
+        const actualErrorMessage = messageList.join(', ');
         
-        // Create detail string with field and message
-        const detail = `${fieldPath}: ${messageText}`;
-        errorDetails.push(detail);
+        // Add to details
+        errorDetails.push(`${fieldPath}: ${actualErrorMessage}`);
         
-        // Split nested fields (e.g., "EmploymentDetails.JobTitle" → ["EmploymentDetails", "JobTitle"])
-        const pathParts = fieldPath.split('.');
-        
-        // Extract actual field name (last part of the path)
-        const fieldName = pathParts[pathParts.length - 1];
-        
-        // Get section from first part of path or use default section mapping
-        let section = "";
-        
-        if (pathParts.length > 1) {
-          // Map section from the first part of the path
-          const sectionName = pathParts[0];
-          section = mapSectionName(sectionName);
-        }
-        
-        // Add to error fields list with proper section
-        const mappedField = mapErrorFieldToUIField(fieldName, section, messageText);
+        // Map the field path to UI field
+        const mappedField = mapFieldPathToUIField(fieldPath, actualErrorMessage);
         if (mappedField) {
           errorFields.push(mappedField);
         }
       });
-    } 
-    // 2. Alternative validationErrors format
-    else if (error.data?.validationErrors) {
-      console.log("Processing alternative validation errors:", error.data.validationErrors);
-      
+    }
+    
+    // Handle other error formats
+    if (error.data?.validationErrors) {
       Object.entries(error.data.validationErrors).forEach(([field, msg]) => {
         const msgText = typeof msg === 'string' ? msg : JSON.stringify(msg);
         errorDetails.push(`${field}: ${msgText}`);
         
-        const mappedField = mapErrorFieldToUIField(field, undefined, msgText);
+        const mappedField = mapFieldPathToUIField(field, msgText);
         if (mappedField) {
           errorFields.push(mappedField);
         }
       });
-    } 
-    // 3. Try to parse error message directly
-    else if (error.data?.message) {
-      errorDetails.push(error.data.message);
-      
-      // Try to extract field names from the message
-      const fieldMatches = error.data.message.match(/field '([^']+)'/g) || [];
-      fieldMatches.forEach((match: string) => {
-        const fieldName = match.replace(/field '([^']+)'/, '$1');
-        const mappedField = mapErrorFieldToUIField(fieldName);
-        if (mappedField) {
-          errorFields.push(mappedField);
-        }
-      });
-      
-      // Try to parse the message as JSON in case it contains stringified error objects
-      try {
-        const parsedMessage = JSON.parse(error.data.message);
-        if (parsedMessage.errors || parsedMessage.validationErrors) {
-          // Recursively process the parsed error object
-          const nestedResult = parseApiErrors({ data: parsedMessage });
-          errorDetails.push(...nestedResult.errorDetails);
-          errorFields.push(...nestedResult.errorFields);
-        }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (_) {
-        // Not valid JSON, continue with other strategies
-      }
     }
     
-    // Check if error message contains a JSON string to parse
-    if (errorFields.length === 0 && typeof errorMessage === 'string') {
-      // Look for JSON-like patterns in the error message
-      // Using separate match calls for compatibility instead of /s flag
-      const jsonMatch = errorMessage.match(/\{[\s\S]*\}/) || errorMessage.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        try {
-          const possibleJson = jsonMatch[0];
-          const parsedJson = JSON.parse(possibleJson);
-          
-          // If it's a valid object with errors, process it
-          if (parsedJson.errors || parsedJson.validationErrors) {
-            const nestedResult = parseApiErrors({ data: parsedJson });
-            errorDetails.push(...nestedResult.errorDetails);
-            errorFields.push(...nestedResult.errorFields);
-          }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (_) {
-          // Not valid JSON
-        }
-      }
-    }
-    
-    // For specific error patterns, extract information
-    if (errorFields.length === 0) {
-      // Extract specific fields mentioned in error message
-      const fieldPatterns = [
-        { regex: /employment/i, section: "Employment Information", fields: ["Current Employer Name", "Employer Address", "Job Title"] },
-        { regex: /name/i, section: "Personal Information", fields: ["First Name", "Last Name"] },
-        { regex: /email/i, section: "Personal Information", fields: ["Email"] },
-        { regex: /phone/i, section: "Personal Information", fields: ["Phone Number"] },
-        { regex: /address/i, section: "Address", fields: ["Address"] },
-        { regex: /id/i, section: "Identification", fields: ["ID Type", "ID Number"] }
-      ];
-      
-      // Check each pattern against the error message
-      for (const pattern of fieldPatterns) {
-        if (pattern.regex.test(errorMessage)) {
-          pattern.fields.forEach(field => {
-            errorFields.push({
-              key: field.replace(/\s/g, ''),
-              label: field,
-              section: pattern.section,
-              message: "This field may need to be updated"
-            });
-          });
-        }
-      }
-    }
-    
-    // Default fallback for status 400 errors
-    const status = error.data?.statusCode || (error.data as any)?.status;
-    if (errorFields.length === 0 && status === 400) {
-      // Default to showing the most common required fields
-      errorFields.push(
-        {key: "CurrentEmployerName", label: "Current Employer Name", section: "Employment Information", message: "Required for employment details"},
-        {key: "EmployerAddress", label: "Employer Address", section: "Employment Information", message: "Required for employment details"},
-        {key: "JobTitle", label: "Job Title", section: "Employment Information", message: "Required for employment details"}
-      );
-    }
-
-    // If we still have no fields, add a general error field
+    // If no specific errors found, add general error
     if (errorFields.length === 0) {
       errorFields.push({
         key: "general",
@@ -282,7 +228,6 @@ const parseApiErrors = (error: any) => {
       });
     }
 
-    // Log the processed error for debugging
     console.log("Processed error:", {
       message: errorMessage,
       details: errorDetails,
@@ -290,12 +235,11 @@ const parseApiErrors = (error: any) => {
     });
   } catch (e) {
     console.error("Error parsing API error response:", e);
-    // Add a fallback error field
     errorFields.push({
       key: "general",
       label: "Form Data",
       section: "General Information",
-      message: "An unexpected error occurred"
+      message: "An unexpected error occurred while processing the error response"
     });
   }
   
@@ -321,123 +265,9 @@ const formatFieldName = (fieldName: string): string => {
     .replace(/^[a-z]/, (letter) => letter.toUpperCase());
 };
 
-// Map common section names to proper UI sections
-const mapSectionName = (sectionName: string): string => {
-  const sectionMap: Record<string, string> = {
-    "EmploymentDetails": "Employment Information",
-    "PersonalDetails": "Personal Information",
-    "IdentificationDetails": "Identification",
-    "AddressDetails": "Address",
-    "GuarantorDetails": "Guarantor & Next of Kin Information",
-    "NextOfKinDetails": "Guarantor & Next of Kin Information",
-    "AccountDetails": "Account Information",
-    "ProofOfAddress": "Proof of Address"
-  };
-
-  // Get the mapped section or create a proper section name from the input
-  return sectionMap[sectionName] || formatFieldName(sectionName);
-};
-
-// Map API error field names to UI field names with sections
-const mapErrorFieldToUIField = (fieldName: string, sectionOverride?: string, errorMessage?: string) => {
-  const fieldMap: Record<string, {label: string, section: string}> = {
-    // Personal Information fields
-    "FirstName": { label: "First Name", section: "Personal Information" },
-    "LastName": { label: "Last Name", section: "Personal Information" },
-    "MiddleName": { label: "Middle Name", section: "Personal Information" },
-    "DateOfBirth": { label: "Date of Birth", section: "Personal Information" },
-    "Dob": { label: "Date of Birth", section: "Personal Information" },
-    "Gender": { label: "Gender", section: "Personal Information" },
-    "Email": { label: "Email", section: "Personal Information" },
-    "EmailAddress": { label: "Email", section: "Personal Information" },
-    "Phone": { label: "Phone Number", section: "Personal Information" },
-    "PhoneNumber": { label: "Phone Number", section: "Personal Information" },
-    "MaritalStatus": { label: "Marital Status", section: "Personal Information" },
-    "AlternatePhone": { label: "Alternate Phone", section: "Personal Information" },
-    "AlternatePhoneNumber": { label: "Alternate Phone", section: "Personal Information" },
-    "EmploymentStatus": { label: "Employment Status", section: "Personal Information" },
-    "Tin": { label: "Tax Identification Number", section: "Personal Information" },
-    "TaxIdenttfictionNumber": { label: "Tax Identification Number", section: "Personal Information" },
-    
-    // Address fields
-    "Country": { label: "Country", section: "Address" },
-    "Nationality": { label: "Country", section: "Address" },
-    "Address": { label: "Address", section: "Address" },
-    "ResidentialAddress": { label: "Address", section: "Address" },
-    
-    // Identification fields
-    "IdType": { label: "ID Type", section: "Identification" },
-    "IdNumber": { label: "ID Number", section: "Identification" },
-    "ExpiryDate": { label: "Expiry Date", section: "Identification" },
-    "IdExpiryDate": { label: "Expiry Date", section: "Identification" },
-    "IssuingAuthority": { label: "Issuing Authority", section: "Identification" },
-    "IdIssuingAuthority": { label: "Issuing Authority", section: "Identification" },
-    "IdDocument": { label: "ID Document", section: "Identification" },
-    "MeansOfIdentification": { label: "ID Document", section: "Identification" },
-    
-    // Proof of Address fields
-    "AddressProofType": { label: "Type of Address Proof", section: "Proof of Address" },
-    "ProofOfAddressType": { label: "Type of Address Proof", section: "Proof of Address" },
-    "IssuingAuthorityPOA": { label: "Issuing Authority", section: "Proof of Address" },
-    "ProofOfAddressIssuingAuthority": { label: "Issuing Authority", section: "Proof of Address" },
-    "DateOfIssue": { label: "Date of Issue", section: "Proof of Address" },
-    "ProofOfAddressDateIssue": { label: "Date of Issue", section: "Proof of Address" },
-    "ProofOfAddress": { label: "Proof of Address Document", section: "Proof of Address" },
-    
-    // Employment fields
-    "CurrentEmployerName": { label: "Current Employer Name", section: "Employment Information" },
-    "EmployerName": { label: "Current Employer Name", section: "Employment Information" },
-    "EmployerAddress": { label: "Employer Address", section: "Employment Information" },
-    "JobTitle": { label: "Job Title", section: "Employment Information" },
-    "StartDate": { label: "Start Date", section: "Employment Information" },
-    "EmployementStateDate": { label: "Start Date", section: "Employment Information" },
-    "EndDate": { label: "End Date", section: "Employment Information" },
-    "EmployementEndDate": { label: "End Date", section: "Employment Information" },
-    "EmploymentDocument": { label: "Employment Document", section: "Employment Information" },
-    "EmploymentVerificationDocument": { label: "Employment Document", section: "Employment Information" },
-    
-    // Account Info fields
-    "Branch": { label: "Branch", section: "Account Information" },
-    "BranchId": { label: "Branch", section: "Account Information" },
-    "AccountOfficer": { label: "Account Officer", section: "Account Information" },
-    "AccountOfficerId": { label: "Account Officer", section: "Account Information" },
-    // "ProductType": { label: "Product Type", section: "Account Information" },
-    "ProfileImage": { label: "Profile Image", section: "Account Information" },
-    "ProfilePicture": { label: "Profile Image", section: "Account Information" },
-    "DesiredAccount": { label: "Product Type", section: "Account Information" }
-  };
-  
-  // Normalize the field name by removing prefixes and converting to proper case
-  // Examples: "customer.firstName" → "FirstName", "employment_details.job_title" → "JobTitle"
-  const normalizedFieldName = fieldName
-    .replace(/^(customer\.|user\.|data\.|employment_details\.|employment\.|identity\.)/, '')
-    .replace(/_([a-z])/g, (_, letter) => letter.toUpperCase()) // Convert snake_case to camelCase
-    .replace(/^[a-z]/, char => char.toUpperCase()); // Capitalize first letter
-  
-  if (fieldMap[normalizedFieldName]) {
-    // If a section was provided, use that instead of the mapped section
-    const section = sectionOverride || fieldMap[normalizedFieldName].section;
-    
-    return {
-      key: normalizedFieldName,
-      label: fieldMap[normalizedFieldName].label,
-      section: section,
-      message: errorMessage || "This field requires attention"
-    };
-  }
-  
-  // If we can't find a mapping, create one based on field name format
-  return {
-    key: normalizedFieldName,
-    label: formatFieldName(normalizedFieldName), 
-    section: sectionOverride || "General Information",
-    message: errorMessage || "This field requires attention"
-  };
-};
-
 // Group error fields by section, similar to missing fields grouping
-const groupErrorFieldsBySection = (errorFields: {key: string, label: string, section: string, message?: string}[]) => {
-  const grouped: Record<string, {label: string, message?: string}[]> = {};
+const groupErrorFieldsBySection = (errorFields: {key: string, label: string, section: string, message: string}[]) => {
+  const grouped: Record<string, {label: string, message: string}[]> = {};
   
   errorFields.forEach(field => {
     if (!grouped[field.section]) {
@@ -467,9 +297,12 @@ export default function ConfirmDetails({ params }: { params?: any }) {
   const [showErrorDialog, setShowErrorDialog] = useState<{ 
     message: string, 
     details: string[], 
-    fields: {key: string, label: string, section: string, message?: string}[],
+    fields: {key: string, label: string, section: string, message: string}[],
     rawError?: any
   }>({ message: "", details: [], fields: [] });
+
+  // Add a memoized grouped error structure for easy rendering
+  const groupedErrorFields = groupErrorFieldsBySection(showErrorDialog.fields);
 
   // Get missing fields (for guidance only)
   const missingFields = formData ? getMissingFields(formData) : []
@@ -679,6 +512,13 @@ export default function ConfirmDetails({ params }: { params?: any }) {
     setStep(1)
   }
 
+  const handleCancel = () => {
+    // Clear all form data from localStorage
+    localStorage.removeItem("customerForm")
+    // Redirect to customer management dashboard
+    router.push("/dashboard/customer-management")
+  }
+
   const handleConfirmAndSubmit = () => {
     console.log("Form submitted:", formData)
 
@@ -853,7 +693,7 @@ export default function ConfirmDetails({ params }: { params?: any }) {
                 <Separator className="my-4" />
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Address</h3>
-                  {renderField("Country", formData.country)}
+                  {renderField("Country", formData.countryName || formData.country)}
                   {renderField("Address", formData.address)}
                 </div>
               </>
@@ -963,9 +803,9 @@ export default function ConfirmDetails({ params }: { params?: any }) {
                 <Separator className="my-4" />
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Account Information</h3>
-                  {renderField("Branch", formData.branch)}
-                  {renderField("Account Officer", formData.accountOfficer)}
-                  {renderField("Product Type", formData.desiredAccount)}
+                  {renderField("Branch", formData.branchName || formData.branch)}
+                  {renderField("Account Officer", formData.accountOfficerName || formData.accountOfficer)}
+                  {renderField("Product Type", formData.productTypeName || formData.desiredAccount)}
                   {renderImage("Profile Image", formData.profileImage, "Profile")}
                 </div>
               </>
@@ -974,9 +814,14 @@ export default function ConfirmDetails({ params }: { params?: any }) {
         </ScrollArea>
       </CardContent>
       <CardFooter className="flex justify-between">
-        <Button variant="outline" onClick={handleMakeChanges} disabled={isSubmitting}>
-          Make Changes
-        </Button>
+        <div className="space-x-2">
+          <Button variant="outline" onClick={handleCancel} disabled={isSubmitting}>
+            Cancel
+          </Button>
+          <Button variant="outline" onClick={handleMakeChanges} disabled={isSubmitting}>
+            Make Changes
+          </Button>
+        </div>
         <div className="space-x-2">
           {hasMissingFields && (
             <Button 
@@ -1104,76 +949,19 @@ export default function ConfirmDetails({ params }: { params?: any }) {
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            {/* Product Type Error Section - Show this when ProductType error exists */}
-            {showErrorDialog.rawError?.errors?.ProductType && (
-              <div className="space-y-6 mb-4">
-                <h4 className="font-medium text-lg">Account Information</h4>
-                <div className="grid grid-cols-1 gap-2">
-                  <div className="flex items-start p-3 rounded-md bg-red-50 border border-red-200">
-                    <XCircle className="h-4 w-4 text-red-500 mr-2 flex-shrink-0 mt-1" />
-                    <div>
-                      <span className="text-sm font-medium text-red-800">Product Type</span>
-                      <p className="text-xs text-red-600 mt-1">This field is required</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Raw Error Display Section - Shows direct API response */}
-            {showErrorDialog.details.length > 0 && showErrorDialog.details.some(detail => detail.includes("EmploymentDetails")) && (
+            {/* Dynamically render all grouped error fields */}
+            {Object.keys(groupedErrorFields).length > 0 ? (
               <div className="space-y-6">
-                <h4 className="font-medium text-lg">Employment Information</h4>
-                <div className="grid grid-cols-1 gap-2">
-                  <div className="flex items-start p-3 rounded-md  border">
-                    <XCircle className="h-4 w-4 text-red-500 mr-2 flex-shrink-0 mt-1" />
-                    <div>
-                      <span className="text-sm font-medium text-foreground/70">Current Employer Name</span>
-                      <p className="text-xs text-muted-foreground mt-1">This field is required</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start p-3 rounded-md  border">
-                    <XCircle className="h-4 w-4 text-red-500 mr-2 flex-shrink-0 mt-1" />
-                    <div>
-                      <span className="text-sm font-medium text-foreground/70">Employer Address</span>
-                      <p className="text-xs text-muted-foreground mt-1">This field is required</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start p-3 rounded-md  border">
-                    <XCircle className="h-4 w-4 text-red-500 mr-2 flex-shrink-0 mt-1" />
-                    <div>
-                      <span className="text-sm font-medium text-foreground/70">Job Title</span>
-                      <p className="text-xs text-muted-foreground mt-1">This field is required</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Processed Fields Display */}
-            {showErrorDialog.fields && showErrorDialog.fields.length > 0 && !showErrorDialog.details.some(detail => detail.includes("EmploymentDetails")) && (
-              <div className="space-y-6">
-                {Object.entries(groupErrorFieldsBySection(showErrorDialog.fields)).map(([section, fields]) => (
+                {Object.entries(groupedErrorFields).map(([section, fields]) => (
                   <div key={section} className="space-y-2">
                     <h4 className="font-medium text-lg">{section}</h4>
                     <div className="grid grid-cols-1 gap-2">
-                      {fields.map((field: {label: string, message?: string}, i: number) => (
-                        <div key={i} className="flex items-start p-3 rounded-md  border">
+                      {fields.map((field, idx) => (
+                        <div key={idx} className="flex items-start p-3 rounded-md border">
                           <XCircle className="h-4 w-4 text-red-500 mr-2 flex-shrink-0 mt-1" />
                           <div>
                             <span className="text-sm font-medium text-foreground/70">{field.label}</span>
-                            {showErrorDialog.details.filter(detail => 
-                              detail.toLowerCase().includes(field.label.toLowerCase()) || 
-                              detail.toLowerCase().includes(field.label.replace(' ', '').toLowerCase())
-                            ).map((detail, idx) => (
-                              <p key={idx} className="text-xs text-muted-foreground mt-1">
-                                {/* Extract just the message part after the colon */}
-                                {detail.includes(':') ? detail.split(':')[1].trim() : detail}
-                              </p>
-                            ))}
-                            {field.message && (
-                              <p className="text-xs text-muted-foreground mt-1">{field.message}</p>
-                            )}
+                            <p className="text-xs text-muted-foreground mt-1">{field.message}</p>
                           </div>
                         </div>
                       ))}
@@ -1181,15 +969,12 @@ export default function ConfirmDetails({ params }: { params?: any }) {
                   </div>
                 ))}
               </div>
-            )}
-            
-            {/* Fallback for no fields but has details */}
-            {showErrorDialog.fields.length === 0 && showErrorDialog.details.length > 0 && (
+            ) : showErrorDialog.details.length > 0 ? (
               <div className="space-y-4">
-                <div className="flex items-start p-3 rounded-md  border">
+                <div className="flex items-start p-3 rounded-md border">
                   <XCircle className="h-4 w-4 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-sm font-medium text-foreground/70">Please review the information</span>
+                    <span className="text-sm font-medium text-foreground/70">Validation Errors</span>
                     <div className="mt-2 space-y-1">
                       {showErrorDialog.details.map((detail, i) => (
                         <p key={i} className="text-xs text-red-600">• {detail}</p>
@@ -1198,15 +983,12 @@ export default function ConfirmDetails({ params }: { params?: any }) {
                   </div>
                 </div>
               </div>
-            )}
-            
-            {/* Fallback for no details */}
-            {showErrorDialog.fields.length === 0 && showErrorDialog.details.length === 0 && (
+            ) : (
               <div className="space-y-4">
-                <div className="flex items-start p-3 rounded-md  border">
+                <div className="flex items-start p-3 rounded-md border">
                   <XCircle className="h-4 w-4 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
                   <span className="text-sm text-red-800">
-                    Failed to update customer. Please check the form information and try again.
+                    {showErrorDialog.message || "An unknown error occurred. Please try again."}
                   </span>
                 </div>
               </div>

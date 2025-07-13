@@ -15,7 +15,7 @@ import {
 import { useBusinessForm } from "@/contexts/BusinessFormContext";
 import { parseAsInteger, useQueryState } from "nuqs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
@@ -23,7 +23,6 @@ const formSchema = z.object({
   registrationNumber: z.string().min(1, "Business registration number is required"),
   tin: z.string().min(1, "Tax Identification Number is required"),
   natureOfBusiness: z.string().min(1, "Nature of business is required"),
-  businessType: z.string().min(1, "Business type is required"),
   businessAddress: z.string().min(1, "Business address is required"),
   phoneNumber: z.string().min(1, "Phone number is required"),
   email: z.string().email("Invalid email address"),
@@ -41,15 +40,7 @@ export default function BusinessDetailsForm({ isEditMode = false }: BusinessDeta
   const [, setStep] = useQueryState("step", parseAsInteger);
   const router = useRouter();
   
-  // Sample business types and industries
-  const businessTypes = [
-    "Sole Proprietorship",
-    "Partnership",
-    "Limited Liability Company (LLC)",
-    "Corporation",
-    "Nonprofit Organization"
-  ];
-  
+  // Sample industries
   const industries = [
     "Agriculture",
     "Manufacturing",
@@ -63,6 +54,12 @@ export default function BusinessDetailsForm({ isEditMode = false }: BusinessDeta
     "Entertainment"
   ];
 
+  // Create enhanced arrays that include current values if not found in predefined options
+  const enhancedIndustries = [...industries];
+  if (formData.natureOfBusiness && !industries.includes(formData.natureOfBusiness)) {
+    enhancedIndustries.push(formData.natureOfBusiness);
+  }
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -70,7 +67,6 @@ export default function BusinessDetailsForm({ isEditMode = false }: BusinessDeta
       registrationNumber: formData.registrationNumber || "",
       tin: formData.tin || "",
       natureOfBusiness: formData.natureOfBusiness || "",
-      businessType: formData.businessType || "",
       businessAddress: formData.businessAddress || "",
       phoneNumber: formData.phoneNumber || "",
       email: formData.email || "",
@@ -84,7 +80,8 @@ export default function BusinessDetailsForm({ isEditMode = false }: BusinessDeta
       const updatedData = {
         ...formData,
         ...data,
-     
+        // Ensure businessType is preserved in edit mode or set to default in create mode
+        businessType: formData.businessType || "Limited Liability Company",
       };
       updateFormData(updatedData);
       localStorage.setItem("CustomerBusinessForm", JSON.stringify(updatedData));
@@ -103,6 +100,15 @@ export default function BusinessDetailsForm({ isEditMode = false }: BusinessDeta
 
   const handlePrevious = () => {
    router.push("/dashboard/customer-management");
+  };
+
+  const handleCancel = () => {
+    // Clear all form data from localStorage
+    localStorage.removeItem("CustomerBusinessForm");
+    localStorage.removeItem("businessForm");
+    localStorage.removeItem("customer-business-form-storage");
+    // Redirect to customer management dashboard
+    router.push("/dashboard/customer-management");
   };
 
   // Add debug function to check form state
@@ -168,8 +174,8 @@ export default function BusinessDetailsForm({ isEditMode = false }: BusinessDeta
             />
           </div>
           
-          {/* Nature of Business and Business Type */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Nature of Business */}
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
             <FormField
               control={form.control}
               name="natureOfBusiness"
@@ -186,36 +192,9 @@ export default function BusinessDetailsForm({ isEditMode = false }: BusinessDeta
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {industries.map((industry) => (
+                      {enhancedIndustries.map((industry) => (
                         <SelectItem key={industry} value={industry}>
                           {industry}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="businessType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base font-medium">Business Type</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="h-12">
-                        <SelectValue placeholder="Select Business Type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {businessTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -305,13 +284,23 @@ export default function BusinessDetailsForm({ isEditMode = false }: BusinessDeta
         </div>
 
         <div className="flex justify-between pt-6">
-          <Button
-            type="button"
-            onClick={handlePrevious}
-            variant="outline"
-          >
-            Previous
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              onClick={handleCancel}
+              variant="outline"
+            >
+              <X className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">Cancel</span>
+            </Button>
+            <Button
+              type="button"
+              onClick={handlePrevious}
+              variant="outline"
+            >
+              Previous
+            </Button>
+          </div>
           
           <div className="flex space-x-2">
             {!isEditMode && (

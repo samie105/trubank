@@ -1,9 +1,9 @@
+"use client"
 import Link from "next/link";
 import { Youtube, Twitter, Instagram, Linkedin } from "lucide-react";
 
 const navigation = {
   home: [
-    { name: "Features", href: "#features" },
     { name: "Partners", href: "#partners" },
     { name: "Testimonies", href: "#testimonies" },
     { name: "How it works", href: "#how-it-works" },
@@ -15,22 +15,19 @@ const navigation = {
     { name: "Core Values", href: "/about-us" },
   ],
   solutions: [
-    { name: "Our Solutions", href: "/solutions" },
-    { name: "Features", href: "/features" },
-    { name: "Get Started", href: "/get-started" },
-    { name: "Contact", href: "/contact" },
+    { name: "Our Solutions", href: "/products-solutions" },
+    { name: "Features", href: "/products-solutions" },
+  
   ],
   resources: [
     { name: "Blog", href: "/resources/blog" },
     { name: "Case Study", href: "/resources/whitepapers" },
     { name: "Documentation", href: "/resources/documentation" },
-    { name: "Contact", href: "/contacts" },
   ],
   others: [
     { name: "Privacy Policy", href: "/privacy-policy" },
     { name: "Terms & Condition", href: "/terms" },
-    { name: "Cookie Policy", href: "/cookie-policy" },
-    { name: "Whistleblowing Policy", href: "/whistleblowing" },
+    { name: "Cookie Policy", href: "/cookies-policy" },
   ],
   social: [
     {
@@ -72,7 +69,7 @@ export function Footer() {
               <p className="text-sm font-medium text-gray-900">
                 Connect with us
               </p>
-              <p className="mt-1 text-sm text-gray-600">info@trubank.com</p>
+              <p className="mt-1 text-sm text-gray-600">info@trubank.ng</p>
               <div className="mt-4 flex space-x-4">
                 {navigation.social.map((item) => (
                   <Link
@@ -172,7 +169,7 @@ export function Footer() {
         <div className="mt-12 border-t border-gray-200 pt-8">
           <div className="grid grid-cols-2 gap-8 lg:grid-cols-2">
             <p className="text-xs text-gray-600">
-              Copyright &copy; {new Date().getFullYear()}, Trubank
+              Copyright &copy; {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}, Trubank
             </p>
             <div className="flex justify-start lg:justify-end space-x-2">
               <Link
@@ -191,7 +188,7 @@ export function Footer() {
           </div>
         </div>
       </div>
-      <div className="text-sm px-5 md:px-16 pb-4 text-gray-600 /w-full">
+      {/* <div className="text-sm px-5 md:px-16 pb-4 text-gray-600 /w-full">
         {" "}
         © 2024, Trubank is a bank with its services provided by Trubank MFB
         Limited and duly licensed by the Central Bank of Nigeria. Unauthorised
@@ -204,7 +201,7 @@ export function Footer() {
         Trubank is not responsible for those third {"parties'"} privacy or
         security practices. Additional disclosures can be found in the resources
         section of our website.
-      </div>
+      </div> */}
     </footer>
   );
 }

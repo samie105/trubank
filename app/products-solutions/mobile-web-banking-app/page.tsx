@@ -37,7 +37,7 @@ export default function page() {
               className="mt-6 bg-white text-primary hover:bg-white/90"
               asChild
             >
-              <Link href="/waitlist">
+              <Link href="/contacts">
                 Get Started Today
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>

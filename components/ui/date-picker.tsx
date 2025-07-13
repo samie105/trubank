@@ -668,6 +668,7 @@ type DateTimePickerProps = {
   value?: Date;
   onChange?: (date: Date | undefined) => void;
   disabled?: boolean;
+  dayDisabled?: (date: Date) => boolean;
   /** showing `AM/PM` or not. */
   hourCycle?: 12 | 24;
   placeholder?: string;
@@ -711,9 +712,10 @@ const DateTimePicker = React.forwardRef<
       yearRange = 50,
       disabled = false,
       displayFormat,
-      granularity = "second",
+      granularity = "day",
       placeholder = "Pick a date",
       className,
+      dayDisabled,
       ...props
     },
     ref
@@ -800,6 +802,7 @@ const DateTimePicker = React.forwardRef<
             onMonthChange={handleSelect}
             yearRange={yearRange}
             locale={locale}
+            disabled={dayDisabled}
             {...props}
           />
           {granularity !== "day" && (

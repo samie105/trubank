@@ -315,7 +315,7 @@ async function processApiResponse(response: Response) {
           success: false,
           error: data.error || data.message || `Failed to update customer (Status: ${response.status})`,
           statusCode: data.statCode || response.status,
-          details: data.errors || data.validationErrors || null,
+          errors: data.errors || data.validationErrors || null,
         };
       }
     } catch (parseError) {

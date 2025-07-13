@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DateTimePicker } from "@/components/ui/date-picker";
 import { parseAsInteger, useQueryState } from "nuqs";
-import { Loader2, Check, ChevronDown, AlertCircle } from "lucide-react";
+import { Loader2, Check, ChevronDown, AlertCircle, X } from "lucide-react";
 import {
   Form,
   FormField,
@@ -90,10 +90,27 @@ export default function InformationDetailsForm() {
     await router.push("/dashboard/customer-management");
   };
 
+  const handleCancel = () => {
+    // Clear all form data from localStorage
+    localStorage.removeItem("customerForm");
+    // Redirect to customer management dashboard
+    router.push("/dashboard/customer-management");
+  };
+
   // Function to get country name by ID
   const getCountryNameById = (id: string): string => {
+    if (!id) return "";
     const country = memoizedCountriesList.find(country => country.id === id);
     return country ? country.name : "";
+  };
+
+  // Function to get display value for country field
+  const getCountryDisplayValue = (id: string): string => {
+    if (!id) return "Select country";
+    
+    // Try to get country name, fallback to ID if not found
+    const countryName = getCountryNameById(id);
+    return countryName || id;
   };
 
   // Function to retry fetching countries
@@ -132,7 +149,15 @@ export default function InformationDetailsForm() {
   }, []); // Don't include getCountriesData in deps to avoid infinite loops
 
   const onSubmit = (data: FormData) => {
-    const updatedData = { ...formData, ...data };
+    // Find the country name for display purposes
+    const countryName = getCountryNameById(data.country || "");
+    
+    const updatedData = { 
+      ...formData, 
+      ...data,
+      // Store the country name for display purposes
+      countryName
+    };
     updateFormData(updatedData);
     localStorage.setItem("customerForm", JSON.stringify(updatedData));
     console.log("Form submitted:", data);
@@ -338,10 +363,8 @@ export default function InformationDetailsForm() {
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             Loading countries...
                           </>
-                        ) : field.value ? (
-                          getCountryNameById(field.value) || field.value
                         ) : (
-                          "Select country"
+                          getCountryDisplayValue(field.value || "")
                         )}
                         <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
@@ -406,34 +429,45 @@ export default function InformationDetailsForm() {
           <FormField
             control={form.control}
             name="maritalStatus"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Marital Status</FormLabel>
-                <Select
-                  onValueChange={(value) => field.onChange(value)}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select marital status" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="married">Married</SelectItem>
-                    <SelectItem value="single">Single</SelectItem>
-                    <SelectItem value="divorced">Divorced</SelectItem>
-                    <SelectItem value="widowed">Widowed</SelectItem>
-                    {/* Allow custom values by keeping current value in dropdown if it doesn't match options */}
-                    {field.value && 
-                      !["married", "single", "divorced", "widowed"].includes(field.value.toLowerCase()) && (
+            render={({ field }) => {
+              const predefinedOptions = [
+                { value: "married", label: "Married" },
+                { value: "single", label: "Single" },
+                { value: "divorced", label: "Divorced" },
+                { value: "widowed", label: "Widowed" }
+              ];
+              
+              // Check if current value exactly matches any predefined option value
+              const hasExactValueMatch = predefinedOptions.some(option => option.value.toLowerCase() === (field.value?.toLowerCase() ?? ""));
+              
+              return (
+                <FormItem>
+                  <FormLabel>Marital Status</FormLabel>
+                  <Select
+                    onValueChange={(value) => field.onChange(value)}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select marital status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {predefinedOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                      {/* Always show the current value if it doesn't exactly match any predefined option value */}
+                      {field.value && !hasExactValueMatch && (
                         <SelectItem value={field.value}>{field.value}</SelectItem>
-                      )
-                    }
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )
+            }}
           />
 
           <FormField
@@ -457,34 +491,45 @@ export default function InformationDetailsForm() {
           <FormField
             control={form.control}
             name="employmentStatus"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Occupation/Employment Status</FormLabel>
-                <Select
-                  onValueChange={(value) => field.onChange(value)}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select employment status" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="Employed">Employed</SelectItem>
-                    <SelectItem value="Self-employed">Self-employed</SelectItem>
-                    <SelectItem value="Unemployed">Unemployed</SelectItem>
-                    <SelectItem value="Student">Student</SelectItem>
-                    {/* Allow custom values by keeping current value in dropdown if it doesn't match options */}
-                    {field.value && 
-                      !["Employed", "Self-employed", "Unemployed", "Student"].includes(field.value) && (
+            render={({ field }) => {
+              const predefinedOptions = [
+                { value: "Employed", label: "Employed" },
+                { value: "Self-employed", label: "Self-employed" },
+                { value: "Unemployed", label: "Unemployed" },
+                { value: "Student", label: "Student" }
+              ];
+              
+              // Check if current value exactly matches any predefined option value
+              const hasExactValueMatch = predefinedOptions.some(option => option.value.toLowerCase() === (field.value?.toLowerCase() ?? ""));
+              
+              return (
+                <FormItem>
+                  <FormLabel>Occupation/Employment Status</FormLabel>
+                  <Select
+                    onValueChange={(value) => field.onChange(value)}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select employment status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {predefinedOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                      {/* Always show the current value if it doesn't exactly match any predefined option value */}
+                      {field.value && !hasExactValueMatch && (
                         <SelectItem value={field.value}>{field.value}</SelectItem>
-                      )
-                    }
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )
+            }}
           />
 
           <FormField
@@ -502,9 +547,15 @@ export default function InformationDetailsForm() {
           />
         </div>
         <div className="flex justify-between mt-4">
-          <Button variant="outline" type="button" onClick={() => handleBack()}>
-            Back
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" type="button" onClick={handleCancel}>
+              <X className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">Cancel</span>
+            </Button>
+            <Button variant="outline" type="button" onClick={() => handleBack()}>
+              Back
+            </Button>
+          </div>
           <Button
             type="submit"
             className="text-white"

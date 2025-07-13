@@ -1,3 +1,4 @@
+"use client"
 import { ArrowRight } from "lucide-react";
 import React from "react";
 import { Button } from "../ui/button";
@@ -21,7 +22,7 @@ export default function CTAsection() {
           className="mt-6 bg-white text-primary hover:bg-white/90"
           asChild
         >
-          <Link href="/waitlist">
+          <Link href="/contacts">
             Get Started Today
             <ArrowRight className="h-4 w-4 ml-2" />
           </Link>

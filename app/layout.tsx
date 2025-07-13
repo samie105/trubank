@@ -19,9 +19,29 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Tru-bank",
-  description: "Still in development",
+  title: "Trubank – Modern Core Banking Software for Fintechs & Digital Banks",
+  description: "Trubank offers a next-gen core banking system built for fintechs, digital banks, and financial institutions. Enjoy seamless account management, real-time transfers, and regulatory-ready reporting.",
+  keywords: "core banking software, fintech banking, digital bank solution, Nigeria banking software, banking technology, Trubank, fintech infrastructure, financial services software, online banking system, real-time banking",
+  openGraph: {
+    title: "Trubank – Modern Core Banking Software for Fintechs & Digital Banks",
+    description: "Trubank is a next-gen core banking solution designed for fintechs and digital banks. Real-time account management, seamless transfers, and powerful reporting.",
+    url: "https://trubankng.com/",
+    type: "website",
+    images: [
+      {
+        url: "https://trubankng.com/assets/logo-dark.png",
+        alt: "Trubank - Modern Core Banking Software"
+      }
+    ]
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Trubank – Modern Core Banking Software for Fintechs & Digital Banks",
+    description: "Explore a next-generation banking platform tailored for financial innovation. Trusted by fintechs and digital banks.",
+    images: ["https://trubankng.com/assets/logo-dark.png"]
+  }
 };
+
 
 export default function RootLayout({
   children,

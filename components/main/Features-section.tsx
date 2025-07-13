@@ -1,3 +1,4 @@
+"use client"
 import type React from "react";
 import {
   ArrowRight,
@@ -102,7 +103,7 @@ export function FeaturesSection() {
 
             <div className="mt-12">
               <Link
-                href="/products-solution"
+                href="/products-solutions"
                 className="inline-flex justify-center w-full items-center text-sm font-semibold text-primary hover:text-primary/80"
               >
                 Learn More

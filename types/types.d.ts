@@ -38,6 +38,7 @@ export type FormData = {
   email?: string;
   phone?: string;
   country?: string;
+  countryName?: string;
   maritalStatus?: string;
   alternatePhone?: string;
   employmentStatus?: string;
@@ -58,6 +59,10 @@ export type FormData = {
   productId?: string;
   productType?: string;
   desiredAccount?: string;
+  // Display names for UI purposes
+  branchName?: string;
+  accountOfficerName?: string;
+  productTypeName?: string;
   employerAddress?: string;
   jobTitle?: string;
   startDate?: Date | string;
@@ -185,6 +190,10 @@ export type BusinessFormData = {
   type?: number;
   customerId?: string;
   businessId?: string;
+  // Display names for UI purposes
+  branchName?: string;
+  accountOfficerName?: string;
+  desiredAccountName?: string;
 };
 
 export interface BusinessApiResponse {

@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { parseAsBoolean, parseAsInteger, useQueryState } from "nuqs";
-import { Loader2 } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/form";
 import { useFormContext } from "@/contexts/FormContext";
 import { FormData } from "@/types/types";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   nextOfKinFullName: z.string().optional(),
@@ -44,6 +45,7 @@ export default function NextOfKin() {
     parseAsBoolean.withDefault(false)
   );
   const [, setStep] = useQueryState("step", parseAsInteger);
+  const router = useRouter();
 
   const form = useForm<NextOfKinFormData>({
     resolver: zodResolver(formSchema),
@@ -77,6 +79,13 @@ export default function NextOfKin() {
     setCreating(false);
     setStep(7);
     console.log("Form submitted:", updatedData);
+  };
+
+  const handleCancel = () => {
+    // Clear all form data from localStorage
+    localStorage.removeItem("customerForm");
+    // Redirect to customer management dashboard
+    router.push("/dashboard/customer-management");
   };
 
   return (
@@ -162,13 +171,19 @@ export default function NextOfKin() {
           </div>
         </div>
         <div className="flex justify-between">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setStep((prev) => (prev || 1) - 1)}
-          >
-            Previous
-          </Button>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" onClick={handleCancel}>
+              <X className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">Cancel</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setStep((prev) => (prev || 1) - 1)}
+            >
+              Previous
+            </Button>
+          </div>
           <Button
             type="submit"
             className="text-white"

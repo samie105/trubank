@@ -150,7 +150,7 @@ export const createCustomerAction = actionClient.schema(customerSchema).action(a
     
     // Use AccountType enum values (Savings = 1, Current = 2)
     // Default to Savings (1) if not specified
-    const desiredAccountType = parsedInput.desiredAccount || parsedInput.productType || "1"
+    const desiredAccountType = parsedInput.desiredAccount || parsedInput.productType || ""
     formData.append("DesiredAccount", desiredAccountType)
     
     formData.append("RequireSmsAlert", parsedInput.requireSmsAlert === undefined ? "true" : String(parsedInput.requireSmsAlert))
@@ -178,7 +178,7 @@ export const createCustomerAction = actionClient.schema(customerSchema).action(a
       parsedInput.dob instanceof Date ? parsedInput.dob.toISOString() : parsedInput.dob || new Date().toISOString(),
     )
     formData.append("PersonalInformations.MaritalStatus", parsedInput.maritalStatus?.toLowerCase() || "single")
-    formData.append("PersonalInformations.Nationality", "NGA")
+    formData.append("PersonalInformations.Nationality", parsedInput.country || "")
     formData.append("PersonalInformations.ResidentialAddress", parsedInput.address || "Default Address")
     formData.append("PersonalInformations.EmailAddress", parsedInput.email || "default@example.com")
     formData.append("PersonalInformations.Password", "Test@123!")
@@ -309,6 +309,7 @@ export const createCustomerAction = actionClient.schema(customerSchema).action(a
         success: false,
         error: data.error || data.message || `Server returned status ${response.status} with invalid response format`,
         statusCode: response.status,
+        errors: data.errors || data.validationErrors || null,
       }
     }
   } catch (error) {

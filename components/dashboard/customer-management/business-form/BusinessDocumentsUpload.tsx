@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { useBusinessForm } from "@/contexts/BusinessFormContext";
 import Image from "next/image";
 import { BusinessFormData } from "@/types/types";
+import { useRouter } from "next/navigation";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_FILE_TYPES = [
@@ -105,6 +106,7 @@ export default function BusinessDocumentsUpload() {
     memorandumArticles: null,
     businessLicense: null,
   });
+  const router = useRouter();
 
   const form = useForm<BusinessDocumentsFormData>({
     resolver: zodResolver(formSchema),
@@ -166,6 +168,15 @@ export default function BusinessDocumentsUpload() {
     updateFormData(updatedData);
     localStorage.setItem("CustomerBusinessForm", JSON.stringify(updatedData));
     setStep(3);
+  };
+
+  const handleCancel = () => {
+    // Clear all form data from localStorage
+    localStorage.removeItem("CustomerBusinessForm");
+    localStorage.removeItem("businessForm");
+    localStorage.removeItem("customer-business-form-storage");
+    // Redirect to customer management dashboard
+    router.push("/dashboard/customer-management");
   };
 
   const handleDrag = (e: React.DragEvent, fieldName: string) => {
@@ -358,9 +369,15 @@ export default function BusinessDocumentsUpload() {
           </div>
         </div>
         <div className="flex justify-between">
-          <Button type="button" variant="outline" onClick={() => setStep(1)}>
-            Previous
-          </Button>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" onClick={handleCancel}>
+              <X className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">Cancel</span>
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setStep(1)}>
+              Previous
+            </Button>
+          </div>
           <div className="space-x-2">
             <Button type="button" variant="outline" onClick={() => setStep(3)}>
               Skip

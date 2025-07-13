@@ -161,7 +161,7 @@ export default function Navbar() {
               className="hidden rounded-full hover:bg-white bg-white text-primary lg:inline-flex"
               asChild
             >
-              <Link href="/waitlist">
+              <Link href="/contacts">
                 <div className="flex items-center">
                   Request Demo
                 </div>
@@ -241,7 +241,7 @@ export default function Navbar() {
                     className="mt-4 bg-primary text-white hover:bg-primary/90"
                     asChild
                   >
-                    <Link href="/waitlist">
+                    <Link href="/contacts">
                       <div className="flex items-center">
                         Request Demo
                       </div>

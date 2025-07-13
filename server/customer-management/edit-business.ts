@@ -238,7 +238,7 @@ console.log("here is the id",parsedInput.businessId)
         success: false,
         error: data.error || data.message || `Failed to update business (Status: ${response.status})`,
         statusCode: data.statCode || response.status,
-        details: data.errors || data.validationErrors || null, // Include any validation errors from the API
+        errors: data.errors || data.validationErrors || null,
       }
     }
   } catch (error) {

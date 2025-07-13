@@ -40,11 +40,10 @@ export default function ContactPage() {
                   <MapPin className="mt-1 h-6 w-6 text-primary" />
                   <div>
                     <h3 className="text-lg font-semibold text-black/80">
-                      Our Location
+                      Head Office
                     </h3>
                     <p className="mt-1 text-gray-600">
-                      112 Chief (Dr) Fabian Nwaora Avenue, EFAB Estate Lokogoma, Abuja
-                    </p>
+                    205, Tonyvic Plaza, Nsukka, Enugu State, Nigeria.   </p>
                   </div>
                 </div>
 
@@ -70,7 +69,7 @@ export default function ContactPage() {
               </div>
 
               {/* Map */}
-              <div className="aspect-[4/3] w-full overflow-hidden rounded-lg">
+              {/* <div className="aspect-[4/3] w-full overflow-hidden rounded-lg">
                 <iframe
                   src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3940.5076902536187!2d7.413972675774285!3d9.002386089377927!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x104e73a0d5f6b0d9%3A0x5e5a8d9c5c5c5c5c!2sEFAB%20Estate%20Lokogoma!5e0!3m2!1sen!2sng!4v1710876547774!5m2!1sen!2sng"
                   width="100%"
@@ -81,7 +80,7 @@ export default function ContactPage() {
                   referrerPolicy="no-referrer-when-downgrade"
                   className="h-full w-full"
                 ></iframe>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

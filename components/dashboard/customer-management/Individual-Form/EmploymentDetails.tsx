@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils"
 import { useFormContext } from "@/contexts/FormContext"
 import type { FormData } from "@/types/types"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 const ACCEPTED_FILE_TYPES = ["image/jpeg", "image/jpg", "image/png"]
@@ -57,6 +58,7 @@ export default function EmploymentDetails() {
   const [dragActive, setDragActive] = useState(false)
   const [, setStep] = useQueryState("step", parseAsInteger)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const router = useRouter()
 
   const form = useForm<EmploymentFormData>({
     resolver: zodResolver(formSchema),
@@ -110,6 +112,13 @@ export default function EmploymentDetails() {
 
   const handleSkip = () => {
     setStep(5)
+  }
+
+  const handleCancel = () => {
+    // Clear all form data from localStorage
+    localStorage.removeItem("customerForm")
+    // Redirect to customer management dashboard
+    router.push("/dashboard/customer-management")
   }
 
   const handleDrag = (e: React.DragEvent) => {
@@ -316,9 +325,15 @@ export default function EmploymentDetails() {
           </div>
         </div>
         <div className="flex justify-between">
-          <Button type="button" variant="outline" onClick={() => setStep(3)}>
-            Previous
-          </Button>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" onClick={handleCancel}>
+              <X className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">Cancel</span>
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setStep(3)}>
+              Previous
+            </Button>
+          </div>
           <div className="space-x-2">
             <Button type="button" variant="outline" onClick={handleSkip}>
               Skip

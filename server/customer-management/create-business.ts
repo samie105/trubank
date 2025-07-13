@@ -10,7 +10,7 @@ const businessSchema = z.object({
   registrationNumber: z.string().min(1, "Registration number is required"),
   tin: z.string().min(1, "TIN is required"),
   natureOfBusiness: z.string().min(1, "Nature of business is required"),
-  businessType: z.string().min(1, "Business type is required"),
+  businessType: z.string().optional(),
   businessAddress: z.string().min(1, "Business address is required"),
   phoneNumber: z.string().min(1, "Phone number is required"),
   email: z.string().email("Invalid email address"),
@@ -58,18 +58,7 @@ function mapUtilityTypeToNumber(utilityType: string): number {
   return utilityTypeMap[utilityType] || 1
 }
 
-// Helper function to map business types to numeric values
-function mapBusinessTypeToNumber(businessType: string): number {
-  const businessTypeMap: Record<string, number> = {
-    "Sole Proprietorship": 1,
-    Partnership: 2,
-    "Limited Liability Company": 3,
-    Corporation: 4,
-    "Non-Profit": 5,
-    Other: 6,
-  }
-  return businessTypeMap[businessType] || 3 // Default to LLC
-}
+// (Business type fixed to "3" for create mode; mapping function no longer needed)
 
 export const createBusinessAction = actionClient.schema(businessSchema).action(async ({ parsedInput }) => {
   console.log("Creating business with data:", parsedInput)
@@ -98,7 +87,8 @@ export const createBusinessAction = actionClient.schema(businessSchema).action(a
     formData.append("RegistrationNumber", parsedInput.registrationNumber)
     formData.append("TaxIdentificationNumber", parsedInput.tin)
     formData.append("NatureOfBusiness", parsedInput.natureOfBusiness)
-    formData.append("BusienssType", String(mapBusinessTypeToNumber(parsedInput.businessType))) // Note: Match API typo
+    // Business type is fixed to 3 (Limited Liability Company) in create mode
+    formData.append("BusienssType", "3")
     formData.append("BusinessAddress", parsedInput.businessAddress)
     formData.append("PhoneNumber", parsedInput.phoneNumber)
     formData.append("EmailAddress", parsedInput.email)
@@ -207,7 +197,7 @@ export const createBusinessAction = actionClient.schema(businessSchema).action(a
         success: false,
         error: data.error || data.message || `Failed to register business (Status: ${response.status})`,
         statusCode: data.statCode || response.status,
-        details: data.errors || data.validationErrors || null, // Include any validation errors from the API
+        errors: data.errors || data.validationErrors || null,
       }
     }
   } catch (error) {

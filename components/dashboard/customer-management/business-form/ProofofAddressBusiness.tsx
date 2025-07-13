@@ -32,6 +32,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useBusinessForm } from "@/contexts/BusinessFormContext";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_FILE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
@@ -100,6 +101,18 @@ export default function ProofofAddressBusiness({isEditMode}:{isEditMode:boolean}
   const [dragActive, setDragActive] = useState(false);
   const [, setStep] = useQueryState("step", parseAsInteger);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const router = useRouter();
+
+  // Create enhanced arrays that include current values if not found in predefined options
+  const enhancedUtilityBillTypes = [...utilityBillTypes] as string[];
+  if (formData.utilityBillType && !utilityBillTypes.includes(formData.utilityBillType as typeof utilityBillTypes[number])) {
+    enhancedUtilityBillTypes.push(formData.utilityBillType);
+  }
+
+  const enhancedUtilityBillIssuers = [...utilityBillIssuers] as string[];
+  if (formData.utilityBillIssuer && !utilityBillIssuers.includes(formData.utilityBillIssuer as typeof utilityBillIssuers[number])) {
+    enhancedUtilityBillIssuers.push(formData.utilityBillIssuer);
+  }
 
   const form = useForm<ProofOfBusinessAddressFormData>({
     resolver: zodResolver(formSchema),
@@ -199,6 +212,15 @@ export default function ProofofAddressBusiness({isEditMode}:{isEditMode:boolean}
     setPreviewUrl(null);
   };
 
+  const handleCancel = () => {
+    // Clear all form data from localStorage
+    localStorage.removeItem("CustomerBusinessForm");
+    localStorage.removeItem("businessForm");
+    localStorage.removeItem("customer-business-form-storage");
+    // Redirect to customer management dashboard
+    router.push("/dashboard/customer-management");
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -233,7 +255,7 @@ export default function ProofofAddressBusiness({isEditMode}:{isEditMode:boolean}
                         <CommandList>
                           <CommandEmpty>No bill type found.</CommandEmpty>
                           <CommandGroup>
-                            {utilityBillTypes.map((type) => (
+                            {enhancedUtilityBillTypes.map((type) => (
                               <CommandItem
                                 key={type}
                                 value={type}
@@ -291,7 +313,7 @@ export default function ProofofAddressBusiness({isEditMode}:{isEditMode:boolean}
                           <CommandList>
                             <CommandEmpty>No issuer found.</CommandEmpty>
                             <CommandGroup>
-                              {utilityBillIssuers.map((issuer) => (
+                              {enhancedUtilityBillIssuers.map((issuer) => (
                                 <CommandItem
                                   key={issuer}
                                   value={issuer}
@@ -431,9 +453,15 @@ export default function ProofofAddressBusiness({isEditMode}:{isEditMode:boolean}
           </div>
         </div>
         <div className="flex justify-between">
-          <Button type="button" variant="outline" onClick={() => setStep(2)}>
-            Previous
-          </Button>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" onClick={handleCancel}>
+              <X className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">Cancel</span>
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setStep(2)}>
+              Previous
+            </Button>
+          </div>
           <Button
             type="submit"
             className="bg-primary hover:bg-primary text-white"

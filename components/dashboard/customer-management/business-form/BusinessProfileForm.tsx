@@ -219,9 +219,18 @@ export default function BusinessProfileForm() {
   }, [form])
 
   const onSubmit = async (data: ProfileFormData) => {
+    // Find the names for display purposes
+    const branchName = branches.find(b => b.id === data.branch)?.name || "";
+    const accountOfficerName = accountOfficers.find(ao => ao.id === data.accountOfficer)?.fullName || "";
+    const desiredAccountName = productTypes.find(pt => pt.id === data.desiredAccount)?.name || "";
+    
     const updatedData = {
       ...formData,
       ...data,
+      // Store the names for display purposes
+      branchName,
+      accountOfficerName,
+      desiredAccountName,
     }
     updateFormData(updatedData)
     localStorage.setItem("CustomerBusinessForm", JSON.stringify(updatedData))

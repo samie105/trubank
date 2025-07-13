@@ -87,6 +87,10 @@ export const useBusinessFormStore = create<BusinessFormState>()(
         accountOfficerId: null,
         desiredAccount: "",
         type: 2,
+        // Display names for UI purposes
+        branchName: "",
+        accountOfficerName: "",
+        desiredAccountName: "",
       },
       updateFormData: (data) => 
         set((state) => ({ 
@@ -144,9 +148,11 @@ export const useBusinessFormStore = create<BusinessFormState>()(
         // Branch and Account Officer
         if (data.branchId) mappedData.branchId = data.branchId;
         else if (data.branch?.id) mappedData.branchId = data.branch.id;
+        if (data.branch?.name) mappedData.branchName = data.branch.name;
         
         if (data.accountOfficerId) mappedData.accountOfficerId = data.accountOfficerId;
         else if (data.accountOfficer?.id) mappedData.accountOfficerId = data.accountOfficer.id;
+        if (data.accountOfficer?.fullName) mappedData.accountOfficerName = data.accountOfficer.fullName;
         
         if (data.desiredAccount) mappedData.desiredAccount = data.desiredAccount;
         

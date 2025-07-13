@@ -1,3 +1,4 @@
+"use client"
 import { Eye, Target } from "lucide-react";
 import Image from "next/image";
 

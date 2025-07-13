@@ -284,6 +284,10 @@ type BusinessFormData = {
   accountOfficer: string
   accountOfficerId?: string
   type?: number
+  // Display names for UI purposes
+  branchName?: string
+  accountOfficerName?: string
+  desiredAccountName?: string
 }
 
 export default function BusinessConfirmationPage({
@@ -303,6 +307,9 @@ export default function BusinessConfirmationPage({
     fields: {key: string, label: string, section: string, message?: string}[],
     rawError?: any
   }>({ message: "", details: [], fields: [] });
+
+  // Grouped error fields for easy rendering
+  const groupedErrorFields = groupErrorFieldsBySection(showErrorDialog.fields);
 
   useEffect(() => {
     const savedData = localStorage.getItem("CustomerBusinessForm")
@@ -430,6 +437,15 @@ export default function BusinessConfirmationPage({
     setStep(1)
   }
 
+  const handleCancel = () => {
+    // Clear all form data from localStorage
+    localStorage.removeItem("businessForm")
+    localStorage.removeItem("CustomerBusinessForm")
+    localStorage.removeItem("customer-business-form-storage")
+    // Redirect to customer management dashboard
+    router.push("/dashboard/customer-management")
+  }
+
   const handleConfirmAndSubmit = () => {
     console.log("Form submitted:", data)
 
@@ -550,17 +566,22 @@ export default function BusinessConfirmationPage({
 
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Account Information</h3>
-              {renderField("Branch", data.branch)}
-              {renderField("Desired Account Type", data.desiredAccount)}
-              {renderField("Account Officer", data.accountOfficer)}
+              {renderField("Branch", data.branchName || data.branch)}
+              {renderField("Desired Account Type", data.desiredAccountName || data.desiredAccount)}
+              {renderField("Account Officer", data.accountOfficerName || data.accountOfficer)}
             </div>
           </div>
         </ScrollArea>
       </CardContent>
       <CardFooter className="flex justify-between">
-        <Button variant="outline" onClick={handlePrevious} disabled={isSubmitting}>
-          Make Changes
-        </Button>
+        <div className="space-x-2">
+          <Button variant="outline" onClick={handleCancel} disabled={isSubmitting}>
+            Cancel
+          </Button>
+          <Button variant="outline" onClick={handlePrevious} disabled={isSubmitting}>
+            Make Changes
+          </Button>
+        </div>
         <Button onClick={handleConfirmAndSubmit} className="text-white" disabled={isSubmitting}>
           {isSubmitting ? "Submitting..." : isEditMode ? "Confirm & Save Edit" : "Confirm & Submit"}
         </Button>
@@ -584,59 +605,17 @@ export default function BusinessConfirmationPage({
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            {/* Product Type Error Section - Show when specific errors exist */}
-            {showErrorDialog.rawError?.errors?.ProductType && (
-              <div className="space-y-6 mb-4">
-                <h4 className="font-medium text-lg">Account Information</h4>
-                <div className="grid grid-cols-1 gap-2">
-                  <div className="flex items-start p-3 rounded-md bg-red-50 border border-red-200">
-                    <XCircle className="h-4 w-4 text-red-500 mr-2 flex-shrink-0 mt-1" />
-                    <div>
-                      <span className="text-sm font-medium text-red-800">Product Type</span>
-                      <p className="text-xs text-red-600 mt-1">This field is required</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Business Name Error Section - Show when specific errors exist */}
-            {showErrorDialog.rawError?.errors?.busienssName && (
-              <div className="space-y-6 mb-4">
-                <h4 className="font-medium text-lg">Business Information</h4>
-                <div className="grid grid-cols-1 gap-2">
-                  <div className="flex items-start p-3 rounded-md bg-red-50 border border-red-200">
-                    <XCircle className="h-4 w-4 text-red-500 mr-2 flex-shrink-0 mt-1" />
-                    <div>
-                      <span className="text-sm font-medium text-red-800">Business Name</span>
-                      <p className="text-xs text-red-600 mt-1">Business name is required</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Processed Fields Display */}
-            {showErrorDialog.fields && showErrorDialog.fields.length > 0 && (
+            {Object.keys(groupedErrorFields).length > 0 ? (
               <div className="space-y-6">
-                {Object.entries(groupErrorFieldsBySection(showErrorDialog.fields)).map(([section, fields]) => (
+                {Object.entries(groupedErrorFields).map(([section, fields]) => (
                   <div key={section} className="space-y-2">
                     <h4 className="font-medium text-lg">{section}</h4>
                     <div className="grid grid-cols-1 gap-2">
-                      {fields.map((field: {label: string, message?: string}, i: number) => (
-                        <div key={i} className="flex items-start p-3 rounded-md border">
+                      {fields.map((field, idx) => (
+                        <div key={idx} className="flex items-start p-3 rounded-md border">
                           <XCircle className="h-4 w-4 text-red-500 mr-2 flex-shrink-0 mt-1" />
                           <div>
                             <span className="text-sm font-medium text-foreground/70">{field.label}</span>
-                            {showErrorDialog.details.filter(detail => 
-                              detail.toLowerCase().includes(field.label.toLowerCase()) || 
-                              detail.toLowerCase().includes(field.label.replace(' ', '').toLowerCase())
-                            ).map((detail, idx) => (
-                              <p key={idx} className="text-xs text-muted-foreground mt-1">
-                                {/* Extract just the message part after the colon */}
-                                {detail.includes(':') ? detail.split(':')[1].trim() : detail}
-                              </p>
-                            ))}
                             {field.message && (
                               <p className="text-xs text-muted-foreground mt-1">{field.message}</p>
                             )}
@@ -647,15 +626,12 @@ export default function BusinessConfirmationPage({
                   </div>
                 ))}
               </div>
-            )}
-            
-            {/* Fallback for no fields but has details */}
-            {showErrorDialog.fields.length === 0 && showErrorDialog.details.length > 0 && (
+            ) : showErrorDialog.details.length > 0 ? (
               <div className="space-y-4">
                 <div className="flex items-start p-3 rounded-md border">
                   <XCircle className="h-4 w-4 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-sm font-medium text-foreground/70">Please review the information</span>
+                    <span className="text-sm font-medium text-foreground/70">Validation Errors</span>
                     <div className="mt-2 space-y-1">
                       {showErrorDialog.details.map((detail, i) => (
                         <p key={i} className="text-xs text-red-600">• {detail}</p>
@@ -664,15 +640,12 @@ export default function BusinessConfirmationPage({
                   </div>
                 </div>
               </div>
-            )}
-            
-            {/* Fallback for no details */}
-            {showErrorDialog.fields.length === 0 && showErrorDialog.details.length === 0 && (
+            ) : (
               <div className="space-y-4">
                 <div className="flex items-start p-3 rounded-md border">
                   <XCircle className="h-4 w-4 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
                   <span className="text-sm text-red-800">
-                    Failed to update business information. Please check the form and try again.
+                    {showErrorDialog.message || "An unknown error occurred. Please try again."}
                   </span>
                 </div>
               </div>

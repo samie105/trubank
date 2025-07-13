@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { useFormContext } from "@/contexts/FormContext";
 import { FormData, ProofOfAddressType } from "@/types/types";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_FILE_TYPES = [
@@ -96,6 +97,20 @@ export default function ProofOfAddress() {
   const [dragActive, setDragActive] = useState(false);
   const [, setStep] = useQueryState("step", parseAsInteger);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const router = useRouter();
+
+  // Create enhanced arrays that include current values if not found in predefined options
+  const enhancedAddressProofTypes = [...addressProofTypes] as string[];
+  const currentAddressProofType = formData.addressProofType;
+  if (currentAddressProofType && !addressProofTypes.includes(currentAddressProofType as typeof addressProofTypes[number])) {
+    enhancedAddressProofTypes.push(currentAddressProofType);
+  }
+
+  const enhancedIssuingAuthorities = [...issuingAuthorities] as string[];
+  const currentIssuingAuthority = formData.issuingAuthorityPOA;
+  if (currentIssuingAuthority && !issuingAuthorities.includes(currentIssuingAuthority as typeof issuingAuthorities[number])) {
+    enhancedIssuingAuthorities.push(currentIssuingAuthority);
+  }
 
   const form = useForm<ProofOfAddressFormData>({
     resolver: zodResolver(formSchema),
@@ -149,6 +164,13 @@ export default function ProofOfAddress() {
 
   const handleSkip = () => {
     setStep(4);
+  };
+
+  const handleCancel = () => {
+    // Clear all form data from localStorage
+    localStorage.removeItem("customerForm");
+    // Redirect to customer management dashboard
+    router.push("/dashboard/customer-management");
   };
 
   const handleDrag = (e: React.DragEvent) => {
@@ -224,7 +246,7 @@ export default function ProofOfAddress() {
                         <CommandList>
                           <CommandEmpty>No proof type found.</CommandEmpty>
                           <CommandGroup>
-                            {addressProofTypes.map((type) => (
+                            {enhancedAddressProofTypes.map((type) => (
                               <CommandItem
                                 key={type}
                                 value={type}
@@ -283,7 +305,7 @@ export default function ProofOfAddress() {
                             No issuing authority found.
                           </CommandEmpty>
                           <CommandGroup>
-                            {issuingAuthorities.map((authority) => (
+                            {enhancedIssuingAuthorities.map((authority) => (
                               <CommandItem
                                 key={authority}
                                 value={authority}
@@ -419,9 +441,15 @@ export default function ProofOfAddress() {
           </div>
         </div>
         <div className="flex justify-between">
-          <Button type="button" variant="outline" onClick={() => setStep(2)}>
-            Previous
-          </Button>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" onClick={handleCancel}>
+              <X className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">Cancel</span>
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setStep(2)}>
+              Previous
+            </Button>
+          </div>
           <div className="space-x-2">
             <Button type="button" variant="outline" onClick={handleSkip}>
               Skip

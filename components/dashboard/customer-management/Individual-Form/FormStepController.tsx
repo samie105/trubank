@@ -7,6 +7,7 @@ import { parseAsInteger, useQueryState } from "nuqs"
 import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { fetchCustomerAction } from "@/server/customer-management/fetch-customer"
+import { fetchCountries, type Country } from "@/server/customer-management/fetchCountries"
 import { useFormContext } from "@/contexts/FormContext"
 import InformationDetailsForm from "./InformationDetailsForm"
 import IDDetailsForm from "./IDDetailsForm"
@@ -146,6 +147,7 @@ export const formatFormDataForApi = (formData: FormData): FormattedApiData => {
 export default function FormStepController() {
   const [step] = useQueryState("step", parseAsInteger.withDefault(1))
   const [isLoading, setIsLoading] = useState(false)
+  const [countries, setCountries] = useState<Country[]>([])
   const params = useParams()
   const searchParams = useSearchParams()
   const { updateFormData } = useFormContext()
@@ -153,6 +155,13 @@ export default function FormStepController() {
   const customerId = searchParams.get("id") || (params.id as string)
 
   console.log( customerId)
+
+  // Helper function to get country name by ID
+  const getCountryNameById = (id: string): string => {
+    if (!countries.length || !id) return id;
+    const country = countries.find(country => country.id === id);
+    return country ? country.name : id; // Return ID if country not found
+  }
 
   // Fetch customer data action
   const { execute: fetchCustomer } = useAction(fetchCustomerAction, {
@@ -178,6 +187,7 @@ export default function FormStepController() {
             email: customerData.emailAddress || "",
             phone: customerData.phoneNumber || "",
             country: customerData.nationality || "",
+            countryName: getCountryNameById(customerData.nationality || ""),
             maritalStatus: customerData.maritalStatus || "",
             alternatePhone: customerData.alternatePhoneNumber || "",
             employmentStatus: customerData.employmentStatus || "",
@@ -255,6 +265,22 @@ export default function FormStepController() {
       setIsLoading(false)
     },
   })
+
+  // Fetch countries on component mount
+  useEffect(() => {
+    const loadCountries = async () => {
+      try {
+        const fetchedCountries = await fetchCountries();
+        if (fetchedCountries && Array.isArray(fetchedCountries)) {
+          setCountries(fetchedCountries);
+        }
+      } catch (error) {
+        console.error("Failed to fetch countries:", error);
+      }
+    };
+    
+    loadCountries();
+  }, []);
 
   // Fetch customer data on component mount if in edit mode
   useEffect(() => {

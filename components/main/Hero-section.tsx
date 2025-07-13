@@ -1,3 +1,4 @@
+"use clients"
 import { ArrowRight, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -26,7 +27,7 @@ export default function HeroSection() {
               variant="secondary"
               className="group inline-flex items-center gap-2 bg-white text-primary hover:bg-white/90"
             >
-              <Link href="/products-solution">
+              <Link href="/products-solutions">
                 <div className="flex items-center gap-2">
                   Learn More
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -38,7 +39,7 @@ export default function HeroSection() {
               variant="ghost"
               className="inline-flex items-center gap-2 border-2 border-none bg-transparent text-white transition-colors hover:bg-white/10 hover:text-white"
             >
-              <Link href="/waitlist">
+              <Link href="/contacts">
                 <div className="flex items-center gap-2">
                   <Building2 className="h-4 w-4" />
                   Request A Demo

@@ -34,6 +34,7 @@ import { useFormContext } from "@/contexts/FormContext";
 import { FormData, IDType } from "@/types/types";
 import Image from "next/image";
 import { DateTimePicker } from "@/components/ui/date-picker";
+import { useRouter } from "next/navigation";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_FILE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
@@ -95,6 +96,7 @@ export default function IDDetailsForm() {
   const [dragActive, setDragActive] = useState(false);
   const [, setStep] = useQueryState("step", parseAsInteger);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const router = useRouter();
 
   const form = useForm<IDFormData>({
     resolver: zodResolver(formSchema),
@@ -109,6 +111,24 @@ export default function IDDetailsForm() {
   });
 
   const selectedIdType = form.watch("idType");
+  
+  // Create enhanced idTypes array that includes current value if not found in predefined options
+  const enhancedIdTypes = [...idTypes] as Array<{value: string, label: string, maxLength: number}>;
+  const currentIdType = form.watch("idType");
+  if (currentIdType && !idTypes.find(type => type.value === currentIdType)) {
+    enhancedIdTypes.push({ 
+      value: currentIdType, 
+      label: currentIdType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      maxLength: 20 
+    });
+  }
+
+  // Create enhanced issuingAuthorities array that includes current value if not found
+  const enhancedIssuingAuthorities = [...issuingAuthorities] as string[];
+  const currentIssuingAuthority = form.watch("issuingAuthority");
+  if (currentIssuingAuthority && !issuingAuthorities.includes(currentIssuingAuthority as typeof issuingAuthorities[number])) {
+    enhancedIssuingAuthorities.push(currentIssuingAuthority);
+  }
 
   useEffect(() => {
     if (formData.idType) {
@@ -153,6 +173,13 @@ export default function IDDetailsForm() {
 
   const handleSkip = () => {
     setStep(3);
+  };
+
+  const handleCancel = () => {
+    // Clear all form data from localStorage
+    localStorage.removeItem("customerForm");
+    // Redirect to customer management dashboard
+    router.push("/dashboard/customer-management");
   };
 
   const handleDrag = (e: React.DragEvent) => {
@@ -218,7 +245,7 @@ export default function IDDetailsForm() {
                           )}
                         >
                           {field.value
-                            ? idTypes.find((type) => type.value === field.value)
+                            ? enhancedIdTypes.find((type) => type.value === field.value)
                                 ?.label
                             : "Select ID"}
                           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -231,7 +258,7 @@ export default function IDDetailsForm() {
                         <CommandList>
                           <CommandEmpty>No ID type found.</CommandEmpty>
                           <CommandGroup>
-                            {idTypes.map((type) => (
+                            {enhancedIdTypes.map((type) => (
                               <CommandItem
                                 key={type.value}
                                 value={type.value}
@@ -271,7 +298,7 @@ export default function IDDetailsForm() {
                   <FormItem>
                     <FormLabel>
                       {
-                        idTypes.find((type) => type.value === selectedIdType)
+                        enhancedIdTypes.find((type) => type.value === selectedIdType)
                           ?.label
                       }{" "}
                       Number
@@ -279,12 +306,12 @@ export default function IDDetailsForm() {
                     <FormControl>
                       <Input
                         placeholder={`Enter your ${
-                          idTypes.find((type) => type.value === selectedIdType)
+                          enhancedIdTypes.find((type) => type.value === selectedIdType)
                             ?.label
                         } number`}
                         {...field}
                         maxLength={
-                          idTypes.find((type) => type.value === selectedIdType)
+                          enhancedIdTypes.find((type) => type.value === selectedIdType)
                             ?.maxLength
                         }
                       />
@@ -344,7 +371,7 @@ export default function IDDetailsForm() {
                             No issuing authority found.
                           </CommandEmpty>
                           <CommandGroup>
-                            {issuingAuthorities.map((authority) => (
+                            {enhancedIssuingAuthorities.map((authority) => (
                               <CommandItem
                                 key={authority}
                                 value={authority}
@@ -460,9 +487,15 @@ export default function IDDetailsForm() {
           </div>
         </div>
         <div className="flex justify-between">
-          <Button type="button" variant="outline" onClick={() => setStep(1)}>
-            Previous
-          </Button>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" onClick={handleCancel}>
+              <X className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">Cancel</span>
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setStep(1)}>
+              Previous
+            </Button>
+          </div>
           <div className="space-x-2">
             <Button type="button" variant="outline" onClick={handleSkip}>
               Skip

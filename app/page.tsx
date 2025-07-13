@@ -6,6 +6,8 @@ import { HowItWorks } from "@/components/main/How_it_works";
 import Navbar from "@/components/main/Navbar";
 import { Testimonials } from "@/components/main/Testimonials";
 import { PartnersSlider } from "@/components/main/Trusted-Partner";
+import { TawkToScript } from "@/components/support/talkto";
+
 
 export default function Home() {
   return (
@@ -19,6 +21,7 @@ export default function Home() {
       <Testimonials />
       <HowItWorks />
       <Footer />
+      <TawkToScript />
     </div>
   );
 }
