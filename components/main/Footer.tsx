@@ -4,6 +4,7 @@ import { Youtube, Twitter, Instagram, Linkedin } from "lucide-react";
 
 const navigation = {
   home: [
+    { name: "Features", href: "#features" },
     { name: "Partners", href: "#partners" },
     { name: "Testimonies", href: "#testimonies" },
     { name: "How it works", href: "#how-it-works" },

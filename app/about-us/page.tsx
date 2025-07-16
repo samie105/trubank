@@ -12,11 +12,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: "About Trubank – Powering the Future of Digital Banking",
     description: "Learn more about Trubank's vision, values, and mission to drive digital transformation in financial services.",
-    url: "https://trubankng.com/about",
+    url: "https://trubank.ng/about",
     type: "website",
     images: [
       {
-        url: "https://trubankng.com/assets/logo-dark.png",
+        url: "https://trubank.ng/assets/logo-dark.png",
         alt: "About Trubank – Powering the Future of Digital Banking"
       }
     ]
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "About Trubank – Powering the Future of Digital Banking",
     description: "We are committed to building flexible and secure banking software to help financial institutions grow and innovate.",
-    images: ["https://trubankng.com/assets/logo-dark.png"]
+    images: ["https://trubank.ng/assets/logo-dark.png"]
   }
 };
 

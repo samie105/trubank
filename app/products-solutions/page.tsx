@@ -12,11 +12,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Trubank Solutions – Digital Core Banking Platform for Fintechs",
     description: "Explore our powerful suite of banking solutions — account management, transaction processing, GL/SL setup, and more.",
-    url: "https://trubankng.com/solutions",
+    url: "https://trubank.ng/solutions",
     type: "website",
     images: [
       {
-        url: "https://trubankng.com/assets/logo-dark.png",
+        url: "https://trubank.ng/assets/logo-dark.png",
         alt: "Trubank Solutions – Digital Core Banking Platform for Fintechs"
       }
     ]
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Trubank Solutions – Digital Core Banking Platform for Fintechs",
     description: "Comprehensive banking features built for modern fintechs. Flexible, scalable, and regulation-ready.",
-    images: ["https://trubankng.com/assets/logo-dark.png"]
+    images: ["https://trubank.ng/assets/logo-dark.png"]
   }
 };
 

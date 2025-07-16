@@ -12,14 +12,22 @@ import { TawkToScript } from "@/components/support/talkto";
 export default function Home() {
   return (
     <div>
-      <section className="h-screen bg-primary overflow-hidden">
+      <section className="h-screen bg-primary overflow-hidden" id="home">
         <Navbar />
         <HeroSection />
       </section>
-      <FeaturesSection />
-      <PartnersSlider />
-      <Testimonials />
-      <HowItWorks />
+      <section id="features">
+        <FeaturesSection />
+      </section>
+      <section id="partners">
+        <PartnersSlider />
+      </section>
+      <section id="testimonies">
+        <Testimonials />
+      </section>
+      <section id="how-it-works">
+        <HowItWorks />
+      </section>
       <Footer />
       <TawkToScript />
     </div>

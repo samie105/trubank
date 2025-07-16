@@ -25,11 +25,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Trubank – Modern Core Banking Software for Fintechs & Digital Banks",
     description: "Trubank is a next-gen core banking solution designed for fintechs and digital banks. Real-time account management, seamless transfers, and powerful reporting.",
-    url: "https://trubankng.com/",
+    url: "https://trubank.ng/",
     type: "website",
     images: [
       {
-        url: "https://trubankng.com/assets/logo-dark.png",
+        url: "https://trubank.ng/assets/logo-dark.png",
         alt: "Trubank - Modern Core Banking Software"
       }
     ]
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Trubank – Modern Core Banking Software for Fintechs & Digital Banks",
     description: "Explore a next-generation banking platform tailored for financial innovation. Trusted by fintechs and digital banks.",
-    images: ["https://trubankng.com/assets/logo-dark.png"]
+    images: ["https://trubank.ng/assets/logo-dark.png"]
   }
 };
 
