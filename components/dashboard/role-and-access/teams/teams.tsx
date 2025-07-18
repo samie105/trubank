@@ -27,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   ResponsiveModal,
   ResponsiveModalContent,
@@ -43,7 +44,6 @@ import {
   Download, 
   MoreVertical, 
   Settings, 
-  ArrowLeft,
   Eye,
   Edit,
   Trash2,
@@ -58,6 +58,7 @@ import type { FetchTeamsSuccess, TeamApi } from "@/server/role-and-access/fetch-
 import { fetchWorkflowsAction, exportWorkflowsCsvAction, exportWorkflowsPdfAction } from "@/server/role-and-access/fetch-workflows";
 import type { WorkflowApi } from "@/server/role-and-access/fetch-workflows";
 import { toast } from "sonner";
+import { ApprovalWorkflowSection } from "./approval-workflow";
 
 interface Team {
   id: string;
@@ -66,7 +67,7 @@ interface Team {
   description: string;
 }
 
-interface ApprovalWorkflow {
+export interface ApprovalWorkflow {
   id: string;
   name: string;
   type: string;
@@ -92,6 +93,8 @@ export default function Teams() {
   const [isLoading, setIsLoading] = useState(false);
   const [workflows, setWorkflows] = useState<ApprovalWorkflow[]>([]);
   const [isWorkflowLoading, setWorkflowLoading] = useState(false);
+  const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   // Create team form state
   const [teamName, setTeamName] = useState("");
@@ -193,6 +196,7 @@ export default function Teams() {
         toast.error((payload as any)?.error || "Failed to load teams");
       }
       setIsLoading(false);
+      setHasLoadedOnce(true);
     },
     onError(err) {
       toast.dismiss("fetch-teams");
@@ -258,11 +262,13 @@ export default function Teams() {
     
     // Load departments on mount
     loadDepartments();
-  }, []);
+  }, [isCreateModalOpen, isEditModalOpen]);
 
   useEffect(() => {
-   if (!showApprovalWorkflow) loadTeams({});
-  }, [loadTeams, showApprovalWorkflow]);
+   if (!showApprovalWorkflow && !hasLoadedOnce) {
+     loadTeams({});
+   }
+  }, [loadTeams, showApprovalWorkflow, hasLoadedOnce]);
 
   useEffect(() => {
     if (showApprovalWorkflow) {
@@ -270,10 +276,29 @@ export default function Teams() {
     }
   }, [showApprovalWorkflow, loadWorkflows]);
 
+  const handleSelectTeam = (teamId: string) => {
+    setSelectedTeamIds(prev => 
+      prev.includes(teamId) 
+        ? prev.filter(id => id !== teamId)
+        : [...prev, teamId]
+    );
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedTeamIds(filteredTeams.map(team => team.id));
+    } else {
+      setSelectedTeamIds([]);
+    }
+  };
+
   const filteredTeams = teams.filter(team =>
     team.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     team.department.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const isAllSelected = filteredTeams.length > 0 && selectedTeamIds.length === filteredTeams.length;
+  const isIndeterminate = selectedTeamIds.length > 0 && selectedTeamIds.length < filteredTeams.length;
 
   const handleCreateTeam = async () => {
     if (!teamName || !selectedDepartment) {
@@ -295,6 +320,7 @@ export default function Teams() {
     setDescription("");
     setSelectedDepartment("");
     setIsCreateModalOpen(false);
+      // Refresh data after create
       loadTeams({});
     } else {
       toast.error(res?.data?.error || res?.data?.message || "Failed to create team");
@@ -321,6 +347,7 @@ export default function Teams() {
         pageNumber: 1,
         searchParams: getExportSearchParams(),
         selectedFields: [],
+        selectedIds: selectedTeamIds.length > 0 ? selectedTeamIds : undefined,
       };
       let fileData: string | undefined;
       const fileName = `teams.${type}`;
@@ -397,171 +424,15 @@ export default function Teams() {
     </div>
   );
 
-  const WorkflowIcon = () => (
-    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-      <Settings className="w-4 h-4 text-primary" />
-    </div>
-  );
-
   if (showApprovalWorkflow) {
     return (
-      <div className="p-6">
-        {/* Header with back button */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setWorkflowQuery(null)}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="hidden lg:inline">Back</span>  
-            </Button>
-            <h1 className="text-base md:text-2xl font-semibold">Approval Workflow</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            {/* Create Approval Level */}
-            <Button className="bg-primary hover:bg-primary/90 text-white" size="icon">
-              <Plus className="w-4 h-4" />
-            </Button>
-
-            {/* Export Dropdown Desktop (Workflow) - NOW INSIDE header row */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="text-muted-foreground border-border hidden lg:inline-flex">
-                  Export
-                  <Download className="ml-2 w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
-                <DropdownMenuItem onClick={() => handleWorkflowExport('csv')}>
-                  Export CSV
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleWorkflowExport('pdf')}>
-                  Export PDF
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Mobile Export Icon (Workflow) - NOW INSIDE header row */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  aria-label="Export Workflows"
-                  className="text-muted-foreground border-border lg:hidden"
-                >
-                  <Download className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
-                <DropdownMenuItem onClick={() => handleWorkflowExport('csv')}>
-                  Export CSV
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleWorkflowExport('pdf')}>
-                  Export PDF
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Settings dropdown for extra actions */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="text-muted-foreground">
-                  <Settings className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-36">
-                <DropdownMenuItem onClick={() => loadWorkflows({})}>
-                  <RotateCcw className="w-4 h-4 mr-2" />
-                  Refresh
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-
-        {/* Search */}
-        <div className="relative w-72 mb-6">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-          <Input
-            placeholder="Search"
-            className="pl-10"
-          />
-        </div>
-
-        {/* Workflows Table */}
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>WORKFLOW NAME</TableHead>
-                <TableHead>TYPE</TableHead>
-                <TableHead>NO OF APPROVAL WORKFLOW</TableHead>
-                <TableHead className="w-[50px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isWorkflowLoading ? (
-                [...Array(5)].map((_, idx) => (
-                  <TableRow key={idx}>
-                    <TableCell><Skeleton className="h-4 w-40" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-12" /></TableCell>
-                    <TableCell></TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                workflows.map((workflow) => (
-                <TableRow key={workflow.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <WorkflowIcon />
-                      <span className="font-medium">{workflow.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{workflow.type}</TableCell>
-                  <TableCell>{workflow.approvalCount}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Eye className="mr-2 w-4 h-4" />
-                          Preview
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Edit className="mr-2 w-4 h-4" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">
-                          <Trash2 className="mr-2 w-4 h-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-
-        {!isWorkflowLoading && workflows.length === 0 && (
-          <div className="p-12 text-center text-muted-foreground">
-            <Settings className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-            <p className="text-lg font-medium mb-2 text-foreground">No approval workflows available</p>
-            <Button variant="outline" className="mt-4">Create Workflow</Button>
-          </div>
-        )}
-      </div>
+      <ApprovalWorkflowSection
+        workflows={workflows}
+        isWorkflowLoading={isWorkflowLoading}
+        setWorkflowQuery={setWorkflowQuery}
+        loadWorkflows={loadWorkflows}
+        handleWorkflowExport={handleWorkflowExport}
+      />
     );
   }
 
@@ -575,7 +446,7 @@ export default function Teams() {
             placeholder="Search"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 w-64 bg-background"
+            className="pl-10 max-w-md bg-background"
           />
         </div>
 
@@ -677,10 +548,14 @@ export default function Teams() {
           {/* Export Dropdown Desktop */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="text-muted-foreground border-border hidden lg:inline-flex">
-            Export
-            <Download className="ml-2 w-4 h-4" />
-          </Button>
+              <Button 
+                variant="outline" 
+                className="text-muted-foreground border-border hidden lg:inline-flex"
+                disabled={selectedTeamIds.length === 0}
+              >
+                Export {selectedTeamIds.length > 0 ? `(${selectedTeamIds.length})` : ''}
+                <Download className="ml-2 w-4 h-4" />
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
               <DropdownMenuItem onClick={() => handleExport('csv')}>
@@ -700,6 +575,7 @@ export default function Teams() {
                 size="icon"
                 className="text-muted-foreground border-border lg:hidden"
                 aria-label="Export"
+                disabled={selectedTeamIds.length === 0}
               >
                 <Download className="w-4 h-4" />
               </Button>
@@ -731,10 +607,6 @@ export default function Teams() {
                 <Settings className="w-4 h-4 mr-2" />
                 Approval Workflow
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => loadTeams({})}>
-                <RotateCcw className="w-4 h-4 mr-2" />
-                Refresh
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -745,6 +617,13 @@ export default function Teams() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[50px]">
+                <Checkbox
+                  checked={isAllSelected}
+                  onCheckedChange={handleSelectAll}
+                  className={isIndeterminate ? "data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground" : ""}
+                />
+              </TableHead>
               <TableHead>TEAM NAME</TableHead>
               <TableHead>ASSOCIATED DEPARTMENT</TableHead>
               <TableHead className="w-[50px]"></TableHead>
@@ -754,6 +633,9 @@ export default function Teams() {
             {isLoading ? (
               [...Array(5)].map((_, idx) => (
                 <TableRow key={idx}>
+                  <TableCell>
+                    <Skeleton className="w-4 h-4" />
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Skeleton className="w-8 h-8 rounded-full" />
@@ -771,6 +653,12 @@ export default function Teams() {
             ) : (
               filteredTeams.map((team) => (
                 <TableRow key={team.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedTeamIds.includes(team.id)}
+                      onCheckedChange={() => handleSelectTeam(team.id)}
+                    />
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <TeamIcon />

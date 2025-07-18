@@ -186,6 +186,7 @@ const exportTeamsSchema = z.object({
   pageNumber: z.number(),
   searchParams: z.record(z.string()),
   selectedFields: z.array(z.string()).optional(),
+  selectedIds: z.array(z.string()).optional(),
 });
 
 export type ExportTeamsInput = z.infer<typeof exportTeamsSchema>;
@@ -215,6 +216,7 @@ export const exportTeamsCsvAction = actionClient
           pageSize: parsedInput.pageSize,
           pageNumber: parsedInput.pageNumber,
           searchParams: parsedInput.searchParams,
+          selectedIds: parsedInput.selectedIds,
         }),
 
       });
@@ -253,6 +255,7 @@ export const exportTeamsPdfAction = actionClient
           pageSize: parsedInput.pageSize,
           pageNumber: parsedInput.pageNumber,
           searchParams: parsedInput.searchParams,
+          selectedIds: parsedInput.selectedIds,
         }),
       });
       const text = await response.text();

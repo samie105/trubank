@@ -14,6 +14,7 @@ import { toast } from "sonner"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Eye, Edit, Trash2 } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Checkbox } from "@/components/ui/checkbox"
 import { ResponsiveModal, ResponsiveModalContent, ResponsiveModalHeader, ResponsiveModalTitle } from "@/components/ui/dialog-2"
 
 interface Department {
@@ -45,9 +46,15 @@ export default function DepartmentsPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isCreating, setIsCreating] = useState(false);
 
+  // Checkbox selection states
+  const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<string[]>([])
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false)
+
   const { execute: loadDepartments } = useAction(fetchDepartmentsAction, {
     onExecute() {
-      setIsLoading(true)
+      if (!hasLoadedOnce) {
+        setIsLoading(true)
+      }
       toast.loading("Fetching departments...", { id: "fetch-dept" })
     },
     onSuccess(apiResponse) {
@@ -66,6 +73,7 @@ export default function DepartmentsPage() {
             numberOfTeams: d.numberOfTeams,
           }))
         )
+        setHasLoadedOnce(true)
       } else {
         const errMsg = (payload as any)?.error || "Failed to load departments"
         toast.error(errMsg)
@@ -83,6 +91,39 @@ export default function DepartmentsPage() {
     loadDepartments({})
   }, [loadDepartments])
 
+  // Refresh handler
+  const handleRefresh = () => {
+    setHasLoadedOnce(false)
+    loadDepartments({})
+  }
+
+  // Checkbox selection handlers
+  const handleSelectDepartment = (departmentId: string) => {
+    setSelectedDepartmentIds(prev => 
+      prev.includes(departmentId) 
+        ? prev.filter(id => id !== departmentId)
+        : [...prev, departmentId]
+    )
+  }
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedDepartmentIds(filteredDepartments.map(dept => dept.id))
+    } else {
+      setSelectedDepartmentIds([])
+    }
+  }
+
+  // Filter departments based on search
+  const filteredDepartments = departments.filter(dept =>
+    dept.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    dept.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  // Checkbox selection states
+  const isAllSelected = filteredDepartments.length > 0 && selectedDepartmentIds.length === filteredDepartments.length
+  const isIndeterminate = selectedDepartmentIds.length > 0 && selectedDepartmentIds.length < filteredDepartments.length
+
   const handleCreateDepartment = async () => {
     if (!departmentName.trim()) return;
     setIsCreating(true);
@@ -98,6 +139,7 @@ export default function DepartmentsPage() {
       setDepartmentName("");
       setDepartmentDescription("");
       setIsCreateModalOpen(false);
+      setHasLoadedOnce(false);
       loadDepartments({});
     } else {
       toast.error(res?.data?.error || res?.data?.message || "Failed to create department");
@@ -132,13 +174,12 @@ export default function DepartmentsPage() {
     if (res?.data?.isSuccess) {
       toast.success(res.data.message || "Department updated successfully");
       closeEditModal();
+      setHasLoadedOnce(false);
       loadDepartments({});
     } else {
       toast.error(res?.data?.error || res?.data?.message || "Failed to update department");
     }
   }
-
-  const filteredDepartments = departments.filter((dept) => dept.name.toLowerCase().includes(searchQuery.toLowerCase()))
 
   // Export handlers
   function getExportSearchParams(): Record<string, string> {
@@ -154,6 +195,7 @@ export default function DepartmentsPage() {
         pageNumber: 1,
         searchParams: getExportSearchParams(),
         selectedFields: [],
+        selectedIds: selectedDepartmentIds.length > 0 ? selectedDepartmentIds : undefined,
       };
       let fileData: string | undefined;
       const fileName = `departments.${type}`;
@@ -208,11 +250,25 @@ export default function DepartmentsPage() {
             <span className="hidden lg:inline">Create Department</span>
           </Button>
 
+          {/* Refresh Button */}
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            className="text-muted-foreground border-border hidden lg:inline-flex"
+          >
+            <RotateCcw className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
+
           {/* Export Dropdown Desktop */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="text-muted-foreground border-border hidden lg:inline-flex">
-                Export
+              <Button 
+                variant="outline" 
+                className="text-muted-foreground border-border hidden lg:inline-flex"
+                disabled={selectedDepartmentIds.length === 0}
+              >
+                Export {selectedDepartmentIds.length > 0 && `(${selectedDepartmentIds.length})`}
                 <Download className="ml-2 w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -229,14 +285,15 @@ export default function DepartmentsPage() {
           {/* Mobile Export Icon */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                className="text-muted-foreground border-border lg:hidden"
-                aria-label="Export"
-              >
-                <Download className="w-4 h-4" />
-              </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="text-muted-foreground border-border lg:hidden"
+            aria-label="Export"
+            disabled={selectedDepartmentIds.length === 0}
+          >
+            <Download className="w-4 h-4" />
+          </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
               <DropdownMenuItem onClick={() => handleExport('csv')}>
@@ -249,23 +306,15 @@ export default function DepartmentsPage() {
           </DropdownMenu>
 
           <Button variant="outline" size="icon" className="text-muted-foreground border-border">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="text-muted-foreground border-border">
-                  <MoreVertical className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => loadDepartments({})}>
-                  <RotateCcw className="w-4 h-4 mr-2" />
-                  Refresh
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Download className="w-4 h-4 mr-2" />
-                  Export
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+        <Button
+          variant="outline"
+          size="icon"
+          className="text-muted-foreground border-border lg:hidden"
+          aria-label="Reload"
+          onClick={handleRefresh}
+        >
+          <RotateCcw className="w-4 h-4" />
+        </Button>
           </Button>
         </div>
       </div>
@@ -276,6 +325,13 @@ export default function DepartmentsPage() {
           <Table>
             <TableHeader>
               <TableRow  className="border-b border-border bg-muted/50">
+                <TableHead className="w-[50px]">
+                  <Checkbox
+                    checked={isAllSelected}
+                    onCheckedChange={handleSelectAll}
+                    className={isIndeterminate ? "data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground" : ""}
+                  />
+                </TableHead>
                 <TableHead className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                   Department Name
                 </TableHead>
@@ -289,6 +345,9 @@ export default function DepartmentsPage() {
               {isLoading ? (
                 [...Array(5)].map((_, idx) => (
                   <TableRow key={idx} className="border-b border-border">
+                    <TableCell>
+                      <Skeleton className="w-4 h-4" />
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Skeleton className="w-10 h-10 rounded-full" />
@@ -306,6 +365,12 @@ export default function DepartmentsPage() {
               ) : (
                 filteredDepartments.map((department) => (
                 <TableRow key={department.id} className="hover:bg-muted/50 transition-colors border-b border-border">
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedDepartmentIds.includes(department.id)}
+                      onCheckedChange={() => handleSelectDepartment(department.id)}
+                    />
+                  </TableCell>
                   <TableCell className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
                       <Users className="w-5 h-5 text-primary" />

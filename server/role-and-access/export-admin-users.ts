@@ -4,8 +4,10 @@ import { actionClient } from "@/lib/safe-action";
 import { cookies } from "next/headers";
 import { z } from "zod";
 
-// No input required but keep schema for consistency
-const exportAdminsSchema = z.object({});
+// Schema for export admins with optional selected IDs
+const exportAdminsSchema = z.object({
+  selectedIds: z.array(z.string()).optional(),
+});
 
 export type ExportAdminsInput = z.infer<typeof exportAdminsSchema>;
 
@@ -22,7 +24,7 @@ export type ExportAdminsError = {
 
 export const exportAdminUsersAction = actionClient
   .schema(exportAdminsSchema)
-  .action(async (): Promise<ExportAdminsSuccess | ExportAdminsError> => {
+  .action(async ({ parsedInput }): Promise<ExportAdminsSuccess | ExportAdminsError> => {
     try {
       const cookieStore = await cookies();
       const accessToken = cookieStore.get("accessToken")?.value;
@@ -37,6 +39,7 @@ export const exportAdminUsersAction = actionClient
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
+        body: JSON.stringify({ selectedIds: parsedInput.selectedIds }),
       });
 
       console.log("Export admins raw response", response);

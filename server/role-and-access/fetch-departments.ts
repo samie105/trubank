@@ -159,7 +159,7 @@ export const updateDepartmentAction = actionClient
         return { isSuccess: false, result: "", message: "Authentication required", error: "No token", statCode: 401 };
       }
 
-      const apiUrl = process.env.API_URL || "";
+      const apiUrl = process.env.API_URL ;
       const response = await fetch(`${apiUrl}/usermanagement/Workflow/update-department`, {
         method: "PUT",
         headers: {
@@ -184,6 +184,7 @@ const exportDepartmentsSchema = z.object({
   pageNumber: z.number(),
   searchParams: z.record(z.string()),
   selectedFields: z.array(z.string()).optional(),
+  selectedIds: z.array(z.string()).optional(),
 });
 
 export type ExportDepartmentsInput = z.infer<typeof exportDepartmentsSchema>;
@@ -213,6 +214,7 @@ export const exportDepartmentsCsvAction = actionClient
           pageSize: parsedInput.pageSize,
           pageNumber: parsedInput.pageNumber,
           searchParams: parsedInput.searchParams,
+          selectedIds: parsedInput.selectedIds,
         }),
       });
       const text = await response.text();
@@ -249,6 +251,7 @@ export const exportDepartmentsPdfAction = actionClient
           pageSize: parsedInput.pageSize,
           pageNumber: parsedInput.pageNumber,
           searchParams: parsedInput.searchParams,
+          selectedIds: parsedInput.selectedIds,
         }),
       });
       const text = await response.text();

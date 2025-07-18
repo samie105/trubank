@@ -9,6 +9,7 @@ const exportAuditLogsSchema = z.object({
   pageNumber: z.number().optional().default(1),
   searchParams: z.record(z.string()).optional().default({}),
   selectedFields: z.array(z.string()).optional(),
+  selectedIds: z.array(z.string()).optional(),
 });
 
 export type ExportAuditLogsInput = z.infer<typeof exportAuditLogsSchema>;
@@ -42,7 +43,10 @@ export const exportAuditLogsCsvAction = actionClient
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify(parsedInput),
+        body: JSON.stringify({
+          ...parsedInput,
+          selectedIds: parsedInput.selectedIds,
+        }),
       });
       console.log("Export audit logs CSV raw response", response);
       let text = "";
@@ -78,7 +82,10 @@ export const exportAuditLogsPdfAction = actionClient
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify(parsedInput),
+        body: JSON.stringify({
+          ...parsedInput,
+          selectedIds: parsedInput.selectedIds,
+        }),
       });
       console.log("Export audit logs PDF raw response", response);
       let text = "";

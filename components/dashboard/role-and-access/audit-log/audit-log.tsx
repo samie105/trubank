@@ -40,6 +40,7 @@ import { fetchAuditLogsAction } from "@/server/role-and-access/fetch-audit-logs"
 import { Skeleton } from "@/components/ui/skeleton";
 import { exportAuditLogsCsvAction, exportAuditLogsPdfAction } from "@/server/role-and-access/export-audit-logs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface AuditLog {
   id: string;
@@ -91,6 +92,10 @@ export default function AuditLog() {
   const [isLoading, setIsLoading] = useState(false);
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
 
+  // Checkbox selection states
+  const [selectedLogIds, setSelectedLogIds] = useState<string[]>([]);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+
   // Compute unique users and actions from logs
   const uniqueUsers = React.useMemo(() => {
     const seen = new Set<string>();
@@ -116,7 +121,9 @@ export default function AuditLog() {
 
   const { execute: loadLogs } = useAction(fetchAuditLogsAction, {
     onExecute() {
-      setIsLoading(true);
+      if (!hasLoadedOnce) {
+        setIsLoading(true);
+      }
       toast.loading("Fetching audit logs...", { id: "fetch-logs" });
     },
     onSuccess(apiResponse) {
@@ -136,6 +143,7 @@ export default function AuditLog() {
             action: l.action,
           }))
         );
+        setHasLoadedOnce(true);
       } else if (Array.isArray(payload)) {
         const plainData = payload as unknown as { id: string; date: string; fullName: string; emailAddress: string; action: string; }[];
         setLogs(
@@ -217,6 +225,23 @@ export default function AuditLog() {
     },
   });
 
+  // Checkbox selection handlers
+  const handleSelectLog = (logId: string) => {
+    setSelectedLogIds(prev => 
+      prev.includes(logId) 
+        ? prev.filter(id => id !== logId)
+        : [...prev, logId]
+    );
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedLogIds(filteredLogs.map(log => log.id));
+    } else {
+      setSelectedLogIds([]);
+    }
+  };
+
   React.useEffect(() => {
     loadLogs({});
   }, [loadLogs]);
@@ -250,22 +275,22 @@ export default function AuditLog() {
 
   // Sort filtered logs
   filteredLogs = filteredLogs.slice().sort((a, b) => {
-    const dateA = parseLogDate(a.date)?.getTime() ?? 0;
-    const dateB = parseLogDate(b.date)?.getTime() ?? 0;
-    return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
-  });
+  const dateA = parseLogDate(a.date)?.getTime() ?? 0;
+  const dateB = parseLogDate(b.date)?.getTime() ?? 0;
+  return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
+});
 
-  // const handleApplyFilter = () => {
-  //   toast.success("Filter applied successfully");
-  // };
+// const handleApplyFilter = () => {
+//   toast.success("Filter applied successfully");
+// };
 
-  const handleResetFilter = () => {
-    setFromDate(undefined);
-    setToDate(undefined);
-    setSelectedUser("");
-    setSelectedAction("");
-    toast.success("Filter reset successfully");
-  };
+const handleResetFilter = () => {
+  setFromDate(undefined);
+  setToDate(undefined);
+  setSelectedUser("");
+  setSelectedAction("");
+  toast.success("Filter reset successfully");
+};
 
   const clearFilter = (filterType: string) => {
     switch (filterType) {
@@ -298,7 +323,7 @@ export default function AuditLog() {
 
         <div className="flex items-center gap-1">
 
-          <Button 
+          <Button
             variant="outline"
             size="icon"
             onClick={() => loadLogs({})}
@@ -309,22 +334,24 @@ export default function AuditLog() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant={"outline"} className=" text-muted-foreground flex items-center gap-2">
+              <Button 
+                variant={"outline"} 
+                className=" text-muted-foreground flex items-center gap-2"
+                disabled={selectedLogIds.length === 0}
+              >
                 <Download className="w-4 h-4" />
-                <span className="hidden lg:inline">Export Logs</span>
+                <span className="hidden lg:inline">Export Logs {selectedLogIds.length > 0 && `(${selectedLogIds.length})`}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => exportCsv({})}>
+              <DropdownMenuItem onClick={() => exportCsv({ selectedIds: selectedLogIds.length > 0 ? selectedLogIds : undefined })}>
                 Export as CSV
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => exportPdf({})}>
+              <DropdownMenuItem onClick={() => exportPdf({ selectedIds: selectedLogIds.length > 0 ? selectedLogIds : undefined })}>
                 Export as PDF
               </DropdownMenuItem>
             </DropdownMenuContent>
-          </DropdownMenu>
-
-          <Popover>
+          </DropdownMenu>          <Popover>
             <PopoverTrigger asChild>
               <Button 
                 variant="outline" 
@@ -466,6 +493,13 @@ export default function AuditLog() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12">
+                <Checkbox
+                  checked={selectedLogIds.length === filteredLogs.length && filteredLogs.length > 0}
+                  onCheckedChange={handleSelectAll}
+                  aria-label="Select all"
+                />
+              </TableHead>
               <TableHead>
                 <div className="flex items-center gap-1">
                   <span>DATE</span>
@@ -500,6 +534,9 @@ export default function AuditLog() {
               [...Array(5)].map((_, idx) => (
                 <TableRow key={idx}>
                   <TableCell>
+                    <Skeleton className="h-4 w-4" />
+                  </TableCell>
+                  <TableCell>
                     <Skeleton className="h-4 w-24" />
                   </TableCell>
                   <TableCell>
@@ -517,6 +554,13 @@ export default function AuditLog() {
             ) : (
             filteredLogs.map((log) => (
               <TableRow key={log.id}>
+                <TableCell>
+                  <Checkbox
+                    checked={selectedLogIds.includes(log.id)}
+                    onCheckedChange={() => handleSelectLog(log.id)}
+                    aria-label={`Select ${log.user.name}`}
+                  />
+                </TableCell>
                 <TableCell>
                   <div>
                     <div className="font-medium">{log.date}</div>
