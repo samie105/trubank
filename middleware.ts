@@ -25,8 +25,8 @@ export default function middleware(request: NextRequest) {
   }
 
   if (isAuthPath && token) {
-    // Redirect to dashboard if trying to access auth routes with token
-    return NextResponse.redirect(new URL("/dashboard", request.url))
+    // Redirect to dashboard overview if trying to access auth routes with token
+    return NextResponse.redirect(new URL("/dashboard/overview", request.url))
   }
 
   return NextResponse.next()

@@ -370,7 +370,7 @@ export default function RequestLog() {
                   <TableCell>
                     <div className="flex items-center gap-2">
                       {getStatusBadge(log.status)}
-                      {log.approvals.some(a => a.comment) && (
+                      {log.approvals && log.approvals.some(a => a.comment) && (
                         <button
                           onClick={() => handleViewComment(log)}
                           className="hover:bg-yellow-500/10 rounded-full p-1 transition-colors"
@@ -389,7 +389,7 @@ export default function RequestLog() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        {log.approvals.some(a => a.comment) && (
+                        {log.approvals && log.approvals.some(a => a.comment) && (
                           <DropdownMenuItem onClick={() => handleViewComment(log)}>
                             View Comment
                           </DropdownMenuItem>
@@ -429,7 +429,7 @@ export default function RequestLog() {
           </ResponsiveModalHeader>
           {selectedLog && (
             <div className="p-6 space-y-4">
-              {selectedLog.approvals.filter(a => a.comment).map((a, idx) => (
+              {selectedLog.approvals && selectedLog.approvals.filter(a => a.comment).map((a, idx) => (
                 <div key={idx} className="border-l-4 border-yellow-500 pl-4 py-2 bg-yellow-500/5">
                   <div className="text-sm text-foreground leading-relaxed">{a.comment}</div>
                   <div className="text-xs text-muted-foreground mt-1">By {a.approver} on {a.date ? new Date(a.date).toLocaleString() : "-"}</div>
@@ -458,7 +458,7 @@ export default function RequestLog() {
               <div>
                 <div className="font-semibold mb-2">Approval Levels</div>
                 <div className="space-y-2">
-                  {selectedLog.approvals.length === 0 ? (
+                  {!selectedLog.approvals || selectedLog.approvals.length === 0 ? (
                     <div className="text-muted-foreground text-sm">No approval levels found.</div>
                   ) : (
                     selectedLog.approvals.map((a, idx) => (

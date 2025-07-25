@@ -19,8 +19,29 @@ import {
   ResponsiveModalClose,
 } from "@/components/ui/dialog-2";
 import ThemeSwitch from "../Theme-switch";
+import { useAction } from "next-safe-action/hooks";
+import { logoutAction } from "@/server/auth/logout";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function Component() {
+  const router = useRouter();
+
+  const { execute: handleLogout } = useAction(logoutAction, {
+    onExecute() {
+      toast.loading("Logging out...", { id: "logout" });
+    },
+    onSuccess() {
+      toast.dismiss("logout");
+      toast.success("Logged out successfully");
+      router.push("/auth/login");
+    },
+    onError(error) {
+      toast.dismiss("logout");
+      toast.error(error.error?.serverError || "Failed to logout");
+    },
+  });
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -94,8 +115,8 @@ export default function Component() {
                   <Button
                     variant={"default"}
                     className="flex items-center text-white gap-x-2"
+                    onClick={() => handleLogout()}
                   >
-                    {" "}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"

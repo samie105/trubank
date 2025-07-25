@@ -74,23 +74,36 @@ import { TableSkeleton } from "./table-skeleton"
 import { Switch } from "@/components/ui/switch"
 // Update imports to include the new server actions
 import { activateUserAction, deleteUserAction } from "@/server/customer-management/customer-actions"
+import { approveKycAction, rejectKycAction } from "@/server/customer-management/kyc-actions"
+import { Textarea } from "@/components/ui/textarea"
 
 // ActionCell component with Popover
 function ActionCell({
   customer,
   onActivate,
   onDelete,
+  onApproveKyc,
+  onRejectKyc,
   isActivating,
   isDeleting,
+  isApprovingKyc,
+  isRejectingKyc,
 }: {
   customer: CustomerTableData
   onActivate: (id: string, activate: boolean) => void
   onDelete: (id: string) => void
+  onApproveKyc: (customerId: string, customerType: CustomerType) => void
+  onRejectKyc: (customerId: string, customerType: CustomerType, rejectionComment: string) => void
   isActivating: string | null
   isDeleting: string | null
+  isApprovingKyc: string | null
+  isRejectingKyc: string | null
 }) {
   const [open, setOpen] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showKycApproveConfirm, setShowKycApproveConfirm] = useState(false)
+  const [showKycRejectModal, setShowKycRejectModal] = useState(false)
+  const [rejectionComment, setRejectionComment] = useState("")
   const router = useRouter()
   const isActive = customer.status === "active"
 
@@ -124,6 +137,34 @@ function ActionCell({
     setOpen(false)
   }
 
+  const handleApproveKycClick = () => {
+    setShowKycApproveConfirm(true)
+    setOpen(false)
+  }
+
+  const handleRejectKycClick = () => {
+    setShowKycRejectModal(true)
+    setOpen(false)
+  }
+
+  const handleConfirmApproveKyc = () => {
+    onApproveKyc(customer.fullId, customer.type as CustomerType)
+    setShowKycApproveConfirm(false)
+  }
+
+  const handleConfirmRejectKyc = () => {
+    if (rejectionComment.trim()) {
+      onRejectKyc(customer.fullId, customer.type as CustomerType, rejectionComment)
+      setShowKycRejectModal(false)
+      setRejectionComment("")
+    }
+  }
+
+  const handleCancelKycReject = () => {
+    setShowKycRejectModal(false)
+    setRejectionComment("")
+  }
+
   return (
     <>
       <Popover open={open} onOpenChange={setOpen}>
@@ -148,6 +189,40 @@ function ActionCell({
             >
               Edit User
             </button>
+            {(customer.type === "Individual" || customer.type === "Business") && customer.kycStatus !== "Approved" && (
+              <button
+                className="w-full text-left px-4 py-2 text-sm text-green-600 hover:bg-green-500/10"
+                onClick={handleApproveKycClick}
+                disabled={isApprovingKyc === customer.fullId}
+                type="button"
+              >
+                {isApprovingKyc === customer.fullId ? (
+                  <span className="flex items-center">
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Approving KYC...
+                  </span>
+                ) : (
+                  "Approve KYC"
+                )}
+              </button>
+            )}
+            {(customer.type === "Individual" || customer.type === "Business") && customer.kycStatus !== "Rejected" && customer.kycStatus !== "Approved" && (
+              <button
+                className="w-full text-left px-4 py-2 text-sm text-orange-600 hover:bg-orange-500/10"
+                onClick={handleRejectKycClick}
+                disabled={isRejectingKyc === customer.fullId}
+                type="button"
+              >
+                {isRejectingKyc === customer.fullId ? (
+                  <span className="flex items-center">
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Rejecting KYC...
+                  </span>
+                ) : (
+                  "Reject KYC"
+                )}
+              </button>
+            )}
             <div className="flex items-center justify-between px-4 py-2 text-sm hover:bg-muted-foreground/10">
               <span>{isActive ? "Deactivate" : "Activate"} User</span>
               <Switch checked={isActive} disabled={isActivating === customer.fullId} onCheckedChange={handleActivate} />
@@ -201,6 +276,80 @@ function ActionCell({
           </div>
         </ResponsiveModalContent>
       </ResponsiveModal>
+
+      {/* KYC Approval Confirmation Dialog */}
+      <ResponsiveModal open={showKycApproveConfirm} onOpenChange={setShowKycApproveConfirm}>
+        <ResponsiveModalContent>
+          <ResponsiveModalHeader>
+            <ResponsiveModalTitle>Confirm KYC Approval</ResponsiveModalTitle>
+            <ResponsiveModalDescription>
+              Are you sure you want to approve the KYC for this {customer.type.toLowerCase()} customer?
+            </ResponsiveModalDescription>
+          </ResponsiveModalHeader>
+          <div className="flex justify-end space-x-2 mt-4">
+            <Button variant="outline" onClick={() => setShowKycApproveConfirm(false)}>
+              Cancel
+            </Button>
+            <Button 
+              className="bg-green-600 hover:bg-green-700 text-white"
+              onClick={handleConfirmApproveKyc}
+              disabled={isApprovingKyc === customer.fullId}
+            >
+              {isApprovingKyc === customer.fullId ? (
+                <span className="flex items-center">
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Approving...
+                </span>
+              ) : (
+                "Approve KYC"
+              )}
+            </Button>
+          </div>
+        </ResponsiveModalContent>
+      </ResponsiveModal>
+
+      {/* KYC Rejection Modal */}
+      <ResponsiveModal open={showKycRejectModal} onOpenChange={setShowKycRejectModal}>
+        <ResponsiveModalContent>
+          <ResponsiveModalHeader>
+            <ResponsiveModalTitle>Reject KYC</ResponsiveModalTitle>
+            <ResponsiveModalDescription>
+              Please provide a reason for rejecting the KYC for this {customer.type.toLowerCase()} customer.
+            </ResponsiveModalDescription>
+          </ResponsiveModalHeader>
+          <div className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label htmlFor="rejection-comment">Reason for rejection</Label>
+              <Textarea
+                id="rejection-comment"
+                placeholder="Enter the reason for KYC rejection..."
+                value={rejectionComment}
+                onChange={(e) => setRejectionComment(e.target.value)}
+                className="min-h-[100px]"
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={handleCancelKycReject}>
+                Cancel
+              </Button>
+              <Button 
+                className="bg-orange-600 hover:bg-orange-700 text-white"
+                onClick={handleConfirmRejectKyc}
+                disabled={!rejectionComment.trim() || isRejectingKyc === customer.fullId}
+              >
+                {isRejectingKyc === customer.fullId ? (
+                  <span className="flex items-center">
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Rejecting...
+                  </span>
+                ) : (
+                  "Reject KYC"
+                )}
+              </Button>
+            </div>
+          </div>
+        </ResponsiveModalContent>
+      </ResponsiveModal>
     </>
   )
 }
@@ -232,6 +381,8 @@ export default function CustomerTable() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [isActivating, setIsActivating] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
+  const [isApprovingKyc, setIsApprovingKyc] = useState<string | null>(null)
+  const [isRejectingKyc, setIsRejectingKyc] = useState<string | null>(null)
   const router = useRouter()
   const [pagination, setPagination] = useState({
     pageNumber: 0,
@@ -418,6 +569,93 @@ export default function CustomerTable() {
     executeDeleteUser({ userId })
   }
 
+  // KYC Approval Action
+  const { execute: executeApproveKyc } = useAction(approveKycAction, {
+    onExecute(data) {
+      setIsApprovingKyc(data.input.customerId)
+      toast.loading("Approving KYC...", { id: `kyc-approve-${data.input.customerId}` })
+    },
+    onSuccess(response) {
+      toast.dismiss(`kyc-approve-${response.input.customerId}`)
+
+      if (response.data?.success) {
+        toast.success(response.data.message || "KYC approved successfully")
+        // Refresh the customer data after successful KYC approval
+        handleRefresh()
+      } else if (response.data?.statusCode === 401 || response.data?.error?.includes("Authentication required")) {
+        toast.error(
+          <div className="flex items-center justify-between gap-2">
+            <p>{response.data?.error || "Your session has expired. Please log in again."}</p>
+            <Button size="sm" onClick={handleLogout} variant="outline">
+              Logout
+            </Button>
+          </div>,
+        )
+      } else {
+        toast.error(response.data?.error || "Failed to approve KYC")
+      }
+      setIsApprovingKyc(null)
+    },
+    onError(error) {
+      if (error.input) {
+        toast.dismiss(`kyc-approve-${error.input.customerId}`)
+      }
+      toast.error(error.error?.serverError || "An error occurred while approving KYC")
+      setIsApprovingKyc(null)
+    },
+  })
+
+  // KYC Rejection Action
+  const { execute: executeRejectKyc } = useAction(rejectKycAction, {
+    onExecute(data) {
+      setIsRejectingKyc(data.input.customerId)
+      toast.loading("Rejecting KYC...", { id: `kyc-reject-${data.input.customerId}` })
+    },
+    onSuccess(response) {
+      toast.dismiss(`kyc-reject-${response.input.customerId}`)
+
+      if (response.data?.success) {
+        toast.success(response.data.message || "KYC rejected successfully")
+        // Refresh the customer data after successful KYC rejection
+        handleRefresh()
+      } else if (response.data?.statusCode === 401 || response.data?.error?.includes("Authentication required")) {
+        toast.error(
+          <div className="flex items-center justify-between gap-2">
+            <p>{response.data?.error || "Your session has expired. Please log in again."}</p>
+            <Button size="sm" onClick={handleLogout} variant="outline">
+              Logout
+            </Button>
+          </div>,
+        )
+      } else {
+        toast.error(response.data?.error || "Failed to reject KYC")
+      }
+      setIsRejectingKyc(null)
+    },
+    onError(error) {
+      if (error.input) {
+        toast.dismiss(`kyc-reject-${error.input.customerId}`)
+      }
+      toast.error(error.error?.serverError || "An error occurred while rejecting KYC")
+      setIsRejectingKyc(null)
+    },
+  })
+
+  // KYC handler functions
+  const handleApproveKyc = (customerId: string, customerType: CustomerType) => {
+    // Only allow KYC actions for Individual and Business customers
+    if (customerType === "Individual" || customerType === "Business") {
+      executeApproveKyc({ customerId, customerType })
+    }
+  }
+
+  const handleRejectKyc = (customerId: string, customerType: CustomerType, rejectionComment: string) => {
+    // Only allow KYC actions for Individual and Business customers
+    if (customerType === "Individual" || customerType === "Business") {
+      executeRejectKyc({ customerId, customerType, rejectionComment })
+    }
+  }
+
   // Export customers action
   const { execute: exportCustomers, status: exportStatus } = useAction(exportCustomersAction, {
     onExecute() {
@@ -569,10 +807,10 @@ export default function CustomerTable() {
         return value === "N/A" ? <span className="text-muted-foreground italic">Not available</span> : value
       }
     },
-    {
-      accessorKey: "tierLevel",
-      header: "Tier Level",
-    },
+    // {
+    //   accessorKey: "tierLevel",
+    //   header: "Tier Level",
+    // },
     {
       accessorKey: "kycStatus",
       header: "KYC Status",
@@ -609,8 +847,12 @@ export default function CustomerTable() {
             customer={customer}
             onActivate={handleActivateUser}
             onDelete={handleDeleteUser}
+            onApproveKyc={handleApproveKyc}
+            onRejectKyc={handleRejectKyc}
             isActivating={isActivating}
             isDeleting={isDeleting}
+            isApprovingKyc={isApprovingKyc}
+            isRejectingKyc={isRejectingKyc}
           />
         )
       },

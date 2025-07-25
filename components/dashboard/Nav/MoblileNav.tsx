@@ -32,16 +32,20 @@ import {
   SidebarMenuSubItem,
   SidebarProvider,
 } from "@/components/ui/sidebar";
-import Image from "next/image";
 import {
   ResponsiveModal,
+  ResponsiveModalTrigger,
   ResponsiveModalClose,
   ResponsiveModalContent,
+  ResponsiveModalTitle,
   ResponsiveModalDescription,
   ResponsiveModalFooter,
-  ResponsiveModalTitle,
-  ResponsiveModalTrigger,
 } from "@/components/ui/dialog-2";
+import Image from "next/image";
+import { useAction } from "next-safe-action/hooks";
+import { logoutAction } from "@/server/auth/logout";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 const menuItems = [
   {
@@ -117,6 +121,22 @@ const roleAndAccessItems = [
 export default function MobileNav() {
   const [openItems, setOpenItems] = useState<string[]>([]);
   const pathname = usePathname();
+  const router = useRouter();
+
+  const { execute: handleLogout } = useAction(logoutAction, {
+    onExecute() {
+      toast.loading("Logging out...", { id: "logout" });
+    },
+    onSuccess() {
+      toast.dismiss("logout");
+      toast.success("Logged out successfully");
+      router.push("/auth/login");
+    },
+    onError(error) {
+      toast.dismiss("logout");
+      toast.error(error.error?.serverError || "Failed to logout");
+    },
+  });
 
   const toggleItem = (itemName: string) => {
     setOpenItems((prev) =>
@@ -460,9 +480,8 @@ export default function MobileNav() {
                           <Button
                             variant={"default"}
                             className="flex items-center text-white gap-x-2"
-                            asChild
+                            onClick={() => handleLogout()}
                           >
-                            <Link href={"/auth/login"}>
                               <div className="flex items-center gap-x-2">
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
@@ -480,7 +499,6 @@ export default function MobileNav() {
                                 </svg>
                                 <span>Logout</span>
                               </div>
-                            </Link>
                           </Button>
                         </div>
                       </ResponsiveModalFooter>
