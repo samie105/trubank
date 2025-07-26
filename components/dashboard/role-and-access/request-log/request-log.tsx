@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Table, 
   TableBody, 
@@ -32,23 +33,31 @@ import {
   Users,
   Clock,
   XCircle,
-  AlertTriangle,
   RotateCcw,
   FileText,
   FileSpreadsheet,
   RefreshCcw,
+  MessageCircle,
+  CheckCircle,
   
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAction } from "next-safe-action/hooks";
 import { fetchRequestLogAction, type RequestLogApi, exportRequestLogCsvAction, exportRequestLogPdfAction } from "@/server/role-and-access/fetch-request-log";
+import { approveWorkflowAction } from "@/server/role-and-access/workflow-approval";
+import { formatActivityType } from "@/lib/format-utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export default function RequestLog() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLog, setSelectedLog] = useState<RequestLogApi | null>(null);
-  const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
+  const [showCommentModal, setShowCommentModal] = useState(false);
+  const [commentData, setCommentData] = useState<{ requestId: string, comment: string } | null>(null);
+  const [approvalComment, setApprovalComment] = useState("");
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [approvalType, setApprovalType] = useState<'approve' | 'reject'>('approve');
+  const [approvalRequestId, setApprovalRequestId] = useState<string>("");
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [logs, setLogs] = useState<RequestLogApi[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -134,6 +143,29 @@ export default function RequestLog() {
     },
   });
 
+  const { execute: performWorkflowApproval, isPending: isApproving } = useAction(approveWorkflowAction, {
+    onExecute: () => {
+      const action = approvalType === 'approve' ? 'Approving' : 'Rejecting';
+      toast.loading(`${action} workflow...`, { id: "workflow-approval" });
+    },
+    onSuccess: (result) => {
+      toast.dismiss("workflow-approval");
+      if (result.data?.success) {
+        toast.success(result.data.message);
+        setShowApprovalModal(false);
+        setApprovalComment("");
+        // Refresh the logs
+        loadLogs({});
+      } else {
+        toast.error(result.data?.error || "Failed to process workflow");
+      }
+    },
+    onError: (err) => {
+      toast.dismiss("workflow-approval");
+      toast.error(err.error?.serverError || "Failed to process workflow");
+    },
+  });
+
   // Refresh handler
   const handleRefresh = () => {
     setHasLoadedOnce(false);
@@ -178,13 +210,43 @@ export default function RequestLog() {
   const rejectedLogs = logs.filter(log => log.status === "Rejected").length;
 
   const handleViewComment = (log: RequestLogApi) => {
-    setSelectedLog(log);
-    setIsCommentModalOpen(true);
+    // Find the first approval with a comment
+    const approvalWithComment = log.approvals?.find(a => a.comment && a.comment.trim() !== "");
+    if (approvalWithComment) {
+      setCommentData({ 
+        requestId: log.requestId, 
+        comment: approvalWithComment.comment || "" 
+      });
+      setShowCommentModal(true);
+    }
   };
 
   const handleViewDetails = (log: RequestLogApi) => {
     setSelectedLog(log);
     setIsDetailsModalOpen(true);
+  };
+
+  // Workflow approval handlers
+  const handleApproveWorkflow = (requestId: string) => {
+    setApprovalRequestId(requestId);
+    setApprovalType('approve');
+    setShowApprovalModal(true);
+  };
+
+  const handleRejectWorkflow = (requestId: string) => {
+    setApprovalRequestId(requestId);
+    setApprovalType('reject');
+    setShowApprovalModal(true);
+  };
+
+  const handleConfirmApproval = () => {
+    if (approvalRequestId) {
+      performWorkflowApproval({
+        requestId: approvalRequestId,
+        approved: approvalType === 'approve',
+        comment: approvalComment,
+      });
+    }
   };
 
   const handleExportCSV = () => {
@@ -365,18 +427,18 @@ export default function RequestLog() {
                   </TableCell>
                   <TableCell>{log.initiator}</TableCell>
                   <TableCell>{log.createdAt ? new Date(log.createdAt).toLocaleDateString() : "-"}</TableCell>
-                  <TableCell>{log.activityType}</TableCell>
+                  <TableCell>{formatActivityType(log.activityType)}</TableCell>
                   <TableCell>{log.workflowName}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       {getStatusBadge(log.status)}
-                      {log.approvals && log.approvals.some(a => a.comment) && (
+                      {log.approvals && log.approvals.some(a => a.comment && a.comment.trim() !== "") && (
                         <button
                           onClick={() => handleViewComment(log)}
-                          className="hover:bg-yellow-500/10 rounded-full p-1 transition-colors"
+                          className="hover:bg-blue-500/10 rounded-full p-1 transition-colors"
                           title="View comment"
                         >
-                          <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                          <MessageCircle className="w-4 h-4 text-blue-500" />
                         </button>
                       )}
                     </div>
@@ -397,9 +459,6 @@ export default function RequestLog() {
                         <DropdownMenuItem onClick={() => handleViewDetails(log)}>
                           View Details
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          Download Report
-                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -418,70 +477,225 @@ export default function RequestLog() {
           </Button>
         </div>
       )}
-      {/* Comment Modal */}
-      <ResponsiveModal open={isCommentModalOpen} onOpenChange={setIsCommentModalOpen}>
-        <ResponsiveModalContent>
-          <ResponsiveModalHeader>
-            <ResponsiveModalTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-yellow-500" />
-              Comment
-            </ResponsiveModalTitle>
-          </ResponsiveModalHeader>
-          {selectedLog && (
-            <div className="p-6 space-y-4">
-              {selectedLog.approvals && selectedLog.approvals.filter(a => a.comment).map((a, idx) => (
-                <div key={idx} className="border-l-4 border-yellow-500 pl-4 py-2 bg-yellow-500/5">
-                  <div className="text-sm text-foreground leading-relaxed">{a.comment}</div>
-                  <div className="text-xs text-muted-foreground mt-1">By {a.approver} on {a.date ? new Date(a.date).toLocaleString() : "-"}</div>
-                </div>
-              ))}
-            </div>
-          )}
-        </ResponsiveModalContent>
-      </ResponsiveModal>
       {/* Details Modal */}
       <ResponsiveModal open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
-        <ResponsiveModalContent>
+        <ResponsiveModalContent className="max-w-2xl">
           <ResponsiveModalHeader>
-            <ResponsiveModalTitle>Request Details</ResponsiveModalTitle>
+            <ResponsiveModalTitle>Activity Information</ResponsiveModalTitle>
           </ResponsiveModalHeader>
           {selectedLog && (
-            <div className="p-6 space-y-4">
-              <div className="space-y-1">
-                <div className="font-semibold text-lg">{selectedLog.activityName}</div>
-                <div className="text-sm text-muted-foreground">Initiator: {selectedLog.initiator}</div>
-                <div className="text-sm text-muted-foreground">Date: {selectedLog.createdAt ? new Date(selectedLog.createdAt).toLocaleString() : "-"}</div>
-                <div className="text-sm text-muted-foreground">Workflow: {selectedLog.workflowName}</div>
-                <div className="text-sm text-muted-foreground">Type: {selectedLog.activityType}</div>
-                <div className="text-sm text-muted-foreground">Status: {selectedLog.status}</div>
+            <div className="p-6 space-y-8">
+              {/* Activity Information Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-primary">Activity Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Activity Name</label>
+                    <div className="mt-1 text-sm font-medium">{selectedLog.activityName}</div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Rejected Logs</label>
+                    <div className="mt-1 text-sm font-medium">25</div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Description</label>
+                    <div className="mt-1 text-sm">Registration of new individual customer</div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Create User</label>
+                    <div className="mt-1 text-sm">{selectedLog.activityType}</div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Initiator</label>
+                    <div className="mt-1 text-sm">{selectedLog.initiator}</div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Assigned Workflow</label>
+                    <div className="mt-1 text-sm">{selectedLog.workflowName}</div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Initiation Date</label>
+                    <div className="mt-1 text-sm">{selectedLog.createdAt ? new Date(selectedLog.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : "-"}</div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <div className="font-semibold mb-2">Approval Levels</div>
-                <div className="space-y-2">
+
+              {/* Activity Trail Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-primary">Activity Trail</h3>
+                <div className="space-y-6">
                   {!selectedLog.approvals || selectedLog.approvals.length === 0 ? (
                     <div className="text-muted-foreground text-sm">No approval levels found.</div>
                   ) : (
-                    selectedLog.approvals.map((a, idx) => (
-                      <div key={idx} className="border rounded p-3 bg-muted/50">
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">Level {a.order}</div>
-                          <div>{getStatusBadge(typeof a.status === "number" ? (a.status === 1 ? "Approved" : a.status === 2 ? "Rejected" : "Under Review") : String(a.status))}</div>
-                        </div>
-                        <div className="text-sm mt-1">Approver: {a.approver}</div>
-                        <div className="text-sm">Department: {a.approverDepartment}</div>
-                        <div className="text-sm">Team: {a.approverTeam}</div>
-                        <div className="text-sm">Position ID: {a.positionId}</div>
-                        {a.comment && (
-                          <div className="text-xs text-yellow-500 mt-2">Comment: {a.comment}</div>
+                    selectedLog.approvals.map((approval, idx) => (
+                      <div key={idx} className="relative">
+                        {/* Timeline connector */}
+                        {idx < selectedLog.approvals!.length - 1 && (
+                          <div className="absolute left-3 top-8 w-px h-20 bg-border"></div>
                         )}
-                        <div className="text-xs text-muted-foreground mt-1">Date: {a.date ? new Date(a.date).toLocaleString() : "-"}</div>
+                        
+                        <div className="flex items-start gap-4">
+                          {/* Status Icon */}
+                          <div className="relative z-10 flex-shrink-0">
+                            {approval.status === 1 ? (
+                              <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center border border-green-200">
+                                <CheckCircle className="w-3 h-3 text-green-600 fill-current" />
+                              </div>
+                            ) : approval.status === 2 ? (
+                              <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center border border-red-200">
+                                <XCircle className="w-3 h-3 text-red-600 fill-current" />
+                              </div>
+                            ) : (
+                              <div className="w-6 h-6 bg-yellow-100 rounded-full flex items-center justify-center border border-yellow-200">
+                                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Approval Details */}
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm mb-2">Approval Level {approval.order}</div>
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                              <div>
+                                <span className="text-muted-foreground">Department:</span>
+                                <div className="font-medium">{approval.approverDepartment}</div>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Status:</span>
+                                <div className={`font-medium ${
+                                  approval.status === 1 ? 'text-green-600' : 
+                                  approval.status === 2 ? 'text-red-600' : 
+                                  'text-yellow-600'
+                                }`}>
+                                  {approval.status === 1 ? 'Successful' : 
+                                   approval.status === 2 ? 'Failed' : 
+                                   'Pending'}
+                                </div>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Team:</span>
+                                <div className="font-medium">{approval.approverTeam}</div>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Approver Name:</span>
+                                <div className="font-medium">{approval.approver}</div>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Date:</span>
+                                <div className="font-medium">{approval.date ? new Date(approval.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : "Pending"}</div>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Team Lead:</span>
+                                <div className="font-medium">{approval.positionId}</div>
+                              </div>
+                            </div>
+                            {approval.comment && (
+                              <div className="mt-3 p-3 bg-muted rounded-md border">
+                                <div className="text-xs font-medium text-muted-foreground mb-1">Comment:</div>
+                                <div className="text-sm">{approval.comment}</div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     ))
                   )}
                 </div>
               </div>
+              
+              {/* Action Buttons */}
+              {selectedLog.status === "Under Review" && (
+                <div className="flex justify-end gap-3 pt-6 border-t">
+                  <Button
+                    onClick={() => handleRejectWorkflow(selectedLog.requestId)}
+                    variant="outline"
+                    disabled={isApproving}
+                  >
+                    Reject
+                  </Button>
+                  <Button
+                    onClick={() => handleApproveWorkflow(selectedLog.requestId)}
+                    disabled={isApproving}
+                  >
+                    Approve
+                  </Button>
+                </div>
+              )}
             </div>
           )}
+        </ResponsiveModalContent>
+      </ResponsiveModal>
+
+      {/* Comment View Modal */}
+      <ResponsiveModal open={showCommentModal} onOpenChange={setShowCommentModal}>
+        <ResponsiveModalContent className="max-w-md">
+          <ResponsiveModalHeader>
+            <ResponsiveModalTitle>View Comment</ResponsiveModalTitle>
+          </ResponsiveModalHeader>
+          {commentData && (
+            <div className="p-6">
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Comment</label>
+                <div className="mt-2 p-3 bg-muted/50 rounded-md text-sm">
+                  {commentData.comment}
+                </div>
+              </div>
+            </div>
+          )}
+        </ResponsiveModalContent>
+      </ResponsiveModal>
+
+      {/* Workflow Approval Modal */}
+      <ResponsiveModal open={showApprovalModal} onOpenChange={setShowApprovalModal}>
+        <ResponsiveModalContent className="max-w-md">
+          <ResponsiveModalHeader>
+            <ResponsiveModalTitle>
+              {approvalType === 'approve' ? 'Approve' : 'Reject'} Workflow
+            </ResponsiveModalTitle>
+          </ResponsiveModalHeader>
+          <div className="p-6 space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">
+                Comment {approvalType === 'reject' ? '(Required)' : '(Optional)'}
+              </label>
+              <Textarea
+                value={approvalComment}
+                onChange={(e) => setApprovalComment(e.target.value)}
+                placeholder={`Add your ${approvalType === 'approve' ? 'approval' : 'rejection'} comment...`}
+                rows={3}
+              />
+            </div>
+            <div className="flex gap-2 pt-4">
+              <Button
+                onClick={() => setShowApprovalModal(false)}
+                variant="outline"
+                className="flex-1"
+                disabled={isApproving}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleConfirmApproval}
+                className={`flex-1 ${
+                  approvalType === 'approve' 
+                    ? 'bg-green-600 hover:bg-green-700' 
+                    : 'bg-red-600 hover:bg-red-700'
+                }`}
+                disabled={isApproving || (approvalType === 'reject' && !approvalComment.trim())}
+              >
+                {isApproving ? (
+                  <RefreshCcw className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  approvalType === 'approve' ? (
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                  ) : (
+                    <XCircle className="w-4 h-4 mr-2" />
+                  )
+                )}
+                {approvalType === 'approve' ? 'Approve' : 'Reject'}
+              </Button>
+            </div>
+          </div>
         </ResponsiveModalContent>
       </ResponsiveModal>
     </div>
