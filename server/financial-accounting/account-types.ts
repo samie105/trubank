@@ -1,0 +1,367 @@
+"use server"
+
+import { actionClient } from "@/lib/safe-action"
+import { cookies } from "next/headers"
+import { z } from "zod"
+
+// Define types for the API responses
+export interface LedgerType {
+  id: string
+  name: string
+}
+
+export interface ProductType {
+  id: string
+  name: string
+}
+
+export interface Currency {
+  id: string
+  name: string
+  currencyCode: string
+}
+
+export interface GeneralLedger {
+  id: string
+  branchId: string
+  ledgerTypeId: string
+  parentAccountId: string
+  ledgerName: string
+  ledgerCode: string
+  currencyCode: string
+  balance: number
+  controlAccount: boolean
+  postingRule: number
+  subAccounts: string[]
+  customerAccounts: CustomerAccount[]
+}
+
+export interface CustomerAccount {
+  id: string
+  accountName: string
+  accountNumber: string
+  productTypeId: string
+  currencyCode: string
+  subLedgerId: string
+  branchId: string
+  balance: number
+  balanceDate: string
+  customerId: string
+  subAccounts: string[]
+}
+
+interface ApiResponse<T> {
+  isSuccess: boolean
+  result: T[]
+  message: string
+  error: string
+  statCode: number
+}
+
+// Schema for getting ledger types (no input needed)
+const getLedgerTypesSchema = z.object({})
+
+// Schema for getting product types (no input needed)
+const getProductTypesSchema = z.object({})
+
+// Schema for creating a new ledger type
+const createLedgerTypeSchema = z.object({
+  name: z.string().min(1, "Account type name is required"),
+})
+
+// Schema for getting general ledger (no input needed)
+const getGeneralLedgerSchema = z.object({})
+
+// Schema for getting currencies (no input needed)
+const getCurrenciesSchema = z.object({})
+
+export const getLedgerTypesAction = actionClient
+  .schema(getLedgerTypesSchema)
+  .action(async () => {
+    try {
+      console.log("Fetching ledger types...")
+      
+      // Get the access token from cookies
+      const cookieStore = await cookies()
+      const accessToken = cookieStore.get("accessToken")?.value
+
+      if (!accessToken) {
+        throw new Error("Access token not found. Please login again.")
+      }
+
+      // Call the API endpoint
+      const response = await fetch(`${process.env.API_URL}/accountmanagement/Get-ledger-types`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`,
+          accept: "application/json",
+        },
+      })
+
+      console.log("API response status:", response.status)
+      const data: ApiResponse<LedgerType> = await response.json()
+      console.log("API response data:", JSON.stringify(data, null, 2))
+
+      // Check if the request was successful
+      if (data.statCode === 200 && data.isSuccess) {
+        console.log("Ledger types fetched successfully")
+        return {
+          success: true,
+          data: data.result,
+          message: data.message || "Ledger types fetched successfully",
+        }
+      } else {
+        console.error("Failed to fetch ledger types:", data.error || data.message)
+        throw new Error(data.error || data.message || "Failed to fetch ledger types")
+      }
+    } catch (error) {
+      console.error("Error fetching ledger types:", error)
+      throw new Error(error instanceof Error ? error.message : "An unexpected error occurred")
+    }
+  })
+
+export const getProductTypesAction = actionClient
+  .schema(getProductTypesSchema)
+  .action(async () => {
+    try {
+      console.log("Fetching product types...")
+      
+      // Get the access token from cookies
+      const cookieStore = await cookies()
+      const accessToken = cookieStore.get("accessToken")?.value
+
+      if (!accessToken) {
+        throw new Error("Access token not found. Please login again.")
+      }
+
+      // Call the API endpoint
+      const response = await fetch(`${process.env.API_URL}/accountmanagement/Get-product-types`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`,
+          accept: "application/json",
+        },
+      })
+
+      console.log("API response status:", response.status)
+      const data: ApiResponse<ProductType> = await response.json()
+      console.log("API response data:", JSON.stringify(data, null, 2))
+
+      // Check if the request was successful
+      if (data.statCode === 200 && data.isSuccess) {
+        console.log("Product types fetched successfully")
+        return {
+          success: true,
+          data: data.result,
+          message: data.message || "Product types fetched successfully",
+        }
+      } else {
+        console.error("Failed to fetch product types:", data.error || data.message)
+        throw new Error(data.error || data.message || "Failed to fetch product types")
+      }
+    } catch (error) {
+      console.error("Error fetching product types:", error)
+      throw new Error(error instanceof Error ? error.message : "An unexpected error occurred")
+    }
+  })
+
+export const createLedgerTypeAction = actionClient
+  .schema(createLedgerTypeSchema)
+  .action(async ({ parsedInput: { name } }) => {
+    try {
+      console.log("Creating ledger type:", name)
+      
+      // Get the access token from cookies
+      const cookieStore = await cookies()
+      const accessToken = cookieStore.get("accessToken")?.value
+
+      if (!accessToken) {
+        throw new Error("Access token not found. Please login again.")
+      }
+
+      // Call the API endpoint (assuming the endpoint exists based on RESTful patterns)
+      const response = await fetch(`${process.env.API_URL}/accountmanagement/Create-ledger-type`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`,
+          accept: "application/json",
+        },
+        body: JSON.stringify({ name }),
+      })
+
+      console.log("API response status:", response.status)
+      const data: ApiResponse<LedgerType> = await response.json()
+      console.log("API response data:", JSON.stringify(data, null, 2))
+
+      // Check if the request was successful
+      if (data.statCode === 200 && data.isSuccess) {
+        console.log("Ledger type created successfully")
+        return {
+          success: true,
+          data: data.result,
+          message: data.message || "Ledger type created successfully",
+        }
+      } else {
+        console.error("Failed to create ledger type:", data.error || data.message)
+        throw new Error(data.error || data.message || "Failed to create ledger type")
+      }
+    } catch (error) {
+      console.error("Error creating ledger type:", error)
+      throw new Error(error instanceof Error ? error.message : "An unexpected error occurred")
+    }
+  })
+
+export const getGeneralLedgerAction = actionClient
+  .schema(getGeneralLedgerSchema)
+  .action(async () => {
+    try {
+      console.log("Fetching general ledger...")
+      
+      // Get the access token from cookies
+      const cookieStore = await cookies()
+      const accessToken = cookieStore.get("accessToken")?.value
+
+      if (!accessToken) {
+        throw new Error("Access token not found. Please login again.")
+      }
+
+      // Call the API endpoint
+      const response = await fetch(`${process.env.API_URL}/accountmanagement/Get-general-ledger`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`,
+          accept: "application/json",
+        },
+      })
+
+      console.log("API response status:", response.status)
+      const data: ApiResponse<GeneralLedger> = await response.json()
+      console.log("API response data:", JSON.stringify(data, null, 2))
+
+      // Check if the request was successful
+      if (data.statCode === 200 && data.isSuccess) {
+        console.log("General ledger fetched successfully")
+        return {
+          success: true,
+          data: data.result,
+          message: data.message || "General ledger fetched successfully",
+        }
+      } else {
+        console.error("Failed to fetch general ledger:", data.error || data.message)
+        throw new Error(data.error || data.message || "Failed to fetch general ledger")
+      }
+    } catch (error) {
+      console.error("Error fetching general ledger:", error)
+      throw new Error(error instanceof Error ? error.message : "An unexpected error occurred")
+    }
+  })
+
+export const getCurrenciesAction = actionClient
+  .schema(getCurrenciesSchema)
+  .action(async () => {
+    try {
+      console.log("Fetching currencies...")
+      
+      // Get the access token from cookies
+      const cookieStore = await cookies()
+      const accessToken = cookieStore.get("accessToken")?.value
+
+      if (!accessToken) {
+        throw new Error("Access token not found. Please login again.")
+      }
+
+      // Call the API endpoint
+      const response = await fetch(`${process.env.API_URL}/accountmanagement/Get-currencies`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`,
+          accept: "application/json",
+        },
+      })
+
+      console.log("API response status:", response.status)
+      const data: ApiResponse<Currency> = await response.json()
+      console.log("API response data:", JSON.stringify(data, null, 2))
+
+      // Check if the request was successful
+      if (data.statCode === 200 && data.isSuccess) {
+        console.log("Currencies fetched successfully")
+        return {
+          success: true,
+          data: data.result,
+          message: data.message || "Currencies fetched successfully",
+        }
+      } else {
+        console.error("Failed to fetch currencies:", data.error || data.message)
+        throw new Error(data.error || data.message || "Failed to fetch currencies")
+      }
+    } catch (error) {
+      console.error("Error fetching currencies:", error)
+      throw new Error(error instanceof Error ? error.message : "An unexpected error occurred")
+    }
+  })
+
+// Create General Ledger Schema
+const createGeneralLedgerSchema = z.object({
+  branchId: z.string().uuid("Branch ID must be a valid UUID"),
+  ledgerCode: z.string().min(1, "Ledger code is required"),
+  ledgerTypeId: z.string().uuid("Ledger type ID must be a valid UUID"),
+  parentAccountId: z.string().uuid("Parent account ID must be a valid UUID").optional(),
+  ledgerName: z.string().min(1, "Ledger name is required"),
+  currencyId: z.string().uuid("Currency ID must be a valid UUID"),
+  opening_balance: z.number().default(0),
+  postingRule: z.number().min(1).max(2, "Posting rule must be 1 (Debit) or 2 (Credit)"),
+})
+
+// Create General Ledger Action
+export const createGeneralLedgerAction = actionClient
+  .schema(createGeneralLedgerSchema)
+  .action(async ({ parsedInput }) => {
+    try {
+      console.log("Creating general ledger with data:", parsedInput)
+
+      // Get access token from cookies
+      const cookieStore = await cookies()
+      const accessToken = cookieStore.get("accessToken")?.value
+
+      if (!accessToken) {
+        throw new Error("No access token found. Please log in again.")
+      }
+
+      // Call the API endpoint
+      const response = await fetch(`${process.env.API_URL}/accountmanagement/create-general-ledger`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`,
+          accept: "application/json",
+        },
+        body: JSON.stringify(parsedInput),
+      })
+
+      console.log("API response status:", response.status)
+      const data = await response.json()
+      console.log("API response data:", JSON.stringify(data, null, 2))
+
+      // Check if the request was successful
+      if (data.statCode === 200 && data.isSuccess) {
+        console.log("General ledger created successfully")
+        return {
+          success: true,
+          data: data.result,
+          message: data.message || "General ledger created successfully",
+        }
+      } else {
+        console.error("Failed to create general ledger:", data.error || data.message)
+        throw new Error(data.error || data.message || "Failed to create general ledger")
+      }
+    } catch (error) {
+      console.error("Error creating general ledger:", error)
+      throw new Error(error instanceof Error ? error.message : "An unexpected error occurred")
+    }
+  })

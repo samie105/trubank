@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -13,6 +13,8 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { getLedgerTypesAction, createLedgerTypeAction, type LedgerType } from "@/server/financial-accounting/account-types";
+import { AccountTableSkeleton } from "./account-table-skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,6 +39,7 @@ import {
   Trash2,
   Plus,
   Settings,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
@@ -60,11 +63,10 @@ import {
   ResponsiveModalTrigger,
 } from "@/components/ui/dialog-2";
 
-// Define the Account type
+// Define the Account type based on LedgerType
 type Account = {
   id: string;
   accountType: string;
-  timestamp: string;
 };
 
 export default function AccountTable() {
@@ -75,33 +77,45 @@ export default function AccountTable() {
   const [open, setOpen] = useState(false);
   const [newAccountName, setNewAccountName] = useState("");
   const [filterColumn, setFilterColumn] = useState("accountType");
-  const [accounts, setAccounts] = useState<Account[]>([
-    {
-      id: "1",
-      accountType: "Expense Account",
-      timestamp: "Oct 10, 2024 2:17 pm",
-    },
-    {
-      id: "2",
-      accountType: "Investment Account",
-      timestamp: "Oct 10, 2024 2:17 pm",
-    },
-    {
-      id: "3",
-      accountType: "Liability Account",
-      timestamp: "Oct 10, 2024 2:17 pm",
-    },
-    {
-      id: "4",
-      accountType: "Equity Account",
-      timestamp: "Oct 10, 2024 2:17 pm",
-    },
-    {
-      id: "5",
-      accountType: "Asset Account",
-      timestamp: "Oct 10, 2024 2:17 pm",
-    },
-  ]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Load ledger types on component mount
+  useEffect(() => {
+    loadLedgerTypes();
+  }, []);
+
+  // Load ledger types function
+  const loadLedgerTypes = async () => {
+    try {
+      setIsLoading(true);
+      const result = await getLedgerTypesAction({});
+      
+      if (result?.data?.success && result.data.data) {
+        // Transform LedgerType to Account format
+        const transformedAccounts: Account[] = result.data.data.map((ledgerType: LedgerType) => ({
+          id: ledgerType.id,
+          accountType: ledgerType.name,
+        }));
+        setAccounts(transformedAccounts);
+      } else {
+        toast.error("Failed to load ledger types");
+      }
+    } catch (error) {
+      console.error("Error loading ledger types:", error);
+      toast.error("Failed to load ledger types");
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  // Handle manual refresh
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    loadLedgerTypes();
+  };
 
   // Define columns
   const columns: ColumnDef<Account>[] = [
@@ -129,35 +143,34 @@ export default function AccountTable() {
       ),
     },
     {
-      accessorKey: "timestamp",
-      header: "TIMESTAMP",
-    },
-    {
       id: "actions",
+      header: "",
       cell: ({ row }) => {
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleEdit(row.original)}>
-                <Edit className="mr-2 h-4 w-4" />
-                <span>Edit</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => handleDelete(row.original.id)}
-                className="text-red-500 focus:text-red-500"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                <span>Delete</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex justify-end">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">Open menu</span>
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleEdit(row.original)}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  <span>Edit</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => handleDelete(row.original.id)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  <span>Delete</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         );
       },
     },
@@ -183,43 +196,46 @@ export default function AccountTable() {
   });
 
   // Handle creating a new account
-  const handleCreateAccount = () => {
+  const handleCreateAccount = async () => {
     if (!newAccountName.trim()) {
       toast.error("Account name cannot be empty");
       return;
     }
 
-    // Show loading toast
-    toast.loading("Creating account type...");
+    try {
+      // Show loading toast
+      toast.loading("Creating account type...");
 
-    // Fake promise to simulate API call
-    new Promise<void>((resolve) => {
-      setTimeout(() => {
-        resolve();
-      }, 1500);
-    }).then(() => {
-      // Add new account to the table
-      const newAccount: Account = {
-        id: (accounts.length + 1).toString(),
-        accountType: newAccountName,
-        timestamp: new Date().toLocaleString("en-US", {
-          year: "numeric",
-          month: "short",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        }),
-      };
+      // Call the server action
+      const result = await createLedgerTypeAction({ name: newAccountName.trim() });
+      
+      if (result?.data?.success) {
+        // Reload the ledger types to get the updated list
+        const updatedResult = await getLedgerTypesAction({});
+        
+        if (updatedResult?.data?.success && updatedResult.data.data) {
+          const transformedAccounts: Account[] = updatedResult.data.data.map((ledgerType: LedgerType) => ({
+            id: ledgerType.id,
+            accountType: ledgerType.name,
+          }));
+          setAccounts(transformedAccounts);
+        }
 
-      setAccounts([...accounts, newAccount]);
-      setNewAccountName("");
-      setOpen(false);
+        setNewAccountName("");
+        setOpen(false);
 
-      // Dismiss loading toast and show success toast
+        // Dismiss loading toast and show success toast
+        toast.dismiss();
+        toast.success(`Account type "${newAccountName}" created successfully`);
+      } else {
+        toast.dismiss();
+        toast.error(result?.data?.message || "Failed to create account type");
+      }
+    } catch (error) {
+      console.error("Error creating account type:", error);
       toast.dismiss();
-      toast.success(`Account type "${newAccountName}" created successfully`);
-    });
+      toast.error("Failed to create account type");
+    }
   };
 
   // Handle editing an account
@@ -304,12 +320,21 @@ export default function AccountTable() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="accountType">Account Type</SelectItem>
-                      <SelectItem value="timestamp">Timestamp</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </PopoverContent>
             </Popover>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleRefresh}
+              disabled={isRefreshing || isLoading}
+              className="ml-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+              <span className="sr-only">Refresh</span>
+            </Button>
           </div>
         </div>
         <ResponsiveModal open={open} onOpenChange={setOpen}>
@@ -365,7 +390,9 @@ export default function AccountTable() {
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {isLoading ? (
+              <AccountTableSkeleton rows={5} />
+            ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
@@ -387,7 +414,7 @@ export default function AccountTable() {
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  No ledger types found.
                 </TableCell>
               </TableRow>
             )}

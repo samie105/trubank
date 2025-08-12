@@ -86,8 +86,8 @@ export const fetchRequestLogAction = actionClient
         },
         body: JSON.stringify(parsedInput),
       });
-      // const rawResponse = await response.clone().json().catch(() => ({}));
-      // console.log("fetchRequestLogAction raw API response:", rawResponse);
+      const rawResponse = await response.clone().json().catch(() => ({}));
+      console.log("fetchRequestLogAction raw API response:", rawResponse);
 
       const status = response.status;
       let data: unknown = {};
@@ -111,7 +111,6 @@ export const fetchRequestLogAction = actionClient
           statusCode: status,
         };
       }
-      console.log("fetchRequestLogAction result:", result.data);
 
       return {
         success: true,
