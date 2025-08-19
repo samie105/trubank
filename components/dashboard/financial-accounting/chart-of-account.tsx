@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -13,7 +14,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { getGeneralLedgerAction, getLedgerTypesAction, createGeneralLedgerAction, getCurrenciesAction, type GeneralLedger, type LedgerType, type Currency } from "@/server/financial-accounting/account-types";
+import { getGeneralLedgerAction, getLedgerTypesAction, createGeneralLedgerAction, updateGeneralLedgerAction, deleteGeneralLedgerAction, getCurrenciesAction, type GeneralLedger, type LedgerType, type Currency } from "@/server/financial-accounting/account-types";
 import { fetchBranchesAction, type Branch } from "@/server/general/fetch-data";
 import { ChartOfAccountSkeleton } from "./chart-of-account-skeleton";
 import {
@@ -22,6 +23,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -57,7 +68,6 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "@/components/ui/sheet";
 import {
   Form,
@@ -103,12 +113,17 @@ type Account = {
 };
 
 export default function AccountTable() {
+  const router = useRouter();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [isCreating, setIsCreating] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [accountToDelete, setAccountToDelete] = useState<Account | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -289,8 +304,9 @@ export default function AccountTable() {
     postingRule: z.string().optional(),
   });
 
-  // Create Ledger form schema
+  // Create/Edit Ledger form schema
   const createLedgerFormSchema = z.object({
+    id: z.string().optional(), // For edit mode
     ledgerName: z.string().min(1, { message: "Ledger name is required" }),
     ledgerCode: z.string().min(1, { message: "Ledger code is required" }),
     currencyId: z.string().min(1, { message: "Currency is required" }),
@@ -313,8 +329,8 @@ export default function AccountTable() {
     },
   });
 
-  // Create Ledger form
-  const createLedgerForm = useForm<z.infer<typeof createLedgerFormSchema>>({
+  // Create/Edit Ledger form
+  const ledgerForm = useForm<z.infer<typeof createLedgerFormSchema>>({
     resolver: zodResolver(createLedgerFormSchema),
     defaultValues: {
       ledgerName: "",
@@ -359,16 +375,20 @@ export default function AccountTable() {
     table.resetColumnFilters();
   };
 
-  // Create Ledger function
-  const onCreateLedger = async (values: z.infer<typeof createLedgerFormSchema>) => {
+  // Create/Update Ledger function
+  const onSubmitLedger = async (values: z.infer<typeof createLedgerFormSchema>) => {
+    const isEditing = !!values.id;
+    
     // Show loading toast
-    const loadingToast = toast.loading("Creating ledger...", {
-      description: "Please wait while we create your new ledger account."
+    const loadingToast = toast.loading(isEditing ? "Updating ledger..." : "Creating ledger...", {
+      description: isEditing 
+        ? "Please wait while we update your ledger account."
+        : "Please wait while we create your new ledger account."
     });
 
     try {
       setIsCreating(true);
-      console.log("Creating ledger with values:", values);
+      console.log(isEditing ? "Updating ledger with values:" : "Creating ledger with values:", values);
 
       // Transform the form data to match API expectations
       const apiData = {
@@ -377,34 +397,39 @@ export default function AccountTable() {
         parentAccountId: values.parentAccountId === "none" ? undefined : values.parentAccountId, // Handle "none" case
       };
 
-      // Call the API
-      const result = await createGeneralLedgerAction(apiData);
+      // Call the appropriate API
+      const result = isEditing && values.id
+        ? await updateGeneralLedgerAction({ ...apiData, id: values.id })
+        : await createGeneralLedgerAction(apiData);
       
       if (result?.data?.success) {
         // Dismiss loading toast and show success
         toast.dismiss(loadingToast);
-        toast.success(`Ledger "${values.ledgerName}" created successfully!`, {
-          description: `Ledger code: ${values.ledgerCode}`,
+        toast.success(`Ledger "${values.ledgerName}" ${isEditing ? 'updated' : 'created'} successfully!`, {
+          description: isEditing 
+            ? "Your ledger has been updated successfully."
+            : `Ledger code: ${values.ledgerCode}`,
           duration: 4000,
         });
         
-        createLedgerForm.reset();
+        ledgerForm.reset();
         setIsSheetOpen(false);
+        setIsEditMode(false);
         // Refresh the data
         loadGeneralLedger();
       } else {
         // Dismiss loading toast and show error
         toast.dismiss(loadingToast);
-        toast.error("Failed to create ledger", {
+        toast.error(`Failed to ${isEditing ? 'update' : 'create'} ledger`, {
           description: result?.data?.message || "An unexpected error occurred. Please try again.",
           duration: 5000,
         });
       }
     } catch (error) {
-      console.error("Error creating ledger:", error);
+      console.error(`Error ${isEditing ? 'updating' : 'creating'} ledger:`, error);
       // Dismiss loading toast and show error
       toast.dismiss(loadingToast);
-      toast.error("Failed to create ledger", {
+      toast.error(`Failed to ${isEditing ? 'update' : 'create'} ledger`, {
         description: error instanceof Error ? error.message : "An unexpected error occurred. Please try again.",
         duration: 5000,
       });
@@ -413,14 +438,121 @@ export default function AccountTable() {
     }
   };
 
+  // Handle edit ledger
+  const handleEditLedger = (account: Account) => {
+    setIsEditMode(true);
+    
+    // Find the currency for this account
+    const accountCurrency = currencies.find(currency => currency.currencyCode === account.currencyCode);
+    
+    // Pre-fill the form with account data
+    ledgerForm.reset({
+      id: account.id,
+      ledgerName: account.ledgerName,
+      ledgerCode: account.ledgerCode,
+      currencyId: accountCurrency?.id || "",
+      controlAccount: account.controlAccount,
+      postingRule: account.postingRule.toString() as "1" | "2",
+      branchId: account.branchId,
+      ledgerTypeId: account.ledgerTypeId,
+      parentAccountId: account.parentAccountId || "none",
+      opening_balance: 0, // Opening balance not shown in edit, you might want to add this to the Account type
+    });
+    
+    setIsSheetOpen(true);
+    
+    toast.info("Edit Ledger", {
+      description: `Editing ledger: ${account.ledgerName}`,
+      duration: 3000,
+    });
+  };
+
+  // Handle create new ledger
+  const handleCreateLedger = () => {
+    setIsEditMode(false);
+    ledgerForm.reset({
+      ledgerName: "",
+      ledgerCode: "",
+      currencyId: "",
+      controlAccount: false,
+      postingRule: "1",
+      branchId: "",
+      ledgerTypeId: "",
+      parentAccountId: "none",
+      opening_balance: 0,
+    });
+    setIsSheetOpen(true);
+  };
+
+  // Handle delete ledger
+  const handleDeleteLedger = (account: Account) => {
+    setAccountToDelete(account);
+    setIsDeleteDialogOpen(true);
+  };
+
+  // Confirm delete ledger
+  const confirmDeleteLedger = async () => {
+    if (!accountToDelete) return;
+
+    // Show loading toast
+    const loadingToast = toast.loading("Deleting ledger...", {
+      description: `Please wait while we delete "${accountToDelete.ledgerName}".`,
+    });
+
+    try {
+      setIsDeleting(true);
+      console.log("Deleting ledger:", accountToDelete.id);
+
+      // Call the delete API
+      const result = await deleteGeneralLedgerAction({ id: accountToDelete.id });
+      
+      if (result?.data?.success) {
+        // Dismiss loading toast and show success
+        toast.dismiss(loadingToast);
+        toast.success(`Ledger "${accountToDelete.ledgerName}" deleted successfully!`, {
+          description: "The ledger has been permanently removed from your chart of accounts.",
+          duration: 4000,
+        });
+        
+        // Close dialog and refresh data
+        setIsDeleteDialogOpen(false);
+        setAccountToDelete(null);
+        loadGeneralLedger();
+      } else {
+        // Dismiss loading toast and show error
+        toast.dismiss(loadingToast);
+        toast.error("Failed to delete ledger", {
+          description: result?.data?.message || "An unexpected error occurred. Please try again.",
+          duration: 5000,
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting ledger:", error);
+      // Dismiss loading toast and show error
+      toast.dismiss(loadingToast);
+      toast.error("Failed to delete ledger", {
+        description: error instanceof Error ? error.message : "An unexpected error occurred. Please try again.",
+        duration: 5000,
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // Handle sheet open/close with informational toast
   const handleSheetOpenChange = (open: boolean) => {
     setIsSheetOpen(open);
-    if (open) {
+    if (open && !isEditMode) {
       toast.info("Create New Ledger", {
         description: "Fill in the required information to create a new ledger account.",
         duration: 3000,
       });
+    }
+    
+    // Reset form and edit mode when closing
+    if (!open) {
+      setIsEditMode(false);
+      ledgerForm.reset();
     }
   };
 
@@ -534,19 +666,20 @@ export default function AccountTable() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
-                  onClick={() => console.log("View", row.original.id)}
+                  onClick={() => router.push(`/dashboard/financial-accounting/chart-of-account/${row.original.id}`)}
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   <span>View</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => console.log("Edit", row.original.id)}
+                  onClick={() => handleEditLedger(row.original)}
                 >
                   <Edit className="mr-2 h-4 w-4" />
                   <span>Edit</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => console.log("Delete", row.original.id)}
+                  onClick={() => handleDeleteLedger(row.original)}
+                  className="text-destructive focus:text-destructive"
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
                   <span>Delete</span>
@@ -647,24 +780,25 @@ export default function AccountTable() {
           </Button>
         </div>
         <div className="flex md:ml-0 ml-2 items-center gap-2">
-                      <Sheet open={isSheetOpen} onOpenChange={handleSheetOpenChange}>
-            <SheetTrigger asChild>
-              <Button className="bg-primary text-wrap text-white hover:bg-primary">
-                <Plus className="md:mr-2 h-4 w-4" />
-                <span className="hidden md:block text-nowrap">Create Ledger</span>
-              </Button>
-            </SheetTrigger>
+          <Sheet open={isSheetOpen} onOpenChange={handleSheetOpenChange}>
+            <Button 
+              className="bg-primary text-wrap text-white hover:bg-primary"
+              onClick={handleCreateLedger}
+            >
+              <Plus className="md:mr-2 h-4 w-4" />
+              <span className="hidden md:block text-nowrap">Create Ledger</span>
+            </Button>
             <SheetContent className="overflow-y-auto">
               <SheetHeader>
-                <SheetTitle>Create Ledger</SheetTitle>
+                <SheetTitle>{isEditMode ? "Edit Ledger" : "Create Ledger"}</SheetTitle>
               </SheetHeader>
-              <Form {...createLedgerForm}>
+              <Form {...ledgerForm}>
                 <form
-                  onSubmit={createLedgerForm.handleSubmit(onCreateLedger)}
+                  onSubmit={ledgerForm.handleSubmit(onSubmitLedger)}
                   className="space-y-4 py-4"
                 >
                   <FormField
-                    control={createLedgerForm.control}
+                    control={ledgerForm.control}
                     name="ledgerTypeId"
                     render={({ field }) => (
                       <FormItem>
@@ -707,7 +841,7 @@ export default function AccountTable() {
                   />
 
                   <FormField
-                    control={createLedgerForm.control}
+                    control={ledgerForm.control}
                     name="branchId"
                     render={({ field }) => (
                       <FormItem>
@@ -750,7 +884,7 @@ export default function AccountTable() {
                   />
 
                   <FormField
-                    control={createLedgerForm.control}
+                    control={ledgerForm.control}
                     name="parentAccountId"
                     render={({ field }) => (
                       <FormItem>
@@ -778,7 +912,7 @@ export default function AccountTable() {
                   />
 
                   <FormField
-                    control={createLedgerForm.control}
+                    control={ledgerForm.control}
                     name="ledgerName"
                     render={({ field }) => (
                       <FormItem>
@@ -791,20 +925,29 @@ export default function AccountTable() {
                   />
 
                   <FormField
-                    control={createLedgerForm.control}
+                    control={ledgerForm.control}
                     name="ledgerCode"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Ledger Code</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter ledger code" {...field} />
+                          <Input 
+                            placeholder="Enter ledger code" 
+                            disabled={isEditMode}
+                            {...field} 
+                          />
                         </FormControl>
+                        {isEditMode && (
+                          <p className="text-xs text-muted-foreground">
+                            Ledger code cannot be changed after creation
+                          </p>
+                        )}
                       </FormItem>
                     )}
                   />
 
                   <FormField
-                    control={createLedgerForm.control}
+                    control={ledgerForm.control}
                     name="currencyId"
                     render={({ field }) => (
                       <FormItem>
@@ -847,7 +990,7 @@ export default function AccountTable() {
                   />
 
                   <FormField
-                    control={createLedgerForm.control}
+                    control={ledgerForm.control}
                     name="postingRule"
                     render={({ field }) => (
                       <FormItem>
@@ -871,7 +1014,7 @@ export default function AccountTable() {
                   />
 
                   <FormField
-                    control={createLedgerForm.control}
+                    control={ledgerForm.control}
                     name="opening_balance"
                     render={({ field }) => (
                       <FormItem>
@@ -889,7 +1032,7 @@ export default function AccountTable() {
                   />
 
                   <FormField
-                    control={createLedgerForm.control}
+                    control={ledgerForm.control}
                     name="controlAccount"
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
@@ -918,12 +1061,16 @@ export default function AccountTable() {
                       {isCreating ? (
                         <>
                           <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                          Creating Ledger...
+                          {isEditMode ? "Updating Ledger..." : "Creating Ledger..."}
                         </>
                       ) : (
                         <>
-                          <Plus className="mr-2 h-4 w-4" />
-                          Create Ledger
+                          {isEditMode ? (
+                            <Edit className="mr-2 h-4 w-4" />
+                          ) : (
+                            <Plus className="mr-2 h-4 w-4" />
+                          )}
+                          {isEditMode ? "Update Ledger" : "Create Ledger"}
                         </>
                       )}
                     </Button>
@@ -1183,6 +1330,39 @@ export default function AccountTable() {
           </Button>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Ledger</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the ledger &ldquo;{accountToDelete?.ledgerName}&rdquo;? 
+              This action cannot be undone and will permanently remove the ledger from your chart of accounts.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteLedger}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete Ledger
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
