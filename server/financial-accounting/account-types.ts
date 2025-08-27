@@ -50,6 +50,26 @@ export interface CustomerAccount {
   subAccounts: string[]
 }
 
+// Reconciliation interfaces
+export interface ReconciliationTransaction {
+  transactionRef: string
+  transactionDate: string
+  amount: number
+  transactionType: string
+  status: string
+  description: string
+  firstAccount: string
+  secondAccount: string
+}
+
+export interface ReconciliationResult {
+  isSuccess: boolean
+  result: ReconciliationTransaction[]
+  message: string
+  error: string
+  statCode: number
+}
+
 interface ApiResponse<T> {
   isSuccess: boolean
   result: T[]
@@ -527,5 +547,83 @@ export const getGeneralLedgersByCustomerIdAction = actionClient
     } catch (error) {
       console.error("Error fetching general ledgers by customer ID:", error)
       throw new Error(error instanceof Error ? error.message : "An unexpected error occurred")
+    }
+  })
+
+// Schema for reconciliation input
+const reconciliationSchema = z.object({
+  firstAccount: z.string().min(1, "First account code is required"),
+  secondAccount: z.string().min(1, "Second account code is required"),
+})
+
+// Reconciliation Result Interface
+export interface ReconciliationTransaction {
+  transactionRef: string
+  transactionDate: string
+  amount: number
+  transactionType: string
+  status: string
+  description: string
+  firstAccount: string
+  secondAccount: string
+}
+
+export interface ReconciliationResult {
+  isSuccess: boolean
+  result: ReconciliationTransaction[]
+  message: string
+  error: string
+  statCode: number
+}
+
+// Reconcile ledgers action
+export const reconcileLedgersAction = actionClient
+  .schema(reconciliationSchema)
+  .action(async ({ parsedInput }) => {
+    try {
+      console.log("Reconciling ledgers:", parsedInput)
+      
+      // Get the access token from cookies
+      const cookieStore = await cookies()
+      const accessToken = cookieStore.get("accessToken")?.value
+
+      if (!accessToken) {
+        throw new Error("Access token not found. Please login again.")
+      }
+
+      // Call the reconciliation API endpoint
+      const response = await fetch(`${process.env.API_URL}/accountmanagement/Reconciliation/reconcile-accounts`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`,
+          accept: "application/json",
+        },
+        body: JSON.stringify({
+          firstAccount: parsedInput.firstAccount,
+          secondAccount: parsedInput.secondAccount
+        })
+      })
+
+      console.log("Reconciliation API response status:", response.status)
+      const data: ReconciliationResult = await response.json()
+      console.log("Reconciliation API response data:", JSON.stringify(data, null, 2))
+
+      // Check if the request was successful
+      if (response.ok && data.isSuccess) {
+        console.log("Ledgers reconciled successfully")
+        return {
+          success: true,
+          data: data.result,
+          message: data.message || "Ledgers reconciled successfully",
+          totalTransactions: data.result?.length || 0
+        }
+      } else {
+        console.error("Failed to reconcile ledgers:", data.error || data.message)
+        throw new Error(data.error || data.message || "Failed to reconcile ledgers")
+      }
+    } catch (error) {
+      console.error("Error reconciling ledgers:", error)
+      throw new Error(error instanceof Error ? error.message : "An unexpected error occurred during reconciliation")
     }
   })

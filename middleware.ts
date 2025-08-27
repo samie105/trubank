@@ -21,7 +21,13 @@ export default function middleware(request: NextRequest) {
   // Redirect logic
   if (isProtectedPath && !token) {
     // Redirect to login if trying to access protected route without token
-    return NextResponse.redirect(new URL("/auth/login", request.url))
+    // Store the original URL as a query parameter for redirect after login
+    const loginUrl = new URL("/auth/login", request.url)
+    // Only set redirect if it's not already a login path to avoid loops
+    if (!authPaths.some(ap => path === ap)) {
+      loginUrl.searchParams.set("redirect", path)
+    }
+    return NextResponse.redirect(loginUrl)
   }
 
   if (isAuthPath && token) {

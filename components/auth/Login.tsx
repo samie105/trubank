@@ -12,7 +12,7 @@ import { useAction } from "next-safe-action/hooks"
 import { toast } from "sonner"
 import { loginAction } from "@/server/Login"
 import { Eye, EyeOff } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -23,6 +23,26 @@ type LoginFormValues = z.infer<typeof loginSchema>
 
 export default function Component() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectParam = searchParams.get("redirect")
+  
+  // Validate redirect path - don't redirect to auth pages or external URLs
+  const getValidRedirectPath = (path: string | null): string => {
+    if (!path) return "/dashboard/customer-management"
+    
+    // Don't redirect to auth pages
+    if (path.startsWith("/auth/")) return "/dashboard/customer-management"
+    
+    // Don't redirect to external URLs
+    if (path.startsWith("http")) return "/dashboard/customer-management"
+    
+    // Ensure path starts with /
+    if (!path.startsWith("/")) return "/dashboard/customer-management"
+    
+    return path
+  }
+  
+  const redirectPath = getValidRedirectPath(redirectParam)
   const [showPassword, setShowPassword] = useState(false)
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -36,7 +56,7 @@ export default function Component() {
     onSuccess(data) {
       if (data.data?.success) {
         toast.success("Login successful!")
-        router.push("/dashboard/customer-management")
+        router.push(redirectPath)
       } else if (data.data?.error) {
         toast.error(data.data.error)
       }
