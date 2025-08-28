@@ -53,7 +53,7 @@ export default function ContactPage() {
                     <h3 className="text-lg font-semibold text-black/80">
                       Phone
                     </h3>
-                    <p className="mt-1 text-gray-600">+2347051583304</p>
+                    <p className="mt-1 text-gray-600">+2347007003300</p>
                   </div>
                 </div>
 

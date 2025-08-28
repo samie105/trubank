@@ -21,6 +21,14 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
   Table,
   TableBody,
   TableCell,
@@ -42,9 +50,10 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 
-// Define the Product type
-type Product = {
+// Define the Table Product type (simplified for display)
+type TableProduct = {
   id: string;
   productName: string;
   accountType: string;
@@ -57,7 +66,7 @@ type Product = {
 };
 
 // Sample data
-const data: Product[] = [
+const data: TableProduct[] = [
   {
     id: "1",
     productName: "Shield & Crow",
@@ -133,9 +142,25 @@ export default function ProductTable() {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [statusFilter] = useState<string | null>(null);
+  
+  // Edit state management
+  const [editingProduct, setEditingProduct] = useState<TableProduct | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // Edit handlers
+  const handleEdit = (product: TableProduct) => {
+    setEditingProduct(product);
+    setIsEditing(true);
+  };
+
+  const handleCloseEdit = () => {
+    setEditingProduct(null);
+    setIsEditing(false);
+  };
 
   // Define columns
-  const columns: ColumnDef<Product>[] = [
+  const columns: ColumnDef<TableProduct>[] = [
     {
       accessorKey: "productName",
       header: "PRODUCT NAME",
@@ -220,7 +245,7 @@ export default function ProductTable() {
                 <span>View</span>
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => console.log("Edit", row.original.id)}
+                onClick={() => handleEdit(row.original)}
               >
                 <Edit className="mr-2 h-4 w-4" />
                 <span>Edit</span>
@@ -385,6 +410,100 @@ export default function ProductTable() {
           </Button>
         </div>
       </div>
+
+      {/* Edit Product Dialog */}
+      <Dialog open={isEditing} onOpenChange={setIsEditing}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Product</DialogTitle>
+            <DialogDescription>
+              Update the product information below.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {editingProduct && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="productName">Product Name</Label>
+                  <Input
+                    id="productName"
+                    defaultValue={editingProduct.productName}
+                    placeholder="Enter product name"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="accountType">Account Type</Label>
+                  <Input
+                    id="accountType"
+                    defaultValue={editingProduct.accountType}
+                    placeholder="Enter account type"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="interestRate">Interest Rate</Label>
+                  <Input
+                    id="interestRate"
+                    defaultValue={editingProduct.interestRate}
+                    placeholder="Enter interest rate"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="feeAmount">Fee Amount</Label>
+                  <Input
+                    id="feeAmount"
+                    defaultValue={editingProduct.feeAmount}
+                    placeholder="Enter fee amount"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="overdraftLimit">Overdraft Limit</Label>
+                  <Input
+                    id="overdraftLimit"
+                    defaultValue={editingProduct.overdraftLimit}
+                    placeholder="Enter overdraft limit"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Input
+                    id="status"
+                    defaultValue={editingProduct.status}
+                    placeholder="Active/Inactive"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={handleCloseEdit}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={async () => {
+                    // For now, just show a placeholder with loading state
+                    setIsUpdating(true);
+                    try {
+                      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+                      toast.success("Edit functionality will be implemented when we get the get-products endpoint");
+                      handleCloseEdit();
+                    } finally {
+                      setIsUpdating(false);
+                    }
+                  }}
+                  disabled={isUpdating}
+                >
+                  {isUpdating ? "Updating..." : "Update Product"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

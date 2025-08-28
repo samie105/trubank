@@ -34,7 +34,7 @@ export default function AboutPage() {
           </div>
           <h1 className="mt-6 text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
             Redefining
-            <span className="text-yellow-300">Financial Innovation</span>
+            <span className="text-yellow-300"> Financial Innovation</span>
             <br />
             for a Connected World
           </h1>

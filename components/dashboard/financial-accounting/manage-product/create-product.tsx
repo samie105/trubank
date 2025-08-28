@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { ArrowLeft, Percent } from "lucide-react";
 import { DateTimePicker } from "@/components/ui/date-picker";
 import { Separator } from "@/components/ui/separator";
+import { createProductAction, type Product } from "@/server/financial-accounting/products";
 
 // Form Schemas
 const productDetailsSchema = z.object({
@@ -255,7 +256,6 @@ export default function CreateProductPage() {
         productName: data.productName,
         accountType: data.accountType,
       });
-      console.log(productDetailsValid);
 
       if (!productDetailsValid.success) {
         setCurrentStep(0);
@@ -317,23 +317,86 @@ export default function CreateProductPage() {
       }
 
       // If we get here, all sections are valid
-
       setIsSubmitting(true);
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Create the payload in the format expected by the API
+      const createProductPayload: Product = {
+        name: data.productName,
+        ledgerId: "00000000-0000-0000-0000-000000000000", // TODO: Get from form or default
+        productName: data.productName,
+        productCode: data.productName.toUpperCase().replace(/\s+/g, "_"), // Generate from name
+        account_generation_format: "AUTO", // TODO: Get from form
+        productInterest: [{
+          interestTypeId: "00000000-0000-0000-0000-000000000000", // TODO: Map from interestType
+          rateAmount: parseFloat(data.rate) || 0,
+          rateType: data.rateUnit || "per-annum",
+          calculationPeriod: 1, // TODO: Map from calculationPeriod
+          compoundingFrequescy: 1, // TODO: Map from compoundingFrequency
+          effectiveDate: data.effectiveDate?.toISOString() || new Date().toISOString(),
+          endDate: data.endDate?.toISOString(),
+          triggerCondition: 1, // TODO: Map from triggerCondition
+          customerType: 1, // TODO: Map from customerType
+        }],
+        overDraft: {
+          name: data.overdraftName || "Default Overdraft",
+          limitAmount: parseFloat(data.overdraftLimit) || 0,
+        },
+        productFees: [{
+          category: 1, // TODO: Map from transactionType
+          percentageFee: data.feeType === "rate" ? parseFloat(data.feeValue) || 0 : 0,
+          feeName: `${data.transactionType} Fee`,
+          feeAmount: data.feeType === "amount" ? parseFloat(data.feeValue) || 0 : 0,
+          capAmount: 0,
+          glAccountId: "00000000-0000-0000-0000-000000000000", // TODO: Get from form
+          feeApplicationFrequency: 1, // TODO: Map from feeApplicationFrequency
+          effectiveDate: data.feeEffectiveDate?.toISOString() || new Date().toISOString(),
+          endDate: data.feeEndDate?.toISOString(),
+          triggerCondition: 1, // TODO: Map from feeTriggerCondition
+          customerType: 1, // TODO: Map from feeCustomerType
+          minimumAmount: 0,
+          isFeesAccount: false,
+          isInterestAccount: false,
+        }],
+        transactionRules: [{
+          category: 1,
+          description: `Transaction rules for ${data.productName}`,
+          accountMappings: [{
+            entryType: 1,
+            feeType: 1,
+            firstLedgerId: "00000000-0000-0000-0000-000000000000",
+            secondLedgerId: "00000000-0000-0000-0000-000000000000",
+            amount: 0,
+            isFeesAccount: false,
+            isInterestAccount: false,
+          }]
+        }]
+      };
 
-      // Clear form data from localStorage
-      localStorage.removeItem("createProductForm");
+      // Show loading toast
+      const loadingToast = toast.loading("Creating product...");
 
-      // Show success message
-      toast.success("Product created successfully");
+      // Call the API
+      const result = await createProductAction(createProductPayload);
 
-      // Redirect to products page
-      router.push("/dashboard/financial-accounting/manage-product");
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
+
+      if (result?.data?.success) {
+        // Clear form data from localStorage
+        localStorage.removeItem("createProductForm");
+
+        // Show success message
+        toast.success(result.data.message || "Product created successfully");
+
+        // Redirect to products page
+        router.push("/dashboard/financial-accounting/manage-product");
+      } else {
+        throw new Error(result?.serverError || "Failed to create product");
+      }
+
     } catch (error) {
       console.error("Error submitting form:", error);
-      toast.error("Error creating product");
+      toast.error(error instanceof Error ? error.message : "Error creating product");
     } finally {
       setIsSubmitting(false);
     }
